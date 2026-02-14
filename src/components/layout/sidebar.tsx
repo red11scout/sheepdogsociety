@@ -17,6 +17,7 @@ import {
   ChevronDown,
   ChevronRight,
   PanelLeftClose,
+  FileText,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -205,6 +206,12 @@ export function Sidebar({ user, onToggle }: SidebarProps) {
             icon={<HandHeart className="h-4 w-4" />}
             label="Prayer"
             active={pathname.startsWith("/prayer")}
+          />
+          <NavLink
+            href="/blog"
+            icon={<FileText className="h-4 w-4" />}
+            label="Blog"
+            active={pathname.startsWith("/blog")}
           />
           <NavLink
             href="/groups"

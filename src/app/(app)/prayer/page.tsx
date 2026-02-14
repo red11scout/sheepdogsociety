@@ -1,18 +1,21 @@
-import { HandHeart } from "lucide-react";
-import { Card, CardContent } from "@/components/ui/card";
+import { auth } from "@clerk/nextjs/server";
+import { db } from "@/db";
+import { users, groups, groupMembers } from "@/db/schema";
+import { eq } from "drizzle-orm";
+import { PrayerWall } from "./prayer-wall";
 
-export default function PrayerPage() {
-  return (
-    <div className="mx-auto max-w-3xl p-6">
-      <h1 className="mb-6 text-2xl font-bold">Prayer Wall</h1>
-      <Card>
-        <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
-          <HandHeart className="h-12 w-12 text-bronze" />
-          <p className="text-muted-foreground">
-            Prayer requests coming in Phase 2. Bear one another&apos;s burdens.
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
+export const dynamic = "force-dynamic";
+
+export default async function PrayerPage() {
+  const { userId } = await auth();
+  const [user] = await db.select().from(users).where(eq(users.id, userId!));
+
+  // Get user's groups for the privacy dropdown
+  const myGroups = await db
+    .select({ id: groups.id, name: groups.name })
+    .from(groupMembers)
+    .innerJoin(groups, eq(groupMembers.groupId, groups.id))
+    .where(eq(groupMembers.userId, userId!));
+
+  return <PrayerWall currentUser={user} myGroups={myGroups} />;
 }
