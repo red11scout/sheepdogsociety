@@ -22,6 +22,7 @@ import {
   Handshake,
   BookMarked,
   FolderOpen,
+  Sparkles,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -248,6 +249,12 @@ export function Sidebar({ user, onToggle }: SidebarProps) {
             active={pathname.startsWith("/resources")}
           />
           <NavLink
+            href="/testimonies"
+            icon={<Sparkles className="h-4 w-4" />}
+            label="Testimonies"
+            active={pathname.startsWith("/testimonies")}
+          />
+          <NavLink
             href="/members"
             icon={<User className="h-4 w-4" />}
             label="Members"
@@ -255,7 +262,7 @@ export function Sidebar({ user, onToggle }: SidebarProps) {
           />
           {user.role === "admin" && (
             <NavLink
-              href="/admin/users"
+              href="/admin/dashboard"
               icon={<Settings className="h-4 w-4" />}
               label="Admin"
               active={pathname.startsWith("/admin")}
