@@ -210,6 +210,18 @@ export function AdminDashboard() {
           >
             Create Event
           </Link>
+          <Link
+            href="/admin/groups"
+            className="rounded-md bg-secondary px-4 py-2 text-sm hover:bg-secondary/80"
+          >
+            Manage Groups
+          </Link>
+          <Link
+            href="/admin/devotionals"
+            className="rounded-md bg-secondary px-4 py-2 text-sm hover:bg-secondary/80"
+          >
+            Manage Devotionals
+          </Link>
         </div>
       </div>
     </div>

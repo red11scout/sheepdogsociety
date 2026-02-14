@@ -8,7 +8,6 @@ import {
   Lock,
   Users,
   MessageCircle,
-  Shield,
   BookOpen,
   Heart,
   HandHeart,
@@ -23,6 +22,7 @@ import {
   BookMarked,
   FolderOpen,
   Sparkles,
+  UserCheck,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -45,6 +45,7 @@ export function Sidebar({ user, onToggle }: SidebarProps) {
     leaders: true,
     groups: true,
     dms: false,
+    admin: true,
   });
 
   const isLeader =
@@ -126,7 +127,7 @@ export function Sidebar({ user, onToggle }: SidebarProps) {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2">
-          <Shield className="h-6 w-6 text-bronze" />
+          <img src="/logo.png" alt="Sheepdog Society" className="h-8 w-8 rounded" />
           <span className="text-lg font-bold">Sheepdog</span>
         </div>
         <Button variant="ghost" size="icon" onClick={onToggle}>
@@ -260,15 +261,43 @@ export function Sidebar({ user, onToggle }: SidebarProps) {
             label="Members"
             active={pathname.startsWith("/members")}
           />
-          {user.role === "admin" && (
-            <NavLink
-              href="/admin/dashboard"
-              icon={<Settings className="h-4 w-4" />}
-              label="Admin"
-              active={pathname.startsWith("/admin")}
-            />
-          )}
         </div>
+
+        {/* Admin section */}
+        {user.role === "admin" && (
+          <>
+            <Separator className="my-3" />
+            <SectionHeader label="Admin" sectionKey="admin" />
+            {expandedSections.admin && (
+              <div className="mb-3 space-y-0.5 pl-1">
+                <NavLink
+                  href="/admin/dashboard"
+                  icon={<Settings className="h-4 w-4" />}
+                  label="Dashboard"
+                  active={pathname === "/admin/dashboard"}
+                />
+                <NavLink
+                  href="/admin/users"
+                  icon={<UserCheck className="h-4 w-4" />}
+                  label="Users"
+                  active={pathname === "/admin/users"}
+                />
+                <NavLink
+                  href="/admin/groups"
+                  icon={<Users className="h-4 w-4" />}
+                  label="Groups"
+                  active={pathname === "/admin/groups"}
+                />
+                <NavLink
+                  href="/admin/devotionals"
+                  icon={<Heart className="h-4 w-4" />}
+                  label="Devotionals"
+                  active={pathname === "/admin/devotionals"}
+                />
+              </div>
+            )}
+          </>
+        )}
       </ScrollArea>
 
       <Separator />

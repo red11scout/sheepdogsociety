@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { searchBible, type BibleTranslation } from "@/lib/bible";
+import { searchBible } from "@/lib/bible";
 import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -9,8 +9,7 @@ export async function GET(req: NextRequest) {
   }
 
   const query = req.nextUrl.searchParams.get("q");
-  const translation =
-    (req.nextUrl.searchParams.get("translation") as BibleTranslation) ?? "ESV";
+  const translation = req.nextUrl.searchParams.get("translation") ?? "ESV";
 
   if (!query) {
     return Response.json({ error: "Missing q parameter" }, { status: 400 });

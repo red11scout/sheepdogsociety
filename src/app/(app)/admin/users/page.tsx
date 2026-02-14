@@ -25,7 +25,7 @@ export default async function AdminUsersPage() {
   return (
     <div className="mx-auto max-w-4xl p-6">
       <h1 className="mb-6 text-2xl font-bold">Manage Members</h1>
-      <AdminUserList users={allUsers} />
+      <AdminUserList users={allUsers} currentUserId={userId} />
     </div>
   );
 }

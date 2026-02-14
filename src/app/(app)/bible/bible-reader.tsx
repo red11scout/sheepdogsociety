@@ -1,29 +1,31 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { BIBLE_BOOKS } from "@/lib/bible";
-import { Card, CardContent } from "@/components/ui/card";
+import { BIBLE_BOOKS, AVAILABLE_TRANSLATIONS } from "@/lib/bible";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   BookOpen,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Search,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
-type Translation = "ESV" | "NIV" | "NKJV";
+const popularTranslations = AVAILABLE_TRANSLATIONS.filter((t) => t.popular);
+const otherTranslations = AVAILABLE_TRANSLATIONS.filter((t) => !t.popular);
 
 export function BibleReader() {
   const [book, setBook] = useState("Genesis");
   const [chapter, setChapter] = useState(1);
-  const [translation, setTranslation] = useState<Translation>("ESV");
+  const [translation, setTranslation] = useState("ESV");
   const [text, setText] = useState("");
   const [copyright, setCopyright] = useState("");
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showBookPicker, setShowBookPicker] = useState(false);
+  const [showAllTranslations, setShowAllTranslations] = useState(false);
 
   const currentBookData = BIBLE_BOOKS.find((b) => b.name === book);
   const maxChapters = currentBookData?.chapters ?? 1;
@@ -44,7 +46,10 @@ export function BibleReader() {
         setText(data.text ?? "");
         setCopyright(data.copyright ?? "");
       } else {
-        setText("Unable to load passage. Please check your API keys.");
+        const errorData = await res.json().catch(() => null);
+        setText(
+          errorData?.error ?? "Unable to load passage. Please check your API keys."
+        );
       }
     } catch {
       setText("Unable to load passage. Please try again.");
@@ -57,7 +62,6 @@ export function BibleReader() {
     if (chapter > 1) {
       setChapter(chapter - 1);
     } else {
-      // Go to previous book
       const idx = BIBLE_BOOKS.findIndex((b) => b.name === book);
       if (idx > 0) {
         const prevBook = BIBLE_BOOKS[idx - 1];
@@ -71,7 +75,6 @@ export function BibleReader() {
     if (chapter < maxChapters) {
       setChapter(chapter + 1);
     } else {
-      // Go to next book
       const idx = BIBLE_BOOKS.findIndex((b) => b.name === book);
       if (idx < BIBLE_BOOKS.length - 1) {
         setBook(BIBLE_BOOKS[idx + 1].name);
@@ -79,6 +82,9 @@ export function BibleReader() {
       }
     }
   }
+
+  const currentTranslationName =
+    AVAILABLE_TRANSLATIONS.find((t) => t.abbr === translation)?.name ?? translation;
 
   return (
     <div className="flex h-full flex-col">
@@ -90,7 +96,10 @@ export function BibleReader() {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setShowBookPicker(!showBookPicker)}
+          onClick={() => {
+            setShowBookPicker(!showBookPicker);
+            setShowAllTranslations(false);
+          }}
           className="font-medium"
         >
           {book} {chapter}
@@ -106,21 +115,41 @@ export function BibleReader() {
           </Button>
         </div>
 
-        {/* Translation Toggle */}
-        <div className="flex rounded-md border border-border">
-          {(["ESV", "NIV", "NKJV"] as Translation[]).map((t) => (
+        {/* Popular Translation Buttons */}
+        <div className="flex items-center gap-0.5 rounded-md border border-border">
+          {popularTranslations.map((t) => (
             <button
-              key={t}
-              onClick={() => setTranslation(t)}
-              className={`px-3 py-1 text-xs font-medium transition-colors ${
-                translation === t
+              key={t.abbr}
+              onClick={() => {
+                setTranslation(t.abbr);
+                setShowAllTranslations(false);
+              }}
+              className={`px-2.5 py-1 text-xs font-medium transition-colors ${
+                translation === t.abbr
                   ? "bg-primary text-primary-foreground"
                   : "hover:bg-secondary"
               }`}
+              title={t.name}
             >
-              {t}
+              {t.abbr}
             </button>
           ))}
+          {/* More translations button */}
+          <button
+            onClick={() => {
+              setShowAllTranslations(!showAllTranslations);
+              setShowBookPicker(false);
+            }}
+            className={`flex items-center gap-0.5 px-2 py-1 text-xs font-medium transition-colors ${
+              showAllTranslations || otherTranslations.some((t) => t.abbr === translation)
+                ? "bg-primary text-primary-foreground"
+                : "hover:bg-secondary"
+            }`}
+            title="More translations"
+          >
+            {otherTranslations.some((t) => t.abbr === translation) ? translation : "More"}
+            <ChevronDown className="h-3 w-3" />
+          </button>
         </div>
 
         {/* Search */}
@@ -136,6 +165,36 @@ export function BibleReader() {
           </div>
         </div>
       </div>
+
+      {/* All Translations Dropdown */}
+      {showAllTranslations && (
+        <div className="border-b border-border bg-card p-4">
+          <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
+            All Translations
+          </div>
+          <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 md:grid-cols-4">
+            {AVAILABLE_TRANSLATIONS.map((t) => (
+              <button
+                key={t.abbr}
+                onClick={() => {
+                  setTranslation(t.abbr);
+                  setShowAllTranslations(false);
+                }}
+                className={`rounded px-3 py-2 text-left text-xs transition-colors ${
+                  translation === t.abbr
+                    ? "bg-primary text-primary-foreground"
+                    : "hover:bg-secondary"
+                }`}
+              >
+                <span className="font-semibold">{t.abbr}</span>
+                <span className="ml-1.5 text-muted-foreground">
+                  {t.name}
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Book Picker Overlay */}
       {showBookPicker && (
@@ -185,7 +244,7 @@ export function BibleReader() {
             ))}
           </div>
           {/* Chapter grid */}
-          <div className="text-xs font-semibold uppercase text-muted-foreground mb-2">
+          <div className="mb-2 text-xs font-semibold uppercase text-muted-foreground">
             Chapter
           </div>
           <div className="flex flex-wrap gap-1">
@@ -212,9 +271,12 @@ export function BibleReader() {
       {/* Scripture Content */}
       <div className="flex-1 overflow-y-auto px-4 py-6 md:px-8 lg:px-16">
         <div className="mx-auto max-w-2xl">
-          <h2 className="mb-4 text-2xl font-bold">
+          <h2 className="mb-1 text-2xl font-bold">
             {book} {chapter}
           </h2>
+          <p className="mb-4 text-sm text-muted-foreground">
+            {currentTranslationName}
+          </p>
 
           {loading ? (
             <div className="space-y-3">

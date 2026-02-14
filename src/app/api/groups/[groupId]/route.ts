@@ -82,3 +82,28 @@ export async function PATCH(req: Request, { params }: Params) {
 
   return NextResponse.json({ group: updated });
 }
+
+// Soft-delete a group (admin only)
+export async function DELETE(_req: Request, { params }: Params) {
+  const { userId } = await auth();
+  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const { groupId } = await params;
+
+  // Only admins can delete groups
+  const [user] = await db.select().from(users).where(eq(users.id, userId));
+  if (!user || user.role !== "admin") {
+    return NextResponse.json({ error: "Only admins can delete groups" }, { status: 403 });
+  }
+
+  const [group] = await db.select().from(groups).where(eq(groups.id, groupId));
+  if (!group) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const [updated] = await db
+    .update(groups)
+    .set({ isActive: false, updatedAt: new Date() })
+    .where(eq(groups.id, groupId))
+    .returning();
+
+  return NextResponse.json({ group: updated });
+}

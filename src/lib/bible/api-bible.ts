@@ -1,11 +1,38 @@
 const API_BIBLE_BASE = "https://rest.api.bible/v1";
 
-// Bible version IDs from API.Bible
-// These will need to be looked up after API key registration
-const BIBLE_IDS: Record<string, string> = {
-  NIV: "78a9f6124f344018-01", // Placeholder — update with actual ID
-  NKJV: "de4e12af7f28f599-02", // Placeholder — update with actual ID
-};
+// All verified English Bible translations from API.Bible
+// IDs confirmed via GET /v1/bibles?language=eng on 2026-02-14
+export const API_BIBLE_TRANSLATIONS: {
+  id: string;
+  abbr: string;
+  name: string;
+  popular?: boolean;
+}[] = [
+  { id: "78a9f6124f344018-01", abbr: "NIV", name: "New International Version", popular: true },
+  { id: "63097d2a0a2f7db3-01", abbr: "NKJV", name: "New King James Version", popular: true },
+  { id: "de4e12af7f28f599-01", abbr: "KJV", name: "King James Version", popular: true },
+  { id: "a761ca71e0b3ddcf-01", abbr: "NASB", name: "New American Standard Bible 2020", popular: true },
+  { id: "d6e14a625393b4da-01", abbr: "NLT", name: "New Living Translation", popular: true },
+  { id: "6f11a7de016f942e-01", abbr: "MSG", name: "The Message", popular: true },
+  { id: "bba9f40183526463-01", abbr: "BSB", name: "Berean Standard Bible" },
+  { id: "06125adad2d5898a-01", abbr: "ASV", name: "American Standard Version" },
+  { id: "9879dbb7cfe39e4d-04", abbr: "WEB", name: "World English Bible" },
+  { id: "01b29f4b342acc35-01", abbr: "LSV", name: "Literal Standard Version" },
+  { id: "65eec8e0b60e656b-01", abbr: "FBV", name: "Free Bible Version" },
+  { id: "b8ee27bcd1cae43a-01", abbr: "NASB95", name: "New American Standard Bible 1995" },
+  { id: "5b888a42e2d9a89d-01", abbr: "NIrV", name: "New International Reader's Version" },
+  { id: "179568874c45066f-01", abbr: "DRA", name: "Douay-Rheims American 1899" },
+  { id: "c315fa9f71d4af3a-01", abbr: "GNV", name: "Geneva Bible" },
+  { id: "55212e3cf5d04d49-01", abbr: "KJVCPB", name: "Cambridge Paragraph Bible KJV" },
+  { id: "685d1470fe4d5c3b-01", abbr: "ASVBT", name: "ASV Byzantine Text with Apocrypha" },
+  { id: "40072c4a5aba4022-01", abbr: "RV", name: "Revised Version 1885" },
+];
+
+// Build lookup map for quick ID resolution
+const BIBLE_ID_MAP: Record<string, string> = {};
+for (const t of API_BIBLE_TRANSLATIONS) {
+  BIBLE_ID_MAP[t.abbr] = t.id;
+}
 
 type ApiBiblePassage = {
   data: {
@@ -18,7 +45,7 @@ type ApiBiblePassage = {
 
 export async function getApiBiblePassage(
   reference: string,
-  version: "NIV" | "NKJV"
+  version: string
 ): Promise<{
   text: string;
   reference: string;
@@ -29,9 +56,9 @@ export async function getApiBiblePassage(
     throw new Error("API_BIBLE_KEY not configured");
   }
 
-  const bibleId = BIBLE_IDS[version];
+  const bibleId = BIBLE_ID_MAP[version];
   if (!bibleId) {
-    throw new Error(`Unknown Bible version: ${version}`);
+    throw new Error(`Unknown Bible version: ${version}. Available: ${Object.keys(BIBLE_ID_MAP).join(", ")}`);
   }
 
   // Convert reference to API.Bible format (e.g., "GEN.1" for Genesis 1)
@@ -48,7 +75,9 @@ export async function getApiBiblePassage(
   );
 
   if (!res.ok) {
-    throw new Error(`API.Bible error: ${res.status}`);
+    const errorBody = await res.text().catch(() => "");
+    console.error(`API.Bible error ${res.status} for ${version} (${bibleId}):`, errorBody);
+    throw new Error(`API.Bible error: ${res.status} — ${version} translation may be unavailable`);
   }
 
   const data: ApiBiblePassage = await res.json();

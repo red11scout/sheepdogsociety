@@ -1,5 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
-import { getPassage, type BibleTranslation } from "@/lib/bible";
+import { getPassage } from "@/lib/bible";
 import { NextRequest } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -9,8 +9,7 @@ export async function GET(req: NextRequest) {
   }
 
   const reference = req.nextUrl.searchParams.get("ref");
-  const translation =
-    (req.nextUrl.searchParams.get("translation") as BibleTranslation) ?? "ESV";
+  const translation = req.nextUrl.searchParams.get("translation") ?? "ESV";
 
   if (!reference) {
     return Response.json({ error: "Missing ref parameter" }, { status: 400 });
@@ -22,6 +21,7 @@ export async function GET(req: NextRequest) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to fetch passage";
+    console.error("Bible passage error:", message);
     return Response.json({ error: message }, { status: 500 });
   }
 }

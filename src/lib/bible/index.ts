@@ -1,15 +1,23 @@
 import { getESVPassage, searchESV } from "./esv";
-import { getApiBiblePassage } from "./api-bible";
+import { getApiBiblePassage, API_BIBLE_TRANSLATIONS } from "./api-bible";
 
-export type BibleTranslation = "ESV" | "NIV" | "NKJV";
+// All available translations: ESV (via ESV API) + everything from API.Bible
+export const AVAILABLE_TRANSLATIONS = [
+  { abbr: "ESV", name: "English Standard Version", popular: true },
+  ...API_BIBLE_TRANSLATIONS.map((t) => ({
+    abbr: t.abbr,
+    name: t.name,
+    popular: t.popular ?? false,
+  })),
+];
 
 export async function getPassage(
   reference: string,
-  translation: BibleTranslation = "ESV"
+  translation: string = "ESV"
 ): Promise<{
   text: string;
   reference: string;
-  translation: BibleTranslation;
+  translation: string;
   copyright: string;
 }> {
   if (translation === "ESV") {
@@ -23,7 +31,7 @@ export async function getPassage(
 
 export async function searchBible(
   query: string,
-  translation: BibleTranslation = "ESV"
+  translation: string = "ESV"
 ): Promise<{ results: { reference: string; content: string }[] }> {
   // Search only supported for ESV currently
   if (translation === "ESV") {

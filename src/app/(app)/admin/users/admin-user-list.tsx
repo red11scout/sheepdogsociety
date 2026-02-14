@@ -6,6 +6,15 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+type UserRole = "admin" | "group_leader" | "asst_leader" | "member";
 
 type User = {
   id: string;
@@ -13,14 +22,28 @@ type User = {
   firstName: string;
   lastName: string;
   avatarUrl: string | null;
-  role: "admin" | "group_leader" | "asst_leader" | "member";
+  role: UserRole;
   status: "pending" | "active" | "suspended";
   createdAt: Date;
 };
 
-export function AdminUserList({ users }: { users: User[] }) {
+const ROLE_LABELS: Record<UserRole, string> = {
+  admin: "Admin",
+  group_leader: "Group Leader",
+  asst_leader: "Asst Leader",
+  member: "Member",
+};
+
+export function AdminUserList({
+  users,
+  currentUserId,
+}: {
+  users: User[];
+  currentUserId: string;
+}) {
   const [userList, setUserList] = useState(users);
   const [loading, setLoading] = useState<string | null>(null);
+  const [roleLoading, setRoleLoading] = useState<string | null>(null);
 
   const pending = userList.filter((u) => u.status === "pending");
   const active = userList.filter((u) => u.status === "active");
@@ -48,9 +71,44 @@ export function AdminUserList({ users }: { users: User[] }) {
     }
   }
 
-  function UserCard({ user }: { user: User }) {
+  async function handleRoleChange(userId: string, newRole: UserRole) {
+    const previousList = [...userList];
+
+    // Optimistic update
+    setUserList((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, role: newRole } : u))
+    );
+    setRoleLoading(userId);
+
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/role`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role: newRole }),
+      });
+
+      if (!res.ok) {
+        // Revert on failure
+        setUserList(previousList);
+      }
+    } catch {
+      // Revert on error
+      setUserList(previousList);
+    } finally {
+      setRoleLoading(null);
+    }
+  }
+
+  function UserCard({
+    user,
+    showRoleSelect,
+  }: {
+    user: User;
+    showRoleSelect?: boolean;
+  }) {
     const initials =
       (user.firstName?.[0] ?? "") + (user.lastName?.[0] ?? "");
+    const isCurrentUser = user.id === currentUserId;
 
     return (
       <Card className="mb-3">
@@ -62,12 +120,38 @@ export function AdminUserList({ users }: { users: User[] }) {
           <div className="flex-1">
             <p className="font-medium">
               {user.firstName} {user.lastName}
+              {isCurrentUser && (
+                <span className="ml-2 text-xs text-muted-foreground">(you)</span>
+              )}
             </p>
             <p className="text-sm text-muted-foreground">{user.email}</p>
           </div>
-          <Badge variant={user.role === "admin" ? "default" : "secondary"}>
-            {user.role.replace("_", " ")}
-          </Badge>
+          {showRoleSelect ? (
+            <Select
+              value={user.role}
+              onValueChange={(value) =>
+                handleRoleChange(user.id, value as UserRole)
+              }
+              disabled={isCurrentUser || roleLoading === user.id}
+            >
+              <SelectTrigger className="w-[150px]" size="sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {(Object.entries(ROLE_LABELS) as [UserRole, string][]).map(
+                  ([value, label]) => (
+                    <SelectItem key={value} value={value}>
+                      {label}
+                    </SelectItem>
+                  )
+                )}
+              </SelectContent>
+            </Select>
+          ) : (
+            <Badge variant={user.role === "admin" ? "default" : "secondary"}>
+              {user.role.replace("_", " ")}
+            </Badge>
+          )}
           {user.status === "pending" && (
             <div className="flex gap-2">
               <Button
@@ -115,15 +199,21 @@ export function AdminUserList({ users }: { users: User[] }) {
       </TabsContent>
 
       <TabsContent value="active" className="mt-4">
-        {active.map((u) => (
-          <UserCard key={u.id} user={u} />
-        ))}
+        {active.length === 0 ? (
+          <p className="text-muted-foreground">No active members.</p>
+        ) : (
+          active.map((u) => (
+            <UserCard key={u.id} user={u} showRoleSelect />
+          ))
+        )}
       </TabsContent>
 
       <TabsContent value="suspended" className="mt-4">
-        {suspended.map((u) => (
-          <UserCard key={u.id} user={u} />
-        ))}
+        {suspended.length === 0 ? (
+          <p className="text-muted-foreground">No suspended members.</p>
+        ) : (
+          suspended.map((u) => <UserCard key={u.id} user={u} />)
+        )}
       </TabsContent>
     </Tabs>
   );
