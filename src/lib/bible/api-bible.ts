@@ -1,4 +1,4 @@
-const API_BIBLE_BASE = "https://api.scripture.api.bible/v1";
+const API_BIBLE_BASE = "https://rest.api.bible/v1";
 
 // Bible version IDs from API.Bible
 // These will need to be looked up after API key registration
