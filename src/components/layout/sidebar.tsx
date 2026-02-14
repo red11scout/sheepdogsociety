@@ -18,6 +18,10 @@ import {
   ChevronRight,
   PanelLeftClose,
   FileText,
+  Calendar,
+  Handshake,
+  BookMarked,
+  FolderOpen,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -218,6 +222,30 @@ export function Sidebar({ user, onToggle }: SidebarProps) {
             icon={<Users className="h-4 w-4" />}
             label="Groups"
             active={pathname.startsWith("/groups")}
+          />
+          <NavLink
+            href="/events"
+            icon={<Calendar className="h-4 w-4" />}
+            label="Events"
+            active={pathname.startsWith("/events")}
+          />
+          <NavLink
+            href="/accountability"
+            icon={<Handshake className="h-4 w-4" />}
+            label="Accountability"
+            active={pathname.startsWith("/accountability")}
+          />
+          <NavLink
+            href="/reading-plans"
+            icon={<BookMarked className="h-4 w-4" />}
+            label="Reading Plans"
+            active={pathname.startsWith("/reading-plans")}
+          />
+          <NavLink
+            href="/resources"
+            icon={<FolderOpen className="h-4 w-4" />}
+            label="Resources"
+            active={pathname.startsWith("/resources")}
           />
           <NavLink
             href="/members"

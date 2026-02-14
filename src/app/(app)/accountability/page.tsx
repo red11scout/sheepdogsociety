@@ -2,26 +2,26 @@ import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { MemberDirectory } from "./member-directory";
+import { AccountabilityView } from "./accountability-view";
 
 export const dynamic = "force-dynamic";
 
-export default async function MembersPage() {
+export default async function AccountabilityPage() {
   const { userId } = await auth();
+  const [user] = await db.select().from(users).where(eq(users.id, userId!));
 
+  // Get active members for partner selection
   const activeMembers = await db
     .select({
       id: users.id,
       firstName: users.firstName,
       lastName: users.lastName,
-      email: users.email,
       avatarUrl: users.avatarUrl,
-      bio: users.bio,
-      role: users.role,
-      createdAt: users.createdAt,
     })
     .from(users)
     .where(eq(users.status, "active"));
 
-  return <MemberDirectory members={activeMembers} currentUserId={userId!} />;
+  const others = activeMembers.filter((m) => m.id !== userId);
+
+  return <AccountabilityView currentUser={user} members={others} />;
 }
