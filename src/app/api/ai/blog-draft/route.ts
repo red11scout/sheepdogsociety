@@ -21,10 +21,7 @@ export async function POST(req: Request) {
     .select()
     .from(users)
     .where(eq(users.id, userId));
-  if (
-    !currentUser ||
-    !["admin", "group_leader", "asst_leader"].includes(currentUser.role)
-  ) {
+  if (!currentUser || currentUser.role !== "admin") {
     return Response.json({ error: "Forbidden" }, { status: 403 });
   }
 

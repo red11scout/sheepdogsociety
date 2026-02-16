@@ -29,10 +29,7 @@ export function BlogList({ currentUser }: { currentUser: AppUser }) {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const canWrite =
-    currentUser.role === "admin" ||
-    currentUser.role === "group_leader" ||
-    currentUser.role === "asst_leader";
+  const canWrite = currentUser.role === "admin";
 
   useEffect(() => {
     fetch("/api/blog")

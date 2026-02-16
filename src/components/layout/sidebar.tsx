@@ -28,6 +28,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { ThemeToggle } from "@/components/theme-toggle";
 import type { AppUser, Channel } from "@/lib/types";
 
 type SidebarProps = {
@@ -130,9 +131,12 @@ export function Sidebar({ user, onToggle }: SidebarProps) {
           <img src="/logo.png" alt="Sheepdog Society" className="h-8 w-8 rounded" />
           <span className="text-lg font-bold">Sheepdog</span>
         </div>
-        <Button variant="ghost" size="icon" onClick={onToggle}>
-          <PanelLeftClose className="h-4 w-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          <ThemeToggle />
+          <Button variant="ghost" size="icon" onClick={onToggle}>
+            <PanelLeftClose className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       <Separator />

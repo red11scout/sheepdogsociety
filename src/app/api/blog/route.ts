@@ -71,12 +71,9 @@ export async function POST(req: Request) {
   const { userId } = await auth();
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  // Only leaders+ can create blog posts
+  // Only admins can create blog posts
   const [user] = await db.select().from(users).where(eq(users.id, userId));
-  if (
-    !user ||
-    !["admin", "group_leader", "asst_leader"].includes(user.role)
-  ) {
+  if (!user || user.role !== "admin") {
     return NextResponse.json({ error: "Not authorized to create posts" }, { status: 403 });
   }
 

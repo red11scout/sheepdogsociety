@@ -11,10 +11,7 @@ export default async function NewBlogPostPage() {
   const { userId } = await auth();
   const [user] = await db.select().from(users).where(eq(users.id, userId!));
 
-  if (
-    !user ||
-    !["admin", "group_leader", "asst_leader"].includes(user.role)
-  ) {
+  if (!user || user.role !== "admin") {
     redirect("/blog");
   }
 
