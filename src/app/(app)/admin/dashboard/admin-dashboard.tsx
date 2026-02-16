@@ -222,6 +222,12 @@ export function AdminDashboard() {
           >
             Manage Devotionals
           </Link>
+          <Link
+            href="/admin/reading-plans"
+            className="rounded-md bg-secondary px-4 py-2 text-sm hover:bg-secondary/80"
+          >
+            Manage Reading Plans
+          </Link>
         </div>
       </div>
     </div>

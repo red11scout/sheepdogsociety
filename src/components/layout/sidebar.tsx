@@ -294,6 +294,12 @@ export function Sidebar({ user, onToggle }: SidebarProps) {
                   label="Devotionals"
                   active={pathname === "/admin/devotionals"}
                 />
+                <NavLink
+                  href="/admin/reading-plans"
+                  icon={<BookMarked className="h-4 w-4" />}
+                  label="Reading Plans"
+                  active={pathname === "/admin/reading-plans"}
+                />
               </div>
             )}
           </>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
@@ -29,12 +30,14 @@ type TipTapEditorProps = {
   content?: object;
   onChange?: (json: object) => void;
   editable?: boolean;
+  externalContent?: string;
 };
 
 export function TipTapEditor({
   content,
   onChange,
   editable = true,
+  externalContent,
 }: TipTapEditorProps) {
   const editor = useEditor({
     extensions: [
@@ -60,6 +63,12 @@ export function TipTapEditor({
       },
     },
   });
+
+  useEffect(() => {
+    if (externalContent && editor) {
+      editor.commands.setContent(externalContent);
+    }
+  }, [externalContent, editor]);
 
   if (!editor) return null;
 

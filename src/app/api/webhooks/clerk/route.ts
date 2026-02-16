@@ -46,6 +46,9 @@ export async function POST(req: Request) {
 
     const primaryEmail = email_addresses?.[0]?.email_address ?? "";
 
+    // Auto-promote super admin
+    const isSuperAdmin = primaryEmail === "beargodwin@gmail.com";
+
     await db.insert(users).values({
       id,
       email: primaryEmail,
@@ -53,8 +56,10 @@ export async function POST(req: Request) {
       lastName: last_name ?? "",
       username: username ?? "",
       avatarUrl: image_url ?? "",
-      role: "member",
-      status: "pending",
+      role: isSuperAdmin ? "admin" : "member",
+      status: isSuperAdmin ? "active" : "pending",
+      approvedBy: isSuperAdmin ? "system" : undefined,
+      approvedAt: isSuperAdmin ? new Date() : undefined,
     });
   }
 
