@@ -4,22 +4,18 @@ import { auth } from "@clerk/nextjs/server";
 import { db } from "@/db";
 import { users, scriptureOfDay, devotionals } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { redirect } from "next/navigation";
 import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BookOpen, Heart, Shield } from "lucide-react";
 
 export default async function HomePage() {
+  // Layout already verified auth + active status
   const { userId } = await auth();
-  if (!userId) redirect("/sign-in");
 
   const [currentUser] = await db
     .select()
     .from(users)
-    .where(eq(users.id, userId));
-
-  if (!currentUser) redirect("/sign-in");
-  if (currentUser.status === "pending") redirect("/pending");
+    .where(eq(users.id, userId!));
 
   const today = format(new Date(), "yyyy-MM-dd");
 

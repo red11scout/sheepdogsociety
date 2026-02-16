@@ -18,7 +18,11 @@ export default async function AppLayout({
     .from(users)
     .where(eq(users.id, userId));
 
-  if (!currentUser) redirect("/sign-in");
+  // Webhook hasn't fired yet, or user not in DB
+  if (!currentUser) redirect("/pending");
+
+  // User exists but awaiting admin approval
+  if (currentUser.status === "pending") redirect("/pending");
 
   return <AppShell user={currentUser}>{children}</AppShell>;
 }
