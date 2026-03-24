@@ -56,7 +56,7 @@ export default function PublicHomePage() {
               alt="Sheepdog Society Shield"
               width={400}
               height={400}
-              className="drop-shadow-xl"
+              className="h-48 w-48 drop-shadow-xl sm:h-64 sm:w-64 lg:h-[400px] lg:w-[400px]"
               priority
             />
           </div>

@@ -87,7 +87,7 @@ export default function LocationsPage() {
 
       {/* Search + Filter */}
       <section className="border-b border-border px-4 py-4 sm:px-6">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
@@ -97,25 +97,28 @@ export default function LocationsPage() {
               className="pl-9"
             />
           </div>
-          <Select value={dayFilter} onValueChange={setDayFilter}>
-            <SelectTrigger className="w-[160px]">
-              <SelectValue placeholder="Day of week" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Days</SelectItem>
-              {DAYS.map((d) => (
-                <SelectItem key={d} value={d}>
-                  {d}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/locations/request">
-              <Plus className="mr-1.5 h-4 w-4" />
-              Start a Group
-            </Link>
-          </Button>
+          <div className="flex gap-3">
+            <Select value={dayFilter} onValueChange={setDayFilter}>
+              <SelectTrigger className="w-full sm:w-[160px]">
+                <SelectValue placeholder="Day of week" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Days</SelectItem>
+                {DAYS.map((d) => (
+                  <SelectItem key={d} value={d}>
+                    {d}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button asChild variant="outline" size="sm" className="shrink-0">
+              <Link href="/locations/request">
+                <Plus className="mr-1.5 h-4 w-4" />
+                <span className="hidden sm:inline">Start a Group</span>
+                <span className="sm:hidden">Start</span>
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
 
@@ -127,7 +130,7 @@ export default function LocationsPage() {
             <div className="lg:col-span-2">
               <LocationMap
                 locations={filtered}
-                className="h-[500px] rounded-lg border border-border"
+                className="h-[300px] sm:h-[400px] lg:h-[500px] rounded-lg border border-border"
               />
             </div>
 
@@ -138,7 +141,7 @@ export default function LocationsPage() {
                   ? "Loading..."
                   : `${filtered.length} Location${filtered.length !== 1 ? "s" : ""}`}
               </h2>
-              <div className="max-h-[460px] space-y-2 overflow-y-auto pr-1">
+              <div className="max-h-[300px] sm:max-h-[360px] lg:max-h-[460px] space-y-2 overflow-y-auto pr-1">
                 {filtered.map((loc) => (
                   <LocationCard key={loc.id} location={loc} />
                 ))}
