@@ -23,6 +23,8 @@ import {
   FolderOpen,
   Sparkles,
   UserCheck,
+  MapPin,
+  ClipboardList,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -303,6 +305,18 @@ export function Sidebar({ user, onToggle }: SidebarProps) {
                   icon={<BookMarked className="h-4 w-4" />}
                   label="Reading Plans"
                   active={pathname === "/admin/reading-plans"}
+                />
+                <NavLink
+                  href="/admin/locations"
+                  icon={<MapPin className="h-4 w-4" />}
+                  label="Locations"
+                  active={pathname === "/admin/locations"}
+                />
+                <NavLink
+                  href="/admin/location-requests"
+                  icon={<ClipboardList className="h-4 w-4" />}
+                  label="Location Requests"
+                  active={pathname === "/admin/location-requests"}
                 />
               </div>
             )}

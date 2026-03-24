@@ -205,6 +205,7 @@ export const messages = pgTable(
     parentMessageId: uuid("parent_message_id"),
     isEdited: boolean("is_edited").notNull().default(false),
     isDeleted: boolean("is_deleted").notNull().default(false),
+    isPinned: boolean("is_pinned").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
   },
@@ -256,6 +257,8 @@ export const blogPosts = pgTable(
       .notNull()
       .references(() => users.id),
     status: postStatusEnum("status").notNull().default("draft"),
+    category: text("category").default(""),
+    isFeatured: boolean("is_featured").notNull().default(false),
     publishedAt: timestamp("published_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow(),
@@ -281,6 +284,9 @@ export const scriptureOfDay = pgTable(
     translation: text("translation").notNull().default("ESV"),
     theme: text("theme").default(""),
     reflection: text("reflection").default(""),
+    seriesId: text("series_id").default(""),
+    seriesName: text("series_name").default(""),
+    dayInSeries: integer("day_in_series"),
     isApproved: boolean("is_approved").notNull().default(false),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
@@ -505,6 +511,10 @@ export const events = pgTable(
     endTime: timestamp("end_time"),
     isRecurring: boolean("is_recurring").notNull().default(false),
     recurrenceRule: text("recurrence_rule"),
+    eventType: text("event_type").default("weekly"), // weekly, monthly, quarterly, annual, conference
+    imageUrl: text("image_url").default(""),
+    maxAttendees: integer("max_attendees"),
+    registrationUrl: text("registration_url").default(""),
     groupId: uuid("group_id").references(() => groups.id),
     createdBy: text("created_by")
       .notNull()
@@ -554,6 +564,9 @@ export const resources = pgTable(
     groupId: uuid("group_id").references(() => groups.id),
     originalResourceId: uuid("original_resource_id"),
     isPublic: boolean("is_public").notNull().default(false),
+    category: text("category").default("general"), // general, study_guide, book, reference
+    level: text("level").default("all"), // all, entry, mid, advanced
+    seriesName: text("series_name").default(""),
     createdAt: timestamp("created_at").notNull().defaultNow(),
   },
   (table) => [
@@ -752,3 +765,130 @@ export const eventRsvpsRelations = relations(eventRsvps, ({ one }) => ({
     references: [users.id],
   }),
 }));
+
+// ============================================================
+// Locations (F3 Nation-style map system)
+// ============================================================
+
+export const locationStatusEnum = pgEnum("location_status", [
+  "active",
+  "pending",
+  "inactive",
+]);
+
+export const locations = pgTable(
+  "locations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    description: text("description").default(""),
+    latitude: text("latitude").notNull(),
+    longitude: text("longitude").notNull(),
+    address: text("address").default(""),
+    city: text("city").notNull(),
+    state: text("state").notNull(),
+    zipCode: text("zip_code").default(""),
+    country: text("country").notNull().default("US"),
+    meetingDay: text("meeting_day").default(""),
+    meetingTime: text("meeting_time").default(""),
+    meetingPlace: text("meeting_place").default(""),
+    groupSize: integer("group_size").default(0),
+    maxSize: integer("max_size").notNull().default(12),
+    signalGroupUrl: text("signal_group_url").default(""),
+    contactName: text("contact_name").default(""),
+    contactEmail: text("contact_email").default(""),
+    status: locationStatusEnum("status").notNull().default("pending"),
+    leaderId: text("leader_id").references(() => users.id),
+    groupId: uuid("group_id").references(() => groups.id),
+    imageUrl: text("image_url").default(""),
+    approvedBy: text("approved_by"),
+    approvedAt: timestamp("approved_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("locations_city_idx").on(table.city),
+    index("locations_state_idx").on(table.state),
+    index("locations_status_idx").on(table.status),
+  ]
+);
+
+export const locationRequests = pgTable("location_requests", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  requesterName: text("requester_name").notNull(),
+  requesterEmail: text("requester_email").notNull(),
+  requesterPhone: text("requester_phone").default(""),
+  proposedCity: text("proposed_city").notNull(),
+  proposedState: text("proposed_state").notNull(),
+  proposedMeetingDetails: text("proposed_meeting_details").default(""),
+  reason: text("reason").default(""),
+  status: text("status").notNull().default("pending"),
+  reviewedBy: text("reviewed_by"),
+  reviewedAt: timestamp("reviewed_at"),
+  notes: text("notes").default(""),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const locationInterests = pgTable("location_interests", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  locationId: uuid("location_id")
+    .notNull()
+    .references(() => locations.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone").default(""),
+  message: text("message").default(""),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+// ============================================================
+// Contact & Newsletter
+// ============================================================
+
+export const contactSubmissions = pgTable("contact_submissions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  topic: text("topic").default("general"),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const newsletterSubscribers = pgTable(
+  "newsletter_subscribers",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    email: text("email").notNull(),
+    firstName: text("first_name").default(""),
+    subscribedAt: timestamp("subscribed_at").notNull().defaultNow(),
+    isActive: boolean("is_active").notNull().default(true),
+  },
+  (table) => [uniqueIndex("newsletter_email_unique").on(table.email)]
+);
+
+// ============================================================
+// Location Relations
+// ============================================================
+
+export const locationsRelations = relations(locations, ({ one, many }) => ({
+  leader: one(users, {
+    fields: [locations.leaderId],
+    references: [users.id],
+  }),
+  group: one(groups, {
+    fields: [locations.groupId],
+    references: [groups.id],
+  }),
+  interests: many(locationInterests),
+}));
+
+export const locationInterestsRelations = relations(
+  locationInterests,
+  ({ one }) => ({
+    location: one(locations, {
+      fields: [locationInterests.locationId],
+      references: [locations.id],
+    }),
+  })
+);
