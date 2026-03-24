@@ -13,7 +13,7 @@ export async function getESVPassage(reference: string): Promise<{
   reference: string;
   copyright: string;
 }> {
-  const apiKey = process.env.ESV_API_KEY;
+  const apiKey = process.env.ESV_API_KEY?.trim();
   if (!apiKey) {
     throw new Error("ESV_API_KEY not configured");
   }
@@ -50,7 +50,7 @@ export async function getESVPassage(reference: string): Promise<{
 export async function searchESV(query: string): Promise<{
   results: { reference: string; content: string }[];
 }> {
-  const apiKey = process.env.ESV_API_KEY;
+  const apiKey = process.env.ESV_API_KEY?.trim();
   if (!apiKey) {
     throw new Error("ESV_API_KEY not configured");
   }

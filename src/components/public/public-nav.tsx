@@ -11,9 +11,10 @@ const navLinks = [
   { href: "/get-started", label: "Get Started" },
   { href: "/about", label: "About" },
   { href: "/locations", label: "Locations" },
+  { href: "/daily-scripture", label: "Daily Scripture" },
+  { href: "/scripture-reader", label: "Bible" },
   { href: "/how-we-gather", label: "How We Gather" },
   { href: "/faq", label: "FAQ" },
-  { href: "/resources", label: "Resources" },
   { href: "/giving", label: "Give" },
 ];
 

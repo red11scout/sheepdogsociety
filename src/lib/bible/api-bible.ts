@@ -51,7 +51,7 @@ export async function getApiBiblePassage(
   reference: string;
   copyright: string;
 }> {
-  const apiKey = process.env.API_BIBLE_KEY;
+  const apiKey = process.env.API_BIBLE_KEY?.trim();
   if (!apiKey) {
     throw new Error("API_BIBLE_KEY not configured");
   }

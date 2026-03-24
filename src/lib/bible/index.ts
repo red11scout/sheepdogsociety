@@ -1,45 +1,107 @@
 import { getESVPassage, searchESV } from "./esv";
 import { getApiBiblePassage, API_BIBLE_TRANSLATIONS } from "./api-bible";
 
-// All available translations: ESV (via ESV API) + everything from API.Bible
+// Free Bible API fallback (no key required) — supports KJV, ASV, WEB
+async function getFreeBiblePassage(
+  reference: string,
+  translation: string = "kjv"
+): Promise<{ text: string; reference: string; copyright: string }> {
+  const versionMap: Record<string, string> = {
+    KJV: "kjv",
+    ASV: "asv",
+    WEB: "web",
+    BBE: "bbe",
+  };
+  const ver = versionMap[translation] ?? "kjv";
+  const res = await fetch(
+    `https://bible-api.com/${encodeURIComponent(reference)}?translation=${ver}`,
+    { next: { revalidate: 86400 } }
+  );
+  if (!res.ok) throw new Error(`bible-api.com error: ${res.status}`);
+  const data = await res.json();
+  const text =
+    data.verses
+      ?.map((v: { verse: number; text: string }) => `[${v.verse}] ${v.text.trim()}`)
+      .join("\n") ?? data.text ?? "";
+  return {
+    text,
+    reference: data.reference ?? reference,
+    copyright: "Public Domain",
+  };
+}
+
+// All available translations
 export const AVAILABLE_TRANSLATIONS = [
+  { abbr: "KJV", name: "King James Version", popular: true },
   { abbr: "ESV", name: "English Standard Version", popular: true },
-  ...API_BIBLE_TRANSLATIONS.map((t) => ({
+  ...API_BIBLE_TRANSLATIONS.filter((t) => t.abbr !== "KJV").map((t) => ({
     abbr: t.abbr,
     name: t.name,
     popular: t.popular ?? false,
   })),
+  { abbr: "ASV", name: "American Standard Version", popular: false },
+  { abbr: "WEB", name: "World English Bible", popular: false },
 ];
+
+// Free translations that work without API keys
+const FREE_TRANSLATIONS = ["KJV", "ASV", "WEB", "BBE"];
 
 export async function getPassage(
   reference: string,
-  translation: string = "ESV"
+  translation: string = "KJV"
 ): Promise<{
   text: string;
   reference: string;
   translation: string;
   copyright: string;
 }> {
-  if (translation === "ESV") {
-    const result = await getESVPassage(reference);
-    return { ...result, translation: "ESV" };
+  // Try free API first for supported translations (always works)
+  if (FREE_TRANSLATIONS.includes(translation)) {
+    try {
+      const result = await getFreeBiblePassage(reference, translation);
+      return { ...result, translation };
+    } catch {
+      // Fall through to other APIs
+    }
   }
 
-  const result = await getApiBiblePassage(reference, translation);
-  return { ...result, translation };
+  // Try ESV API if key is configured
+  if (translation === "ESV" && process.env.ESV_API_KEY?.trim()) {
+    try {
+      const result = await getESVPassage(reference);
+      return { ...result, translation: "ESV" };
+    } catch {
+      // Fall through to free fallback
+    }
+  }
+
+  // Try API.Bible if key is configured
+  if (process.env.API_BIBLE_KEY?.trim()) {
+    try {
+      const result = await getApiBiblePassage(reference, translation);
+      return { ...result, translation };
+    } catch {
+      // Fall through to free fallback
+    }
+  }
+
+  // Ultimate fallback: KJV from free API
+  const result = await getFreeBiblePassage(reference, "KJV");
+  return { ...result, translation: "KJV" };
 }
 
 export async function searchBible(
   query: string,
   translation: string = "ESV"
 ): Promise<{ results: { reference: string; content: string }[] }> {
-  // Search only supported for ESV currently
-  if (translation === "ESV") {
-    return searchESV(query);
+  if (translation === "ESV" && process.env.ESV_API_KEY?.trim()) {
+    try {
+      return await searchESV(query);
+    } catch {
+      return { results: [] };
+    }
   }
-
-  // Fallback: search ESV and return results
-  return searchESV(query);
+  return { results: [] };
 }
 
 // Bible book data for navigation
