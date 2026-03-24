@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { locations } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 
 export async function GET() {
   try {
@@ -22,12 +22,13 @@ export async function GET() {
         contactName: locations.contactName,
       })
       .from(locations)
-      .where(eq(locations.status, "active"));
+      .where(sql`${locations.status}::text = 'active'`);
 
     return NextResponse.json({ locations: activeLocations });
-  } catch {
+  } catch (error) {
+    console.error("Failed to fetch locations:", error);
     return NextResponse.json(
-      { error: "Failed to fetch locations" },
+      { error: "Failed to fetch locations", detail: String(error) },
       { status: 500 }
     );
   }
