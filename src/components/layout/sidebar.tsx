@@ -25,6 +25,9 @@ import {
   UserCheck,
   MapPin,
   ClipboardList,
+  Mail,
+  Newspaper,
+  Shield,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -317,6 +320,55 @@ export function Sidebar({ user, onToggle }: SidebarProps) {
                   icon={<ClipboardList className="h-4 w-4" />}
                   label="Location Requests"
                   active={pathname === "/admin/location-requests"}
+                />
+                <Separator className="my-1.5" />
+                <NavLink
+                  href="/admin/blog"
+                  icon={<FileText className="h-4 w-4" />}
+                  label="Blog Posts"
+                  active={pathname === "/admin/blog"}
+                />
+                <NavLink
+                  href="/admin/events"
+                  icon={<Calendar className="h-4 w-4" />}
+                  label="Events"
+                  active={pathname === "/admin/events"}
+                />
+                <NavLink
+                  href="/admin/testimonies"
+                  icon={<Sparkles className="h-4 w-4" />}
+                  label="Testimonies"
+                  active={pathname === "/admin/testimonies"}
+                />
+                <NavLink
+                  href="/admin/resources"
+                  icon={<FolderOpen className="h-4 w-4" />}
+                  label="Resources"
+                  active={pathname === "/admin/resources"}
+                />
+                <NavLink
+                  href="/admin/scripture"
+                  icon={<BookOpen className="h-4 w-4" />}
+                  label="Scripture"
+                  active={pathname === "/admin/scripture"}
+                />
+                <NavLink
+                  href="/admin/prayer"
+                  icon={<HandHeart className="h-4 w-4" />}
+                  label="Prayer"
+                  active={pathname === "/admin/prayer"}
+                />
+                <NavLink
+                  href="/admin/contacts"
+                  icon={<Mail className="h-4 w-4" />}
+                  label="Contacts"
+                  active={pathname === "/admin/contacts"}
+                />
+                <NavLink
+                  href="/admin/newsletter"
+                  icon={<Newspaper className="h-4 w-4" />}
+                  label="Newsletter"
+                  active={pathname === "/admin/newsletter"}
                 />
               </div>
             )}
