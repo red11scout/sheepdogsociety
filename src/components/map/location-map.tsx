@@ -49,7 +49,7 @@ export function LocationMap({
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/mapbox/dark-v11",
+      style: "mapbox://styles/mapbox/navigation-night-v1",
       center: [-84.39, 33.75], // Default: Atlanta area
       zoom: 5,
     });
