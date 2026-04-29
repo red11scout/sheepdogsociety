@@ -62,6 +62,11 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         apiKey: process.env.AUTH_RESEND_KEY ?? process.env.RESEND_API_KEY,
         from: FROM_AUTH,
       }),
+      // The Resend factory hardcodes from to "Auth.js <no-reply@authjs.dev>"
+      // and stuffs user config into provider.options.* (silently dropping
+      // our `from`). Re-set it at the top level so Resend doesn't reject
+      // the send for an unverified domain.
+      from: FROM_AUTH,
       // 8-character code from an unambiguous alphabet (no 0/O, 1/I, etc.).
       // randomBytes from node:crypto guarantees CSRP-quality randomness in
       // the Node serverless runtime.
