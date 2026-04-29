@@ -1,133 +1,93 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { Menu, X } from "lucide-react";
-import { BrandWordmark } from "@/components/public/brand-wordmark";
+import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
-// Brief §3 mandates 5 items max in the primary nav. The legacy app's
-// secondary routes (Daily Scripture, Bible reader, FAQ, Giving) live in
-// the More menu so we don't break existing inbound links.
-const primaryLinks = [
-  { href: "/letter", label: "Letter" },
-  { href: "/devotionals", label: "Devotionals" },
-  { href: "/groups", label: "Groups" },
-  { href: "/events", label: "Events" },
+const navLinks = [
+  { href: "/get-started", label: "Get Started" },
   { href: "/about", label: "About" },
-];
-
-const moreLinks = [
-  { href: "/resources", label: "Resources" },
+  { href: "/locations", label: "Locations" },
   { href: "/daily-scripture", label: "Daily Scripture" },
-  { href: "/scripture-reader", label: "Bible Reader" },
+  { href: "/scripture-reader", label: "Bible" },
   { href: "/how-we-gather", label: "How We Gather" },
-  { href: "/stories", label: "Stories" },
   { href: "/faq", label: "FAQ" },
   { href: "/giving", label: "Give" },
-  { href: "/partnerships", label: "Partnerships" },
-  { href: "/contact", label: "Contact" },
 ];
 
 export function PublicNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-stone bg-bone/95 backdrop-blur supports-[backdrop-filter]:bg-bone/85">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6">
-        <BrandWordmark size="md" />
+    <header className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
+        {/* Logo */}
+        <Link href="/" className="flex items-center gap-2">
+          <Image
+            src="/logo.png"
+            alt="Sheepdog Society"
+            width={36}
+            height={36}
+            className="rounded"
+          />
+          <span className="text-lg font-bold">SheepDog Society</span>
+        </Link>
 
-        {/* Desktop nav */}
+        {/* Desktop Nav */}
         <div className="hidden items-center gap-1 md:flex">
-          {primaryLinks.map((link) => (
+          {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="rounded px-3 py-2 font-body text-sm text-iron transition-colors hover:text-brass"
+              className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               {link.label}
             </Link>
           ))}
-          <div className="relative">
-            <button
-              onClick={() => setMoreOpen(!moreOpen)}
-              onBlur={() => setTimeout(() => setMoreOpen(false), 150)}
-              className="rounded px-3 py-2 font-body text-sm text-iron transition-colors hover:text-brass"
-              aria-expanded={moreOpen}
-              aria-haspopup="true"
-            >
-              More
-            </button>
-            {moreOpen && (
-              <div className="absolute right-0 top-full mt-1 w-56 rounded border border-stone bg-bone shadow-lg">
-                {moreLinks.map((link) => (
-                  <Link
-                    key={link.href}
-                    href={link.href}
-                    className="block px-4 py-2 font-body text-sm text-iron hover:bg-stone/30 hover:text-brass"
-                  >
-                    {link.label}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
         </div>
 
-        <div className="hidden items-center gap-3 md:flex">
-          <Link
-            href="/subscribe"
-            className="rounded-full bg-iron px-5 py-2 font-body text-sm font-semibold text-bone transition-colors hover:bg-navy"
+        {/* Sign In + Theme */}
+        <div className="hidden items-center gap-2 md:flex">
+          <ThemeToggle />
+          <Button asChild variant="default" size="sm">
+            <Link href="/sign-in">Sign In</Link>
+          </Button>
+        </div>
+
+        {/* Mobile: Theme + Toggle */}
+        <div className="flex items-center gap-1 md:hidden">
+          <ThemeToggle />
+          <button
+            className="rounded-md p-2"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Toggle menu"
           >
-            Subscribe
-          </Link>
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
         </div>
-
-        {/* Mobile toggle */}
-        <button
-          className="rounded p-2 text-iron md:hidden"
-          onClick={() => setMobileOpen(!mobileOpen)}
-          aria-label="Toggle menu"
-          aria-expanded={mobileOpen}
-        >
-          {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
       </nav>
 
+      {/* Mobile Menu */}
       {mobileOpen && (
-        <div className="border-t border-stone bg-bone px-4 pb-6 md:hidden">
-          {primaryLinks.map((link) => (
+        <div className="border-t border-border bg-background px-4 pb-4 md:hidden">
+          {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="block px-3 py-3 font-body text-base text-iron border-b border-stone/50 hover:text-brass"
+              className="block rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
               onClick={() => setMobileOpen(false)}
             >
               {link.label}
             </Link>
           ))}
-          <details className="mt-1">
-            <summary className="cursor-pointer px-3 py-3 font-body text-base text-iron border-b border-stone/50">
-              More
-            </summary>
-            {moreLinks.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="block px-6 py-2 font-body text-sm text-olive hover:text-brass"
-                onClick={() => setMobileOpen(false)}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </details>
-          <Link
-            href="/subscribe"
-            onClick={() => setMobileOpen(false)}
-            className="mt-4 block rounded-full bg-iron px-5 py-3 text-center font-body text-sm font-semibold text-bone hover:bg-navy"
-          >
-            Subscribe
-          </Link>
+          <div className="mt-2 border-t border-border pt-2">
+            <Button asChild variant="default" size="sm" className="w-full">
+              <Link href="/sign-in">Sign In</Link>
+            </Button>
+          </div>
         </div>
       )}
     </header>

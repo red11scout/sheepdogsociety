@@ -1,279 +1,219 @@
+import Image from "next/image";
 import Link from "next/link";
-import { db } from "@/db";
-import { letters } from "@/db/schema";
-import { and, desc, eq, isNull } from "drizzle-orm";
-import { IssueKicker } from "@/components/public/issue-kicker";
-import { ScriptureBand } from "@/components/public/scripture-band";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Shield,
+  Users,
+  Heart,
+  BookOpen,
+  MapPin,
+  Calendar,
+  Utensils,
+  Mountain,
+} from "lucide-react";
 
 export const metadata = {
-  title: "Acts 2028 Sheepdog Society — A Letter for Christian Men",
+  title: "SheepDog Society — Stand Guard. Protect the Flock.",
   description:
-    "A weekly letter for Christian men, anchored in Acts 20:28. One passage, one big idea, one practical step. Bible-study groups, devotionals, and brotherhood under the authority of the Great Shepherd.",
+    "A brotherhood of men rooted in faith, gathering weekly to study Scripture, sharpen one another, and live out Acts 20:28.",
 };
 
-interface HomeLetter {
-  slug: string;
-  issueNumber: number;
-  title: string;
-  subtitle: string | null;
-  themeWord: string | null;
-  excerpt: string | null;
-  publishedAt: Date | null;
-}
-
-async function getLatestLetters(): Promise<HomeLetter[]> {
-  try {
-    return await db
-      .select({
-        slug: letters.slug,
-        issueNumber: letters.issueNumber,
-        title: letters.title,
-        subtitle: letters.subtitle,
-        themeWord: letters.themeWord,
-        excerpt: letters.excerpt,
-        publishedAt: letters.publishedAt,
-      })
-      .from(letters)
-      .where(and(eq(letters.status, "published"), isNull(letters.deletedAt)))
-      .orderBy(desc(letters.publishedAt))
-      .limit(4);
-  } catch {
-    return [];
-  }
-}
-
-export default async function HomePage() {
-  const recentLetters = await getLatestLetters();
-  const featured = recentLetters[0];
-  const trio = recentLetters.slice(1, 4);
-  const subscriberCount = 0; // Wire to Resend audience size in Phase F.
-
+export default function PublicHomePage() {
   return (
     <>
-      {/* Editorial hero — current letter or empty state */}
-      <section className="border-b border-stone/40 bg-bone px-6 pt-16 pb-20 md:pt-24 md:pb-28">
-        <div className="mx-auto max-w-6xl">
-          {featured ? <FeaturedLetterHero letter={featured} /> : <EmptyHero />}
-        </div>
-      </section>
-
-      {/* Four-card resource grid */}
-      <section className="bg-bone px-6 py-20 md:py-24">
-        <div className="mx-auto max-w-6xl">
-          <h2 className="font-display text-3xl md:text-4xl font-semibold tracking-tight mb-2">
-            Where to start
-          </h2>
-          <p className="font-body text-base text-olive max-w-prose mb-12">
-            Four ways in. Read on Friday. Read every morning. Find a table near
-            you. Come to a gathering.
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <ResourceCard
-              href="/letter"
-              kicker="Weekly"
-              title="The Letter"
-              body="One passage. One big idea. One practical step. Each Friday."
-            />
-            <ResourceCard
-              href="/devotionals"
-              kicker="Daily"
-              title="Devotionals"
-              body="Short scripture-anchored reflections for working men."
-            />
-            <ResourceCard
-              href="/groups"
-              kicker="Local"
-              title="Find a Group"
-              body="Bible-study brotherhoods meeting in cities across the country."
-            />
-            <ResourceCard
-              href="/events"
-              kicker="Gather"
-              title="Events"
-              body="Retreats, conferences, and the gatherings worth getting on a plane for."
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-background to-card px-4 py-20 sm:px-6 lg:py-28">
+        <div className="mx-auto flex max-w-7xl flex-col items-center gap-12 lg:flex-row">
+          <div className="flex-1 space-y-6">
+            <span className="inline-flex items-center gap-2 rounded-full border border-bronze/30 bg-bronze/10 px-3 py-1 text-sm text-bronze">
+              <Shield className="h-3.5 w-3.5" />
+              Transformed by Grace
+            </span>
+            <h1 className="text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl">
+              Stand Guard.
+              <br />
+              Protect the Flock.
+              <br />
+              Live with Purpose.
+            </h1>
+            <p className="max-w-lg text-lg text-muted-foreground">
+              We are men of faith who embrace the protector calling. We stand
+              between wolves and sheep. We guard what matters. We live ready.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Button asChild size="lg">
+                <Link href="/get-started">Join the Brotherhood</Link>
+              </Button>
+              <Button asChild variant="outline" size="lg">
+                <Link href="/locations">Find a Location</Link>
+              </Button>
+            </div>
+          </div>
+          <div className="flex-shrink-0">
+            <Image
+              src="/logo.png"
+              alt="Sheepdog Society Shield"
+              width={400}
+              height={400}
+              className="h-48 w-48 drop-shadow-xl sm:h-64 sm:w-64 lg:h-[400px] lg:w-[400px]"
+              priority
             />
           </div>
         </div>
       </section>
 
-      {/* Anchor scripture band */}
-      <ScriptureBand reference="Acts 20:28">
-        Be on guard for yourselves and for all the flock, among which the Holy
-        Spirit has made you overseers, to shepherd the church of God.
-      </ScriptureBand>
+      {/* Mission */}
+      <section className="bg-card px-4 py-16 sm:px-6">
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="text-3xl font-bold">
+            Brothers of the Sheepdog Society, Welcome!
+          </h2>
+          <p className="mt-4 text-muted-foreground">
+            We gather as men who recognize a hard truth: every one of us was
+            born a sinner. But by His sovereign grace, through the power of the
+            Gospel, He transforms wolves into sheepdogs under the Great
+            Shepherd, Jesus Christ.
+          </p>
+        </div>
+      </section>
 
-      {/* Recent letters 3-up */}
-      {trio.length > 0 ? (
-        <section className="bg-bone px-6 py-20 md:py-24">
-          <div className="mx-auto max-w-6xl">
-            <div className="mb-10 flex items-end justify-between gap-6">
-              <h2 className="font-display text-3xl md:text-4xl font-semibold tracking-tight">
-                Recent issues
-              </h2>
-              <Link
-                href="/letter/archive"
-                className="font-body text-sm text-brass hover:text-iron underline underline-offset-4"
-              >
-                Full archive →
+      {/* Foundation */}
+      <section className="px-4 py-16 sm:px-6">
+        <div className="mx-auto max-w-3xl text-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-bronze/30 bg-bronze/10 px-3 py-1 text-sm text-bronze">
+            Our Foundation
+          </span>
+          <h2 className="mt-4 text-3xl font-bold">Acts 20:28</h2>
+          <blockquote className="mt-6 border-l-4 border-bronze pl-6 text-left font-scripture text-lg italic">
+            &ldquo;Keep watch over yourselves and all the flock of which the
+            Holy Spirit has made you overseers. Be shepherds of the church of
+            God, which he bought with his own blood.&rdquo;
+          </blockquote>
+        </div>
+      </section>
+
+      {/* Why We Exist */}
+      <section className="bg-card px-4 py-16 sm:px-6">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="text-center text-3xl font-bold">Why We Exist</h2>
+          <p className="mx-auto mt-4 max-w-2xl text-center text-muted-foreground">
+            To be transformed wolves turned sheepdogs, living out Acts 20:28
+            with fearless faith.
+          </p>
+          <div className="mt-10 grid gap-6 sm:grid-cols-3">
+            <Card>
+              <CardContent className="flex flex-col items-center p-6 text-center">
+                <Shield className="mb-3 h-10 w-10 text-bronze" />
+                <h3 className="text-lg font-bold">Protect</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  We guard our faith, families, and communities against
+                  spiritual and physical threats.
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="flex flex-col items-center p-6 text-center">
+                <Users className="mb-3 h-10 w-10 text-bronze" />
+                <h3 className="text-lg font-bold">Fellowship</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  We sharpen one another through brotherhood, training, and
+                  shared burdens.
+                </p>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="flex flex-col items-center p-6 text-center">
+                <Heart className="mb-3 h-10 w-10 text-bronze" />
+                <h3 className="text-lg font-bold">Serve</h3>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  We lead with sacrificial love as protectors, providers, and
+                  under-shepherds.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* How We Gather */}
+      <section className="px-4 py-16 sm:px-6">
+        <div className="mx-auto max-w-5xl">
+          <h2 className="text-center text-3xl font-bold">How We Gather</h2>
+          <div className="mt-10 grid gap-6 sm:grid-cols-2">
+            {[
+              {
+                icon: BookOpen,
+                title: "Weekly Studies",
+                freq: "Every Week",
+                desc: "We meet weekly to dig deep into Scripture. Small groups. Hard questions. Real answers. Men challenging men to grow.",
+              },
+              {
+                icon: Utensils,
+                title: "Monthly Meals",
+                freq: "Every Month",
+                desc: "Once a month, we break bread together. Good food. Good fellowship. Time to connect beyond the study.",
+              },
+              {
+                icon: Calendar,
+                title: "Quarterly Gatherings",
+                freq: "Every Quarter",
+                desc: "Four times a year, we gather the whole brotherhood. Worship. Teaching. Vision casting.",
+              },
+              {
+                icon: Mountain,
+                title: "Annual Camping",
+                freq: "Every Year",
+                desc: "Once a year, we head to the wilderness. Campfires. Stars. Stories. Time away from the noise to hear God clearly.",
+              },
+            ].map((item) => (
+              <Card key={item.title}>
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-lg bg-bronze/10 p-2">
+                      <item.icon className="h-5 w-5 text-bronze" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold">{item.title}</h3>
+                      <p className="text-xs text-muted-foreground">
+                        {item.freq}
+                      </p>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-sm text-muted-foreground">
+                    {item.desc}
+                  </p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="bg-gradient-to-br from-card to-background px-4 py-16 sm:px-6">
+        <div className="mx-auto max-w-3xl text-center">
+          <h2 className="font-scripture text-2xl font-bold italic text-bronze">
+            Let&apos;s go forth as sheepdogs under the Shepherd of God — fierce,
+            faithful, and forever His.
+          </h2>
+          <p className="mt-4 text-lg font-bold">Glory to God!</p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Button asChild size="lg">
+              <Link href="/get-started">Join the Brotherhood</Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/blog">Read the Yarn</Link>
+            </Button>
+            <Button asChild variant="outline" size="lg">
+              <Link href="/locations">
+                <MapPin className="mr-2 h-4 w-4" />
+                Find a Location
               </Link>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {trio.map((letter) => (
-                <LetterCard key={letter.slug} letter={letter} />
-              ))}
-            </div>
+            </Button>
           </div>
-        </section>
-      ) : null}
-
-      {/* Subscribe band */}
-      <section className="border-t border-stone/40 bg-bone px-6 py-20 md:py-24">
-        <div className="mx-auto max-w-2xl text-center">
-          <IssueKicker parts={["Subscribe", `${subscriberCount + 4200}+ men`]} />
-          <h2 className="mt-4 font-display text-3xl md:text-5xl font-semibold tracking-tight leading-tight">
-            Each Friday, one short letter.
-          </h2>
-          <p className="mt-4 font-body text-base md:text-lg text-olive">
-            One passage, one big idea, one practical step.
-          </p>
-          <Link
-            href="/subscribe"
-            className="mt-8 inline-block rounded-full bg-iron px-7 py-3 font-body font-semibold text-bone hover:bg-navy transition-colors"
-          >
-            Subscribe
-          </Link>
         </div>
       </section>
     </>
-  );
-}
-
-function FeaturedLetterHero({ letter }: { letter: HomeLetter }) {
-  const dateLabel = letter.publishedAt
-    ? letter.publishedAt.toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      })
-    : null;
-
-  return (
-    <article className="grid md:grid-cols-2 gap-10 items-center">
-      <div className="aspect-[4/3] bg-stone/30 border border-stone/60 rounded-sm" />
-      <div>
-        <IssueKicker
-          parts={[
-            `Issue No. ${letter.issueNumber}`,
-            letter.themeWord,
-            dateLabel,
-          ]}
-        />
-        <h1 className="mt-4 font-display text-4xl md:text-5xl lg:text-6xl font-semibold leading-[1.05] tracking-tight">
-          {letter.title}
-        </h1>
-        {letter.subtitle ? (
-          <p className="mt-5 font-pullquote italic text-xl md:text-2xl text-olive leading-relaxed">
-            {letter.subtitle}
-          </p>
-        ) : null}
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Link
-            href={`/letter/${letter.slug}`}
-            className="rounded-full bg-iron px-6 py-3 font-body font-semibold text-bone hover:bg-navy transition-colors"
-          >
-            Read this week
-          </Link>
-          <Link
-            href="/subscribe"
-            className="rounded-full border-2 border-iron px-6 py-3 font-body font-semibold text-iron hover:bg-iron hover:text-bone transition-colors"
-          >
-            Subscribe
-          </Link>
-        </div>
-      </div>
-    </article>
-  );
-}
-
-function EmptyHero() {
-  return (
-    <div className="grid md:grid-cols-2 gap-10 items-center">
-      <div className="aspect-[4/3] bg-stone/30 border border-stone/60 rounded-sm" />
-      <div>
-        <IssueKicker parts={["Coming soon", "First issue in flight"]} />
-        <h1 className="mt-4 font-display text-4xl md:text-5xl lg:text-6xl font-semibold leading-[1.05] tracking-tight">
-          A weekly letter for Christian men.
-        </h1>
-        <p className="mt-5 font-pullquote italic text-xl md:text-2xl text-olive leading-relaxed">
-          One passage, one big idea, one practical step. Anchored in Acts 20:28.
-        </p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Link
-            href="/subscribe"
-            className="rounded-full bg-iron px-6 py-3 font-body font-semibold text-bone hover:bg-navy transition-colors"
-          >
-            Subscribe
-          </Link>
-          <Link
-            href="/about"
-            className="rounded-full border-2 border-iron px-6 py-3 font-body font-semibold text-iron hover:bg-iron hover:text-bone transition-colors"
-          >
-            What we do
-          </Link>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ResourceCard({
-  href,
-  kicker,
-  title,
-  body,
-}: {
-  href: string;
-  kicker: string;
-  title: string;
-  body: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className="group block border border-stone bg-bone p-6 hover:border-iron transition-colors"
-    >
-      <p className="font-body uppercase tracking-[0.18em] text-xs text-brass">
-        {kicker}
-      </p>
-      <h3 className="mt-3 font-display text-2xl font-semibold tracking-tight">
-        {title}
-      </h3>
-      <p className="mt-3 font-body text-sm text-olive leading-relaxed">
-        {body}
-      </p>
-      <p className="mt-5 font-body text-sm text-iron group-hover:text-brass transition-colors">
-        Read more →
-      </p>
-    </Link>
-  );
-}
-
-function LetterCard({ letter }: { letter: HomeLetter }) {
-  return (
-    <Link
-      href={`/letter/${letter.slug}`}
-      className="group block border-t border-stone pt-6 hover:border-iron"
-    >
-      <div className="aspect-[16/10] bg-stone/30 border border-stone/60 mb-4" />
-      <IssueKicker parts={[`Issue ${letter.issueNumber}`, letter.themeWord]} />
-      <h3 className="mt-3 font-display text-xl md:text-2xl font-semibold leading-snug tracking-tight">
-        {letter.title}
-      </h3>
-      {letter.excerpt ? (
-        <p className="mt-3 font-body text-sm text-olive line-clamp-3">
-          {letter.excerpt}
-        </p>
-      ) : null}
-    </Link>
   );
 }

@@ -24,27 +24,30 @@ export const authConfig = {
     // Auth.js calls this on every sign-in attempt regardless of provider.
     async signIn({ user }) {
       const email = user?.email ?? null;
-      // Only admins on the allowlist may receive a working magic link.
-      // Member sign-up via magic link is intentionally not enabled here —
-      // the (app) section uses the existing approval-gate (users.status).
       return isAdminEmail(email);
     },
-    // Reflect role + id onto the session so route handlers can authorize.
-    async session({ session, user }) {
-      if (session.user && user) {
-        session.user.id = user.id;
-        // Role is read from the local users table by the adapter; surface it.
+    // JWT callback runs on every request — we surface the user id so
+    // server components can read session.user.id without a DB hop.
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
         const role = (user as { role?: string }).role;
-        if (role) (session.user as { role?: string }).role = role;
+        if (role) token.role = role;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (session.user && token) {
+        if (token.id) session.user.id = token.id as string;
+        if (token.role) (session.user as { role?: string }).role = token.role as string;
       }
       return session;
     },
   },
-  // Providers attached in auth.ts (the full config) — the edge config has none
-  // because the Resend provider needs the Resend SDK + Drizzle adapter, both of
-  // which require Node runtime.
   providers: [],
-  session: { strategy: "database", maxAge: 60 * 60 * 24 * 30 }, // 30 days
+  // JWT session strategy — required for edge middleware (database sessions
+  // need a Drizzle adapter, which can't run on edge runtime).
+  session: { strategy: "jwt", maxAge: 60 * 60 * 24 * 30 }, // 30 days
 } satisfies NextAuthConfig;
 
 export { isAdminEmail };
