@@ -52,28 +52,38 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     verificationTokensTable: schema.verificationTokens,
   }),
   providers: [
-    Resend({
-      apiKey: process.env.AUTH_RESEND_KEY ?? process.env.RESEND_API_KEY,
-      from: FROM_AUTH,
-      // Generate a SHORT 8-character code instead of the default UUID. The
-      // user enters this code on a form (POST), which is immune to the email
-      // scanner / Outlook Safe Links / Gmail prefetcher problem that burns
-      // one-time tokens before the user can click them.
-      generateVerificationToken: () => {
-        // Excludes look-alike chars (0/O, 1/I, etc.)
+    // The Resend() factory in @auth/core puts user config inside
+    // provider.options.* but Auth.js core reads sendVerificationRequest
+    // and generateVerificationToken at the TOP LEVEL of the provider
+    // object. We spread the factory output then override top-level fields
+    // explicitly so our customizations actually take effect.
+    {
+      ...Resend({
+        apiKey: process.env.AUTH_RESEND_KEY ?? process.env.RESEND_API_KEY,
+        from: FROM_AUTH,
+      }),
+      // 8-character code from an unambiguous alphabet (no 0/O, 1/I, etc.).
+      // randomBytes from node:crypto guarantees CSRP-quality randomness in
+      // the Node serverless runtime.
+      generateVerificationToken: async () => {
+        const { randomBytes } = await import("node:crypto");
         const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        const buf = randomBytes(8);
         let code = "";
-        const buf = new Uint8Array(8);
-        crypto.getRandomValues(buf);
         for (let i = 0; i < 8; i++) {
           code += chars[buf[i] % chars.length];
         }
         return code;
       },
-      // Email shows the code prominently. The link still works for users
-      // whose mail client doesn't prefetch (most desktop Gmail), but the
-      // code is the canonical path.
-      async sendVerificationRequest({ identifier, url, token, provider }) {
+      // Email shows the code prominently. NO callback URL in the body so
+      // email scanners (Outlook Safe Links, Gmail link-scan, etc.) have
+      // nothing to consume. The user enters the code on a form.
+      sendVerificationRequest: async ({ identifier, url, token, provider }: {
+        identifier: string;
+        url: string;
+        token: string;
+        provider: { from?: string };
+      }) => {
         const host = new URL(url).host;
         const html = await render(MagicLinkEmail({ url, host, code: token }));
         const text = `Sign in to ${host}
@@ -85,7 +95,7 @@ https://${host}/admin/sign-in
 
 The code works for 24 hours. If you didn't request this, ignore this email.`;
         const result = await resend().emails.send({
-          from: provider.from!,
+          from: provider.from ?? FROM_AUTH,
           to: identifier,
           subject: `Sheepdog Society sign-in code: ${token}`,
           html,
@@ -95,6 +105,6 @@ The code works for 24 hours. If you didn't request this, ignore this email.`;
           throw new Error(`Resend send failed: ${result.error.message}`);
         }
       },
-    }),
+    },
   ],
 });
