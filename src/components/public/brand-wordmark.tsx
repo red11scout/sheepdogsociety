@@ -8,11 +8,14 @@ export function BrandWordmark({
   size = "md",
   className = "",
   subheadColor = "text-olive",
+  accentColor = "text-brass",
 }: {
   size?: "sm" | "md" | "lg";
   className?: string;
   /** Tailwind text-* class for the subhead. Default text-olive (passes WCAG AA on bone bg). On dark iron, override with text-stone. */
   subheadColor?: string;
+  /** Tailwind text-* class for the "20:28" colon decorator. Default text-brass (works on bone). On dark iron, override with text-stone. */
+  accentColor?: string;
 }) {
   const sizes = {
     sm: { primary: "text-base", secondary: "text-[10px]" },
@@ -30,7 +33,7 @@ export function BrandWordmark({
       className={`inline-flex flex-col leading-none ${className}`}
     >
       <span className={`font-display font-semibold tracking-tight ${s.primary}`}>
-        Acts <span className="text-brass">20:28</span>
+        Acts <span className={accentColor}>20:28</span>
       </span>
       <span
         className={`font-body uppercase tracking-[0.18em] mt-1 ${subheadColor} ${s.secondary}`}

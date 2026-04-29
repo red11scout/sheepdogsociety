@@ -21,7 +21,12 @@ export function PublicFooter() {
 
         <div className="grid gap-10 md:grid-cols-4">
           <div className="md:col-span-1">
-            <BrandWordmark size="md" className="text-bone" subheadColor="text-stone" />
+            <BrandWordmark
+              size="md"
+              className="text-bone"
+              subheadColor="text-stone"
+              accentColor="text-stone"
+            />
             <p className="mt-4 font-body text-sm text-stone leading-relaxed">
               Christian men learning to keep watch over their families, their
               churches, and themselves, under the authority of the Great
@@ -95,7 +100,7 @@ function FooterColumn({
 }) {
   return (
     <div>
-      <h3 className="mb-4 font-body uppercase tracking-[0.18em] text-xs text-brass">
+      <h3 className="mb-4 font-body uppercase tracking-[0.18em] text-xs text-stone">
         {heading}
       </h3>
       <ul className="space-y-2">
