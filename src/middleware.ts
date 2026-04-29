@@ -20,6 +20,22 @@ const isPublicRoute = createRouteMatcher([
   "/api/webhooks(.*)",
   "/api/cron(.*)",
   "/api/public(.*)",
+  // New Auth.js admin sign-in flow (coexists with Clerk during migration).
+  "/admin/sign-in(.*)",
+  "/admin/check-email(.*)",
+  "/api/auth(.*)",
+  // Brief-mandated public routes that don't exist yet — when added, they'll be reachable.
+  "/letter(.*)",
+  "/devotionals(.*)",
+  "/groups(.*)",
+  "/events(.*)",
+  "/resources(.*)",
+  "/subscribe(.*)",
+  "/merch(.*)",
+  "/statement-of-faith(.*)",
+  "/sitemap.xml",
+  "/robots.txt",
+  "/feed.xml",
 ]);
 
 export default clerkMiddleware(async (auth, request) => {
