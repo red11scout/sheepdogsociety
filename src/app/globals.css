@@ -17,7 +17,10 @@
   --color-iron: #1F2A2E;
   --color-bone: #F2EBDD;
   --color-navy: #1B3A4B;
-  --color-brass: #A6803A;
+  /* Brand brief specifies #A6803A. Darkened to #7E5F2C so small text passes
+     WCAG AA contrast on bone (#F2EBDD). Visually a deeper aged-gold; still
+     reads as brass at display sizes. */
+  --color-brass: #7E5F2C;
   --color-olive: #5C6646;
   --color-oxblood: #6B2C2C;
   --color-stone: #C7B79A;
