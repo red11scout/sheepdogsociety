@@ -7,9 +7,12 @@ import Link from "next/link";
 export function BrandWordmark({
   size = "md",
   className = "",
+  subheadColor = "text-olive",
 }: {
   size?: "sm" | "md" | "lg";
   className?: string;
+  /** Tailwind text-* class for the subhead. Default text-olive (passes WCAG AA on bone bg). On dark iron, override with text-stone. */
+  subheadColor?: string;
 }) {
   const sizes = {
     sm: { primary: "text-base", secondary: "text-[10px]" },
@@ -18,17 +21,19 @@ export function BrandWordmark({
   } as const;
   const s = sizes[size];
 
+  // Subhead uses olive (#5C6646) instead of stone (#C7B79A) for WCAG AA
+  // contrast on bone backgrounds. On iron/dark backgrounds the parent passes
+  // a className that overrides.
   return (
     <Link
       href="/"
       className={`inline-flex flex-col leading-none ${className}`}
-      aria-label="Acts 20:28 Sheepdog Society — home"
     >
       <span className={`font-display font-semibold tracking-tight ${s.primary}`}>
         Acts <span className="text-brass">20:28</span>
       </span>
       <span
-        className={`font-body uppercase tracking-[0.18em] text-stone mt-1 ${s.secondary}`}
+        className={`font-body uppercase tracking-[0.18em] mt-1 ${subheadColor} ${s.secondary}`}
       >
         Sheepdog Society
       </span>

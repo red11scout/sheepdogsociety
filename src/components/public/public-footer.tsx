@@ -21,7 +21,7 @@ export function PublicFooter() {
 
         <div className="grid gap-10 md:grid-cols-4">
           <div className="md:col-span-1">
-            <BrandWordmark size="md" className="text-bone" />
+            <BrandWordmark size="md" className="text-bone" subheadColor="text-stone" />
             <p className="mt-4 font-body text-sm text-stone leading-relaxed">
               Christian men learning to keep watch over their families, their
               churches, and themselves, under the authority of the Great
