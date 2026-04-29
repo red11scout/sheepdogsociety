@@ -78,6 +78,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         for (let i = 0; i < 8; i++) {
           code += chars[buf[i] % chars.length];
         }
+        console.log("[auth-debug] generateVerificationToken returning:", code);
         return code;
       },
       // Email shows the code prominently. NO callback URL in the body so
@@ -89,6 +90,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         token: string;
         provider: { from?: string };
       }) => {
+        console.log("[auth-debug] sendVerificationRequest CALLED. identifier=", identifier, "token=", token, "tokenLength=", token.length);
         const host = new URL(url).host;
         const html = await render(MagicLinkEmail({ url, host, code: token }));
         const text = `Sign in to ${host}
@@ -106,6 +108,7 @@ The code works for 24 hours. If you didn't request this, ignore this email.`;
           html,
           text,
         });
+        console.log("[auth-debug] Resend send result:", JSON.stringify({ id: result.data?.id, error: result.error?.message }));
         if (result.error) {
           throw new Error(`Resend send failed: ${result.error.message}`);
         }
