@@ -364,6 +364,10 @@ function PublishPanel({
 }) {
   const [pending, startTransition] = useTransition();
   const [countdown, setCountdown] = useState<number | null>(null);
+  const [sendBroadcast, setSendBroadcast] = useState(true);
+  const [publishWeb, setPublishWeb] = useState(true);
+  const [emailSubject, setEmailSubject] = useState(title);
+  const [emailPreview, setEmailPreview] = useState("");
 
   function startPublishCountdown() {
     setCountdown(3);
@@ -376,7 +380,15 @@ function PublishPanel({
         if (c <= 1) {
           clearInterval(timer);
           startTransition(async () => {
-            await publishLetter({ id: letterId, themeWord: themeWord || undefined });
+            if (publishWeb) {
+              await publishLetter({
+                id: letterId,
+                themeWord: themeWord || undefined,
+                sendBroadcast,
+                emailSubject: emailSubject || undefined,
+                emailPreviewText: emailPreview || undefined,
+              });
+            }
             window.location.href = "/admin/letters";
           });
           return 0;
@@ -392,14 +404,15 @@ function PublishPanel({
 
   return (
     <div className="fixed inset-0 z-50 bg-foreground/40 flex items-center justify-center p-4">
-      <div className="bg-background border border-border rounded-lg shadow-xl max-w-lg w-full p-6">
+      <div className="bg-background border border-border rounded-lg shadow-xl max-w-lg w-full p-6 max-h-[90vh] overflow-y-auto">
         <h2 className="font-display text-2xl font-semibold mb-2">
           Publish this letter?
         </h2>
         <p className="font-body text-sm text-muted-foreground mb-6">
-          The letter will go live on the website. Email broadcast send is
-          available in Phase F (after Resend domain is verified).
+          Live on the website immediately. Email broadcast sends to the full
+          audience.
         </p>
+
         <div className="border border-border rounded p-4 mb-6">
           <p className="font-body text-xs uppercase tracking-[0.18em] text-muted-foreground mb-1">
             Going live
@@ -411,6 +424,56 @@ function PublishPanel({
             </p>
           ) : null}
         </div>
+
+        <div className="space-y-4 mb-6">
+          <label className="block">
+            <span className="font-body text-xs uppercase tracking-[0.18em] text-muted-foreground mb-1 block">
+              Email subject
+            </span>
+            <input
+              type="text"
+              value={emailSubject}
+              onChange={(e) => setEmailSubject(e.target.value)}
+              placeholder={title}
+              className="w-full px-3 py-2 border border-border rounded font-body text-sm bg-background"
+            />
+          </label>
+          <label className="block">
+            <span className="font-body text-xs uppercase tracking-[0.18em] text-muted-foreground mb-1 block">
+              Preview text (60-90 chars)
+            </span>
+            <input
+              type="text"
+              maxLength={90}
+              value={emailPreview}
+              onChange={(e) => setEmailPreview(e.target.value)}
+              placeholder="Shows next to the subject in inboxes"
+              className="w-full px-3 py-2 border border-border rounded font-body text-sm bg-background"
+            />
+          </label>
+
+          <div className="space-y-2 border-t border-border pt-4">
+            <label className="flex items-center gap-2 font-body text-sm">
+              <input
+                type="checkbox"
+                checked={publishWeb}
+                onChange={(e) => setPublishWeb(e.target.checked)}
+                className="rounded"
+              />
+              <span>Publish on website</span>
+            </label>
+            <label className="flex items-center gap-2 font-body text-sm">
+              <input
+                type="checkbox"
+                checked={sendBroadcast}
+                onChange={(e) => setSendBroadcast(e.target.checked)}
+                className="rounded"
+              />
+              <span>Send to email subscribers</span>
+            </label>
+          </div>
+        </div>
+
         <div className="flex gap-3">
           {countdown === null ? (
             <>
@@ -418,6 +481,7 @@ function PublishPanel({
                 type="button"
                 onClick={onClose}
                 disabled={pending}
+                autoFocus
                 className="px-4 py-2 rounded-full border border-border font-body text-sm hover:bg-muted"
               >
                 Cancel
@@ -425,8 +489,8 @@ function PublishPanel({
               <button
                 type="button"
                 onClick={startPublishCountdown}
-                disabled={pending}
-                className="px-5 py-2 rounded-full bg-primary text-primary-foreground font-body font-semibold text-sm"
+                disabled={pending || (!publishWeb && !sendBroadcast)}
+                className="px-5 py-2 rounded-full bg-primary text-primary-foreground font-body font-semibold text-sm disabled:opacity-50"
               >
                 🚀 Send & publish
               </button>

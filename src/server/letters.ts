@@ -6,6 +6,9 @@ import { letters, letterVersions, users } from "@/db/schema";
 import { and, desc, eq, isNull, max } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { render } from "@react-email/render";
+import { resend, FROM_NEWSLETTER } from "@/lib/email";
+import { NewsletterEmail } from "@/emails/newsletter";
 
 async function requireAdmin() {
   const session = await auth();
@@ -104,6 +107,9 @@ interface PublishInput {
   id: string;
   finalSlug?: string;
   themeWord?: string;
+  sendBroadcast?: boolean;
+  emailSubject?: string;
+  emailPreviewText?: string;
 }
 
 export async function publishLetter(input: PublishInput) {
@@ -116,14 +122,18 @@ export async function publishLetter(input: PublishInput) {
   if (!letter) throw new Error("not found");
 
   const slug = input.finalSlug || slugify(letter.title);
+  const themeWord = input.themeWord ?? letter.themeWord;
 
+  // Update DB first — site goes live immediately even if broadcast fails.
   await db
     .update(letters)
     .set({
       slug,
       status: "published",
       publishedAt: new Date(),
-      themeWord: input.themeWord ?? letter.themeWord,
+      themeWord,
+      emailSubject: input.emailSubject ?? letter.emailSubject,
+      emailPreviewText: input.emailPreviewText ?? letter.emailPreviewText,
       updatedAt: new Date(),
     })
     .where(eq(letters.id, input.id));
@@ -131,7 +141,49 @@ export async function publishLetter(input: PublishInput) {
   revalidatePath("/letter");
   revalidatePath(`/letter/${slug}`);
   revalidatePath("/");
-  return { ok: true, slug };
+
+  // Fire the broadcast asynchronously — failures don't block the publish.
+  let broadcastId: string | null = null;
+  if (input.sendBroadcast && process.env.RESEND_AUDIENCE_ID && process.env.RESEND_API_KEY) {
+    try {
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.acts2028sheepdogsociety.com";
+      const publicUrl = `${siteUrl}/letter/${slug}`;
+      const html = await render(
+        NewsletterEmail({
+          issueNumber: letter.issueNumber,
+          themeWord,
+          title: letter.title,
+          subtitle: letter.subtitle,
+          bodyHtml: letter.bodyHtml,
+          publicUrl,
+          unsubscribeUrl: "{{{RESEND_UNSUBSCRIBE_URL}}}",
+        })
+      );
+      const text = `${letter.title}\n\n${letter.subtitle ?? ""}\n\nRead on the web: ${publicUrl}`;
+      const broadcast = await resend().broadcasts.create({
+        audienceId: process.env.RESEND_AUDIENCE_ID,
+        from: FROM_NEWSLETTER,
+        subject: input.emailSubject || letter.title,
+        replyTo: process.env.RESEND_FROM_AUTH ?? FROM_NEWSLETTER,
+        html,
+        text,
+      });
+      if (broadcast.data?.id) {
+        broadcastId = broadcast.data.id;
+        await resend().broadcasts.send(broadcast.data.id);
+        await db
+          .update(letters)
+          .set({ broadcastId, updatedAt: new Date() })
+          .where(eq(letters.id, input.id));
+      }
+    } catch (err) {
+      console.error("Resend broadcast failed", err);
+      // Letter is still published on the website; admin gets a flag to retry
+      // (we surface this via the broadcastId being null on the row).
+    }
+  }
+
+  return { ok: true, slug, broadcastId };
 }
 
 export async function softDeleteLetter(id: string) {

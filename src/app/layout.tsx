@@ -29,8 +29,15 @@ const cormorant = Cormorant_Garamond({
 });
 
 export const metadata: Metadata = {
-  title: "Sheepdog Society",
-  description: "Men of Faith Community",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.acts2028sheepdogsociety.com"
+  ),
+  title: {
+    default: "Acts 2028 Sheepdog Society",
+    template: "%s — Acts 2028 Sheepdog Society",
+  },
+  description:
+    "A weekly letter for Christian men, anchored in Acts 20:28. One passage, one big idea, one practical step.",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "32x32" },
@@ -39,6 +46,14 @@ export const metadata: Metadata = {
       { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
     ],
     apple: "/apple-touch-icon.png",
+  },
+  openGraph: {
+    siteName: "Acts 2028 Sheepdog Society",
+    type: "website",
+  },
+  robots: {
+    index: process.env.VERCEL_ENV !== "preview",
+    follow: process.env.VERCEL_ENV !== "preview",
   },
 };
 
@@ -54,7 +69,7 @@ export default function RootLayout({
       >
         <ThemeProvider
           attribute="class"
-          defaultTheme="dark"
+          defaultTheme="light"
           enableSystem
           disableTransitionOnChange
         >
