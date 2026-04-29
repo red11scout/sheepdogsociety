@@ -9,8 +9,11 @@ import {
   blogPosts,
   testimonies,
   channels,
+  letters,
+  aiGenerations,
+  newsletterSubscribers,
 } from "@/db/schema";
-import { eq, sql, gte } from "drizzle-orm";
+import { eq, sql, gte, desc, isNull, and } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 export async function GET() {
@@ -40,6 +43,13 @@ export async function GET() {
     publishedPostsResult,
     pendingTestimoniesResult,
     totalChannelsResult,
+    // NEW: Letters + AI + subscribers
+    draftLettersResult,
+    publishedLettersResult,
+    recentLettersList,
+    aiGenerationsThisWeekResult,
+    aiGenerationsTotalResult,
+    activeSubscribersResult,
   ] = await Promise.all([
     db.select({ count: sql<number>`count(*)::int` }).from(users),
     db
@@ -77,6 +87,36 @@ export async function GET() {
       .from(testimonies)
       .where(eq(testimonies.isApproved, false)),
     db.select({ count: sql<number>`count(*)::int` }).from(channels),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(letters)
+      .where(and(eq(letters.status, "draft"), isNull(letters.deletedAt))),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(letters)
+      .where(and(eq(letters.status, "published"), isNull(letters.deletedAt))),
+    db
+      .select({
+        id: letters.id,
+        title: letters.title,
+        themeWord: letters.themeWord,
+        issueNumber: letters.issueNumber,
+        status: letters.status,
+        updatedAt: letters.updatedAt,
+      })
+      .from(letters)
+      .where(isNull(letters.deletedAt))
+      .orderBy(desc(letters.updatedAt))
+      .limit(5),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(aiGenerations)
+      .where(gte(aiGenerations.createdAt, sevenDaysAgo)),
+    db.select({ count: sql<number>`count(*)::int` }).from(aiGenerations),
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(newsletterSubscribers)
+      .where(eq(newsletterSubscribers.isActive, true)),
   ]);
 
   return NextResponse.json({
@@ -93,6 +133,12 @@ export async function GET() {
       publishedPosts: publishedPostsResult[0].count,
       pendingTestimonies: pendingTestimoniesResult[0].count,
       totalChannels: totalChannelsResult[0].count,
+      draftLetters: draftLettersResult[0].count,
+      publishedLetters: publishedLettersResult[0].count,
+      activeSubscribers: activeSubscribersResult[0].count,
+      aiGenerationsThisWeek: aiGenerationsThisWeekResult[0].count,
+      aiGenerationsTotal: aiGenerationsTotalResult[0].count,
     },
+    recentLetters: recentLettersList,
   });
 }
