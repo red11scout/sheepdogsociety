@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
 import { users, locations } from "@/db/schema";
 import { eq } from "drizzle-orm";

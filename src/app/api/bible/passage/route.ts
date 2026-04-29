@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth-compat";
 import { getPassage } from "@/lib/bible";
 import { NextRequest } from "next/server";
 

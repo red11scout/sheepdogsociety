@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Merriweather } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
+import { Inter, Merriweather, Fraunces, Cormorant_Garamond } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
@@ -16,9 +15,29 @@ const merriweather = Merriweather({
   subsets: ["latin"],
 });
 
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  axes: ["opsz", "SOFT", "WONK"],
+});
+
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
-  title: "Sheepdog Society",
-  description: "Men of Faith Community",
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.acts2028sheepdogsociety.com"
+  ),
+  title: {
+    default: "Acts 2028 Sheepdog Society",
+    template: "%s — Acts 2028 Sheepdog Society",
+  },
+  description:
+    "A weekly letter for Christian men, anchored in Acts 20:28. One passage, one big idea, one practical step.",
   icons: {
     icon: [
       { url: "/favicon.ico", sizes: "32x32" },
@@ -28,6 +47,14 @@ export const metadata: Metadata = {
     ],
     apple: "/apple-touch-icon.png",
   },
+  openGraph: {
+    siteName: "Acts 2028 Sheepdog Society",
+    type: "website",
+  },
+  robots: {
+    index: process.env.VERCEL_ENV !== "preview",
+    follow: process.env.VERCEL_ENV !== "preview",
+  },
 };
 
 export default function RootLayout({
@@ -36,23 +63,19 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider dynamic>
-      <html lang="en" suppressHydrationWarning>
-        <body
-          className={`${inter.variable} ${merriweather.variable} font-sans antialiased`}
+    <html lang="en" suppressHydrationWarning>
+      <body
+        className={`${inter.variable} ${merriweather.variable} ${fraunces.variable} ${cormorant.variable} font-sans antialiased`}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange
         >
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <TooltipProvider>
-              {children}
-            </TooltipProvider>
-          </ThemeProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+          <TooltipProvider>{children}</TooltipProvider>
+        </ThemeProvider>
+      </body>
+    </html>
   );
 }

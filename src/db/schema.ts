@@ -10,7 +10,7 @@ import {
   uniqueIndex,
   index,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations, sql } from "drizzle-orm";
 
 // ============================================================
 // Enums
@@ -85,8 +85,11 @@ export const groupMemberRoleEnum = pgEnum("group_member_role", [
 export const users = pgTable(
   "users",
   {
-    id: text("id").primaryKey(), // Clerk user ID
+    id: text("id").primaryKey(), // Clerk user ID (text PK; Auth.js adapter accepts this)
     email: text("email").notNull(),
+    emailVerified: timestamp("email_verified"),
+    image: text("image"), // Auth.js adapter expects "image"; existing avatarUrl preserved separately
+    name: text("name"), // Auth.js adapter expects "name"; existing firstName/lastName preserved
     firstName: text("first_name").notNull().default(""),
     lastName: text("last_name").notNull().default(""),
     username: text("username").default(""),
@@ -892,3 +895,313 @@ export const locationInterestsRelations = relations(
     }),
   })
 );
+
+// ============================================================
+// Auth.js v5 adapter tables
+// (Added for migration from Clerk; users.id stays text since 30+ tables FK it)
+// ============================================================
+
+export const accounts = pgTable(
+  "accounts",
+  {
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    type: text("type").notNull(),
+    provider: text("provider").notNull(),
+    providerAccountId: text("provider_account_id").notNull(),
+    refresh_token: text("refresh_token"),
+    access_token: text("access_token"),
+    expires_at: integer("expires_at"),
+    token_type: text("token_type"),
+    scope: text("scope"),
+    id_token: text("id_token"),
+    session_state: text("session_state"),
+  },
+  (table) => [
+    uniqueIndex("accounts_provider_account_unique").on(
+      table.provider,
+      table.providerAccountId
+    ),
+    index("accounts_user_idx").on(table.userId),
+  ]
+);
+
+export const sessions = pgTable(
+  "sessions",
+  {
+    sessionToken: text("session_token").primaryKey(),
+    userId: text("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    expires: timestamp("expires").notNull(),
+  },
+  (table) => [index("sessions_user_idx").on(table.userId)]
+);
+
+export const verificationTokens = pgTable(
+  "verification_tokens",
+  {
+    identifier: text("identifier").notNull(),
+    token: text("token").notNull(),
+    expires: timestamp("expires").notNull(),
+  },
+  (table) => [
+    uniqueIndex("verification_tokens_identifier_token_unique").on(
+      table.identifier,
+      table.token
+    ),
+  ]
+);
+
+// ============================================================
+// Newsletter / Letters (brief Phase 1 + 2)
+// "letter" rather than "blog" — issue-based weekly editorial
+// ============================================================
+
+export const letterStatusEnum = pgEnum("letter_status", [
+  "draft",
+  "scheduled",
+  "published",
+  "archived",
+]);
+
+export const letters = pgTable(
+  "letters",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    slug: text("slug").notNull(),
+    issueNumber: integer("issue_number").notNull(),
+    title: text("title").notNull(),
+    subtitle: text("subtitle"),
+    themeWord: text("theme_word"),
+    coverImageUrl: text("cover_image_url"),
+    body: jsonb("body").notNull(), // Tiptap ProseMirror JSON
+    bodyHtml: text("body_html").notNull().default(""), // pre-rendered for SEO/email
+    excerpt: text("excerpt").default(""),
+    authorId: text("author_id")
+      .notNull()
+      .references(() => users.id),
+    status: letterStatusEnum("status").notNull().default("draft"),
+    tags: jsonb("tags").$type<string[]>().notNull().default([]),
+    emailSubject: text("email_subject"),
+    emailPreviewText: text("email_preview_text"),
+    metaDescription: text("meta_description"),
+    socialCopy: text("social_copy"),
+    broadcastId: text("broadcast_id"), // Resend Broadcast ID
+    publishedAt: timestamp("published_at"),
+    scheduledFor: timestamp("scheduled_for"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    deletedAt: timestamp("deleted_at"), // soft delete; 30-day cron purge
+  },
+  (table) => [
+    uniqueIndex("letters_slug_active_unique")
+      .on(table.slug)
+      .where(notDeletedPredicate),
+    uniqueIndex("letters_issue_active_unique")
+      .on(table.issueNumber)
+      .where(notDeletedPredicate),
+    index("letters_status_published_idx").on(
+      table.status,
+      table.publishedAt
+    ),
+    index("letters_author_idx").on(table.authorId),
+  ]
+);
+
+export const letterVersions = pgTable(
+  "letter_versions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    letterId: uuid("letter_id")
+      .notNull()
+      .references(() => letters.id, { onDelete: "cascade" }),
+    versionNumber: integer("version_number").notNull(),
+    title: text("title").notNull(),
+    body: jsonb("body").notNull(),
+    bodyHtml: text("body_html").notNull().default(""),
+    editedById: text("edited_by_id").references(() => users.id),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("letter_versions_unique").on(
+      table.letterId,
+      table.versionNumber
+    ),
+    index("letter_versions_letter_idx").on(table.letterId),
+  ]
+);
+
+// ============================================================
+// Group Leaders (brief Phase 2; separates leader from member identity)
+// ============================================================
+
+export const groupLeaders = pgTable(
+  "group_leaders",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    email: text("email"), // never exposed publicly
+    phone: text("phone"),
+    bio: text("bio").default(""),
+    photoUrl: text("photo_url"),
+    userId: text("user_id").references(() => users.id), // optional link to existing user
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    deletedAt: timestamp("deleted_at"),
+  },
+  (table) => [index("group_leaders_user_idx").on(table.userId)]
+);
+
+// ============================================================
+// AI Generations log + Audit log (brief §9 mandatory)
+// ============================================================
+
+export const aiTypeEnum = pgEnum("ai_generation_type", [
+  "draft",
+  "improve",
+  "pullquote",
+  "publish_meta",
+  "alt_text",
+  "image",
+]);
+
+export const aiGenerations = pgTable(
+  "ai_generations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    type: aiTypeEnum("type").notNull(),
+    prompt: text("prompt").notNull(),
+    promptVersion: text("prompt_version"),
+    model: text("model").notNull(),
+    output: text("output").notNull(),
+    inputTokens: integer("input_tokens"),
+    outputTokens: integer("output_tokens"),
+    estimatedCostCents: integer("estimated_cost_cents"),
+    entityType: text("entity_type"), // letter | devotional | etc
+    entityId: text("entity_id"),
+    userId: text("user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("ai_generations_user_created_idx").on(
+      table.userId,
+      table.createdAt
+    ),
+    index("ai_generations_entity_idx").on(table.entityType, table.entityId),
+  ]
+);
+
+export const auditLog = pgTable(
+  "audit_log",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: text("user_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    action: text("action").notNull(), // create | update | soft_delete | restore | publish | broadcast | etc
+    entityType: text("entity_type").notNull(),
+    entityId: text("entity_id").notNull(),
+    before: jsonb("before"),
+    after: jsonb("after"),
+    ipAddress: text("ip_address"),
+    userAgent: text("user_agent"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("audit_entity_idx").on(table.entityType, table.entityId),
+    index("audit_user_idx").on(table.userId),
+    index("audit_created_idx").on(table.createdAt),
+  ]
+);
+
+// ============================================================
+// Group Inquiries (brief §5 — public "I'm interested" form)
+// (Separate from existing locationInterests so we can track followups)
+// ============================================================
+
+export const groupInquiries = pgTable(
+  "group_inquiries",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    locationId: uuid("location_id")
+      .notNull()
+      .references(() => locations.id, { onDelete: "cascade" }),
+    inquirerName: text("inquirer_name").notNull(),
+    inquirerEmail: text("inquirer_email").notNull(),
+    inquirerPhone: text("inquirer_phone"),
+    message: text("message"),
+    leaderRespondedAt: timestamp("leader_responded_at"),
+    followupSentAt: timestamp("followup_sent_at"),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+  },
+  (table) => [
+    index("group_inquiries_location_idx").on(table.locationId),
+    index("group_inquiries_followup_idx").on(table.followupSentAt),
+  ]
+);
+
+// ============================================================
+// Relations for new tables
+// ============================================================
+
+export const accountsRelations = relations(accounts, ({ one }) => ({
+  user: one(users, { fields: [accounts.userId], references: [users.id] }),
+}));
+
+export const sessionsRelations = relations(sessions, ({ one }) => ({
+  user: one(users, { fields: [sessions.userId], references: [users.id] }),
+}));
+
+export const lettersRelations = relations(letters, ({ one, many }) => ({
+  author: one(users, {
+    fields: [letters.authorId],
+    references: [users.id],
+  }),
+  versions: many(letterVersions),
+}));
+
+export const letterVersionsRelations = relations(
+  letterVersions,
+  ({ one }) => ({
+    letter: one(letters, {
+      fields: [letterVersions.letterId],
+      references: [letters.id],
+    }),
+    editor: one(users, {
+      fields: [letterVersions.editedById],
+      references: [users.id],
+    }),
+  })
+);
+
+export const groupLeadersRelations = relations(groupLeaders, ({ one }) => ({
+  user: one(users, {
+    fields: [groupLeaders.userId],
+    references: [users.id],
+  }),
+}));
+
+export const aiGenerationsRelations = relations(aiGenerations, ({ one }) => ({
+  user: one(users, {
+    fields: [aiGenerations.userId],
+    references: [users.id],
+  }),
+}));
+
+export const groupInquiriesRelations = relations(
+  groupInquiries,
+  ({ one }) => ({
+    location: one(locations, {
+      fields: [groupInquiries.locationId],
+      references: [locations.id],
+    }),
+  })
+);
+
+// Partial unique indexes exclude soft-deleted rows.
+// Defined as a const SQL fragment so the same predicate is reused everywhere.
+const notDeletedPredicate = sql`deleted_at IS NULL`;

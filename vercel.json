@@ -1,0 +1,11 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "crons": [
+    { "path": "/api/cron/generate-daily", "schedule": "0 5 * * *" },
+    { "path": "/api/cron/purge", "schedule": "0 4 * * *" },
+    { "path": "/api/cron/group-followup", "schedule": "0 * * * *" }
+  ],
+  "functions": {
+    "src/app/api/ai/**/route.ts": { "maxDuration": 60 }
+  }
+}
