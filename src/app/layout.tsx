@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Merriweather } from "next/font/google";
+import { Inter, Merriweather, Fraunces, Cormorant_Garamond } from "next/font/google";
 import { ClerkProvider } from "@clerk/nextjs";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -13,6 +13,19 @@ const inter = Inter({
 const merriweather = Merriweather({
   variable: "--font-merriweather",
   weight: ["300", "400", "700"],
+  subsets: ["latin"],
+});
+
+const fraunces = Fraunces({
+  variable: "--font-fraunces",
+  subsets: ["latin"],
+  axes: ["opsz", "SOFT", "WONK"],
+});
+
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
+  weight: ["400", "500", "600"],
+  style: ["normal", "italic"],
   subsets: ["latin"],
 });
 
@@ -39,7 +52,7 @@ export default function RootLayout({
     <ClerkProvider dynamic>
       <html lang="en" suppressHydrationWarning>
         <body
-          className={`${inter.variable} ${merriweather.variable} font-sans antialiased`}
+          className={`${inter.variable} ${merriweather.variable} ${fraunces.variable} ${cormorant.variable} font-sans antialiased`}
         >
           <ThemeProvider
             attribute="class"

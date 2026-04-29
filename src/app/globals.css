@@ -10,6 +10,17 @@
   --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
   --font-scripture: var(--font-merriweather);
+  --font-display: var(--font-fraunces);
+  --font-pullquote: var(--font-cormorant);
+
+  /* Pasture & Iron — brand palette per Acts 20:28 brief */
+  --color-iron: #1F2A2E;
+  --color-bone: #F2EBDD;
+  --color-navy: #1B3A4B;
+  --color-brass: #A6803A;
+  --color-olive: #5C6646;
+  --color-oxblood: #6B2C2C;
+  --color-stone: #C7B79A;
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
