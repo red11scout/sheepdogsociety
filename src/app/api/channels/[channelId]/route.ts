@@ -1,4 +1,4 @@
-import { auth } from "@clerk/nextjs/server";
+import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
 import { channels, messages, users, reactions } from "@/db/schema";
 import { eq, desc, and, sql, lt } from "drizzle-orm";

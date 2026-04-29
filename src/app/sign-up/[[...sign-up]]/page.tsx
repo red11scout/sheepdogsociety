@@ -1,19 +1,7 @@
-import { SignUp } from "@clerk/nextjs";
+import { redirect } from "next/navigation";
 
-export default function SignUpPage() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <SignUp
-        appearance={{
-          elements: {
-            rootBox: "mx-auto",
-            card: "bg-card border-border shadow-xl",
-            headerTitle: "text-foreground",
-            headerSubtitle: "text-muted-foreground",
-            formButtonPrimary: "bg-primary hover:bg-primary/90",
-          },
-        }}
-      />
-    </div>
-  );
+// Legacy Clerk sign-up path. Member sign-up via the public site is
+// disabled during the auth migration; admin sign-in is at /admin/sign-in.
+export default function LegacySignUp() {
+  redirect("/admin/sign-in");
 }

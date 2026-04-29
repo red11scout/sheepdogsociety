@@ -1,30 +1,24 @@
 "use client";
 
 import { createBrowserClient } from "@supabase/ssr";
-import { useSession } from "@clerk/nextjs";
 import { useMemo } from "react";
 
-function createBrowserSupabaseClient(token: string | null) {
+// Browser-side Supabase client.
+// During the Auth.js v5 migration, Clerk's useSession is removed; this
+// client is currently only used as a Realtime broker for chat (channels).
+// Auth-aware (RLS-token) calls happen server-side via the service-role
+// client. If we keep Supabase Realtime long-term, we'll wire an
+// Auth.js-issued JWT here in Phase G; for now, the unauthenticated browser
+// client is enough for Realtime subscribe/presence.
+function createBrowserSupabaseClient() {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      global: {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      },
-    }
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
 }
 
 export function useSupabase() {
-  const { session } = useSession();
-
-  return useMemo(() => {
-    const token = session ? (session as unknown as { getToken: (opts: { template: string }) => Promise<string | null> }).getToken({ template: "supabase" }) : null;
-    // For the browser client, we create without token initially
-    // and update headers on each request through the middleware
-    return createBrowserSupabaseClient(null);
-  }, [session]);
+  return useMemo(() => createBrowserSupabaseClient(), []);
 }
 
 export { createBrowserSupabaseClient };
