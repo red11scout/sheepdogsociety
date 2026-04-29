@@ -23,13 +23,13 @@ import { MagicLinkEmail } from "@/emails/magic-link";
 // pulling in the full schema's relation graph. Re-using the same Postgres
 // driver pool to avoid extra connections.
 function getAuthDb() {
-  const url =
-    process.env.NEON_DATABASE_URL?.trim() ??
-    process.env.DATABASE_URL?.trim().replace(/\\n$/, "");
+  // Use the same DB the rest of the app uses so users + sessions + accounts
+  // all live together. Auth.js's Drizzle adapter requires the users table it
+  // references to be reachable on the same connection, and the existing
+  // members data is in DATABASE_URL.
+  const url = process.env.DATABASE_URL?.trim().replace(/\\n$/, "");
   if (!url) {
-    throw new Error(
-      "NEON_DATABASE_URL or DATABASE_URL must be set for Auth.js"
-    );
+    throw new Error("DATABASE_URL must be set for Auth.js");
   }
   const client = postgres(url, {
     prepare: false,
