@@ -22,21 +22,21 @@ import { MagicLinkEmail } from "@/emails/magic-link";
 // adapter can read/write account/session/verification_token rows without
 // pulling in the full schema's relation graph. Re-using the same Postgres
 // driver pool to avoid extra connections.
+// Auth.js's DrizzleAdapter does runtime type-checks on the DB instance, so
+// it has to be a real Drizzle client at module-import time. To avoid
+// crashing at build time when DATABASE_URL isn't set in the env (e.g.
+// preview deploys without the secret), we fall back to a placeholder URL —
+// the placeholder client is never actually queried during build.
 function getAuthDb() {
-  // Use the same DB the rest of the app uses so users + sessions + accounts
-  // all live together. Auth.js's Drizzle adapter requires the users table it
-  // references to be reachable on the same connection, and the existing
-  // members data is in DATABASE_URL.
-  const url = process.env.DATABASE_URL?.trim().replace(/\\n$/, "");
-  if (!url) {
-    throw new Error("DATABASE_URL must be set for Auth.js");
-  }
+  const url =
+    process.env.DATABASE_URL?.trim().replace(/\\n$/, "") ||
+    "postgresql://placeholder@localhost:5432/placeholder";
   const client = postgres(url, {
     prepare: false,
     connect_timeout: 10,
     idle_timeout: 20,
     max_lifetime: 60 * 30,
-    max: 1, // single connection — Auth.js writes are infrequent
+    max: 1,
   });
   return drizzle(client, { schema });
 }
