@@ -55,17 +55,39 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
     Resend({
       apiKey: process.env.AUTH_RESEND_KEY ?? process.env.RESEND_API_KEY,
       from: FROM_AUTH,
-      // Custom template rendered through @react-email/render so we get the
-      // brand-correct email AND the plaintext URL fallback that prevents
-      // Outlook Safe Links from burning one-time tokens.
-      async sendVerificationRequest({ identifier, url, provider }) {
+      // Generate a SHORT 8-character code instead of the default UUID. The
+      // user enters this code on a form (POST), which is immune to the email
+      // scanner / Outlook Safe Links / Gmail prefetcher problem that burns
+      // one-time tokens before the user can click them.
+      generateVerificationToken: () => {
+        // Excludes look-alike chars (0/O, 1/I, etc.)
+        const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+        let code = "";
+        const buf = new Uint8Array(8);
+        crypto.getRandomValues(buf);
+        for (let i = 0; i < 8; i++) {
+          code += chars[buf[i] % chars.length];
+        }
+        return code;
+      },
+      // Email shows the code prominently. The link still works for users
+      // whose mail client doesn't prefetch (most desktop Gmail), but the
+      // code is the canonical path.
+      async sendVerificationRequest({ identifier, url, token, provider }) {
         const host = new URL(url).host;
-        const html = await render(MagicLinkEmail({ url, host }));
-        const text = `Sign in to ${host}\n\n${url}\n\nThis link works for 24 hours.\n\nIf you didn't request this, ignore this email.`;
+        const html = await render(MagicLinkEmail({ url, host, code: token }));
+        const text = `Sign in to ${host}
+
+Your code: ${token}
+
+Enter this code at:
+https://${host}/admin/sign-in
+
+The code works for 24 hours. If you didn't request this, ignore this email.`;
         const result = await resend().emails.send({
           from: provider.from!,
           to: identifier,
-          subject: `Sign in to ${host}`,
+          subject: `Sheepdog Society sign-in code: ${token}`,
           html,
           text,
         });
