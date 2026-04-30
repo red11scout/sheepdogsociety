@@ -3,17 +3,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Icon } from "@/components/icons/Icon";
 import { Button } from "@/components/ui/button";
-import { ThemeToggle } from "@/components/theme-toggle";
 
 const navLinks = [
-  { href: "/get-started", label: "Get Started" },
+  { href: "/locations", label: "Groups" },
+  { href: "/how-we-gather", label: "How we gather" },
   { href: "/about", label: "About" },
-  { href: "/locations", label: "Locations" },
-  { href: "/daily-scripture", label: "Daily Scripture" },
-  { href: "/scripture-reader", label: "Bible" },
-  { href: "/how-we-gather", label: "How We Gather" },
+  { href: "/stories", label: "Stories" },
+  { href: "/daily-scripture", label: "Daily scripture" },
   { href: "/faq", label: "FAQ" },
   { href: "/giving", label: "Give" },
 ];
@@ -22,70 +20,88 @@ export function PublicNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-      <nav className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 sm:px-6">
-        {/* Logo */}
-        <Link href="/" className="flex items-center gap-2">
+    <header className="sticky top-0 z-50 border-b border-iron/10 bg-bone/90 backdrop-blur supports-[backdrop-filter]:bg-bone/75">
+      <nav className="mx-auto flex max-w-7xl items-center justify-between gap-6 px-6 py-4 md:px-12">
+        <Link
+          href="/"
+          className="flex items-center gap-3 text-iron"
+          aria-label="Sheepdog Society home"
+        >
           <Image
             src="/logo.png"
-            alt="Sheepdog Society"
+            alt=""
             width={36}
             height={36}
-            className="rounded"
+            className="rounded-none"
           />
-          <span className="text-lg font-bold">SheepDog Society</span>
+          <div className="leading-tight">
+            <div className="display-xl text-base text-iron">
+              Sheepdog Society
+            </div>
+            <div className="section-mark text-[0.625rem] text-brass">
+              Acts 20:28
+            </div>
+          </div>
         </Link>
 
-        {/* Desktop Nav */}
-        <div className="hidden items-center gap-1 md:flex">
+        <div className="hidden items-center gap-1 lg:flex">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="rounded-md px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="px-3 py-2 text-sm font-medium text-iron/70 transition-colors hover:text-iron"
             >
               {link.label}
             </Link>
           ))}
         </div>
 
-        {/* Sign In + Theme */}
-        <div className="hidden items-center gap-2 md:flex">
-          <ThemeToggle />
-          <Button asChild variant="default" size="sm">
-            <Link href="/sign-in">Sign In</Link>
+        <div className="hidden items-center gap-3 lg:flex">
+          <Button
+            asChild
+            size="sm"
+            className="lift h-10 rounded-none border border-iron bg-iron px-5 text-sm text-bone hover:bg-iron/90"
+          >
+            <Link href="/get-started">
+              Join
+              <Icon name="arrow-right" size={14} className="ml-2" />
+            </Link>
           </Button>
         </div>
 
-        {/* Mobile: Theme + Toggle */}
-        <div className="flex items-center gap-1 md:hidden">
-          <ThemeToggle />
-          <button
-            className="rounded-md p-2"
-            onClick={() => setMobileOpen(!mobileOpen)}
-            aria-label="Toggle menu"
-          >
-            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </button>
-        </div>
+        <button
+          type="button"
+          className="rounded-none p-2 text-iron lg:hidden"
+          onClick={() => setMobileOpen((v) => !v)}
+          aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          aria-expanded={mobileOpen}
+        >
+          <Icon name={mobileOpen ? "close" : "menu"} size={22} />
+        </button>
       </nav>
 
-      {/* Mobile Menu */}
       {mobileOpen && (
-        <div className="border-t border-border bg-background px-4 pb-4 md:hidden">
+        <div className="border-t border-iron/10 bg-bone px-6 pb-6 pt-2 lg:hidden">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="block rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+              className="block py-3 text-sm font-medium text-iron/80"
               onClick={() => setMobileOpen(false)}
             >
               {link.label}
             </Link>
           ))}
-          <div className="mt-2 border-t border-border pt-2">
-            <Button asChild variant="default" size="sm" className="w-full">
-              <Link href="/sign-in">Sign In</Link>
+          <div className="mt-4 border-t border-iron/10 pt-4">
+            <Button
+              asChild
+              size="sm"
+              className="lift h-11 w-full rounded-none border border-iron bg-iron px-5 text-sm text-bone hover:bg-iron/90"
+            >
+              <Link href="/get-started" onClick={() => setMobileOpen(false)}>
+                Join the brotherhood
+                <Icon name="arrow-right" size={16} className="ml-2" />
+              </Link>
             </Button>
           </div>
         </div>

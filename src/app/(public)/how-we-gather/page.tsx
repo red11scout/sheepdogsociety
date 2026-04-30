@@ -1,140 +1,211 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen, Utensils, Calendar, Mountain, Users, Info } from "lucide-react";
+import { Icon } from "@/components/icons/Icon";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
 export const metadata = {
-  title: "How We Gather — SheepDog Society",
-  description: "Weekly studies, monthly meals, quarterly gatherings, and annual camping — how Sheepdog Society men connect.",
+  title: "How We Gather — Sheepdog Society",
+  description:
+    "Weekly studies, monthly meals, quarterly gatherings, and annual camping. Four rhythms that hold the brotherhood together.",
 };
+
+const rhythms = [
+  {
+    icon: "scroll" as const,
+    roman: "I",
+    title: "Weekly studies",
+    cadence: "Every week",
+    sub: "The core",
+    copy: "Small groups of two to twelve men meet weekly at a consistent time and place. This is the heartbeat of Sheepdog Society. Each man reads Scripture aloud. We discuss what God is showing us, sharpen one another, and end with a Circle of Prayer.",
+    notes: [
+      "Group size: two to twelve men (ideal range)",
+      "Each man reads aloud from Scripture",
+      "Open discussion on real-life application",
+      "Every gathering ends with the Circle of Prayer",
+      "Any man is welcome to lead",
+    ],
+  },
+  {
+    icon: "table" as const,
+    roman: "II",
+    title: "Monthly meals",
+    cadence: "Every month",
+    sub: "Break bread",
+    copy: "Once a month, share a meal with your brothers. Deepen relationships. Connect beyond the study. Combine with another local group when you want to widen the table.",
+    notes: [],
+  },
+  {
+    icon: "calendar" as const,
+    roman: "III",
+    title: "Quarterly gatherings",
+    cadence: "Every quarter",
+    sub: "All groups converge",
+    copy: "Four times a year, all local small groups gather for a convergence. Bigger events with guest speakers, stories from group leaders, competitions, cookouts, and food trucks. A reminder that you are part of something bigger.",
+    notes: [],
+  },
+  {
+    icon: "mountain" as const,
+    roman: "IV",
+    title: "Annual camping",
+    cadence: "Every year",
+    sub: "The big gathering",
+    copy: "Once a year, we head to the wilderness. Campfires under the stars. Stories of transformation. Teaching that goes deep. Time away from the noise to hear God clearly and bond with brothers from across the region.",
+    notes: [],
+  },
+];
+
+const guidelines = [
+  {
+    label: "Ideal size: two to twelve men.",
+    body: "Small enough for real conversation. Large enough for iron to sharpen iron.",
+  },
+  {
+    label: "If you routinely get over twelve, split.",
+    body: "Don't split because twenty showed up one weekend. Split when it is consistently over twelve.",
+  },
+  {
+    label: "When you split, plant.",
+    body: "Apply for a new location and identify new leadership. This creates more leaders and extends the brotherhood.",
+  },
+];
 
 export default function HowWeGatherPage() {
   return (
     <>
-      <section className="bg-card px-4 py-12 sm:px-6">
-        <div className="mx-auto max-w-3xl text-center">
-          <Users className="mx-auto mb-4 h-10 w-10 text-bronze" />
-          <h1 className="text-3xl font-bold sm:text-4xl">How We Gather</h1>
-          <p className="mt-2 text-muted-foreground">
-            Four rhythms of connection — weekly, monthly, quarterly, and
-            annually.
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-bone text-iron">
+        <div className="dotted-grid absolute inset-0 opacity-50" aria-hidden />
+        <div className="relative mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
+          <div className="flex items-center gap-4">
+            <span className="section-mark">§ How We Gather</span>
+            <div className="hairline flex-1" />
+          </div>
+          <h1 className="display-xl mt-10 max-w-4xl text-[clamp(2.5rem,7vw,6.5rem)]">
+            Four rhythms.
+            <br />
+            <span className="text-brass">One brotherhood.</span>
+          </h1>
+          <p className="mt-10 max-w-2xl font-pullquote text-xl italic leading-relaxed text-iron/70 md:text-2xl">
+            Weekly. Monthly. Quarterly. Yearly. We gather in person, eat
+            together, climb together, and stand watch together.
           </p>
         </div>
       </section>
 
-      <section className="px-4 py-12 sm:px-6">
-        <div className="mx-auto max-w-4xl space-y-8">
-          {/* Weekly */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="rounded-lg bg-bronze/10 p-2.5">
-                  <BookOpen className="h-6 w-6 text-bronze" />
+      {/* Rhythms */}
+      <section className="bg-iron text-bone">
+        <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
+          <ol className="divide-y divide-stone/15 border-y border-stone/15">
+            {rhythms.map((r) => (
+              <li key={r.title} className="py-12 md:py-20">
+                <div className="grid gap-8 md:grid-cols-[120px_1fr_240px] md:gap-12">
+                  <div className="flex flex-col gap-4">
+                    <span className="section-mark text-brass">§ {r.roman}</span>
+                    <Icon
+                      name={r.icon}
+                      size={56}
+                      strokeWidth={2}
+                      className="text-brass"
+                    />
+                  </div>
+                  <div>
+                    <span className="section-mark text-stone/60">{r.sub}</span>
+                    <h2 className="display-xl mt-3 text-3xl text-bone md:text-5xl">
+                      {r.title}
+                    </h2>
+                    <p className="mt-6 max-w-2xl text-base leading-relaxed text-stone md:text-lg">
+                      {r.copy}
+                    </p>
+                    {r.notes.length > 0 && (
+                      <ul className="mt-8 space-y-2 text-sm text-stone/80">
+                        {r.notes.map((note) => (
+                          <li
+                            key={note}
+                            className="flex items-start gap-3 leading-relaxed"
+                          >
+                            <span
+                              className="mt-2 inline-block h-px w-3 shrink-0 bg-brass"
+                              aria-hidden
+                            />
+                            {note}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  <div className="md:text-right">
+                    <span className="section-mark text-brass">{r.cadence}</span>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold">Weekly Studies</h2>
-                  <p className="text-sm text-muted-foreground">The Core — Every Week</p>
-                </div>
-              </div>
-              <p className="text-muted-foreground">
-                Small groups of 2-12 men meet weekly at a consistent time and place.
-                This is the heartbeat of Sheepdog Society. Each man reads Scripture aloud.
-                We discuss what God is showing us, challenge each other, and end with
-                a Circle of Prayer.
-              </p>
-              <ul className="mt-4 space-y-1 text-sm text-muted-foreground">
-                <li>- Group size: 2-12 men (ideal range)</li>
-                <li>- Each man reads aloud from Scripture</li>
-                <li>- Open discussion on real-life application</li>
-                <li>- Every gathering ends with Circle of Prayer (COP)</li>
-                <li>- Any man is welcome to lead</li>
-              </ul>
-            </CardContent>
-          </Card>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
 
-          {/* Monthly */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="rounded-lg bg-bronze/10 p-2.5">
-                  <Utensils className="h-6 w-6 text-bronze" />
+      {/* Guidelines */}
+      <section className="bg-bone text-iron">
+        <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
+          <div className="flex items-center gap-4">
+            <span className="section-mark">§ Group size guidelines</span>
+            <div className="hairline flex-1" />
+          </div>
+          <div className="mt-10 grid gap-12 md:grid-cols-[2fr_3fr] md:gap-20">
+            <h2 className="display-xl text-4xl md:text-6xl">
+              Two to twelve.
+              <br />
+              <span className="text-brass">Then plant another.</span>
+            </h2>
+            <div className="space-y-8">
+              {guidelines.map((g) => (
+                <div key={g.label} className="border-l-2 border-brass pl-6">
+                  <p className="display-xl text-xl text-iron md:text-2xl">
+                    {g.label}
+                  </p>
+                  <p className="mt-2 text-base leading-relaxed text-iron/70">
+                    {g.body}
+                  </p>
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold">Monthly Meals</h2>
-                  <p className="text-sm text-muted-foreground">Break Bread Together — Every Month</p>
-                </div>
-              </div>
-              <p className="text-muted-foreground">
-                Once a month, break bread with your brothers. Share a meal, deepen
-                relationships, and connect beyond the study. You can combine with
-                another local small group if you want to expand the fellowship.
-              </p>
-            </CardContent>
-          </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
 
-          {/* Quarterly */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="rounded-lg bg-bronze/10 p-2.5">
-                  <Calendar className="h-6 w-6 text-bronze" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold">Quarterly Gatherings</h2>
-                  <p className="text-sm text-muted-foreground">All Groups Converge — Every Quarter</p>
-                </div>
-              </div>
-              <p className="text-muted-foreground">
-                Four times a year, all local small groups gather for a convergence.
-                These are bigger events with guest speakers, group leaders sharing
-                stories, competitions, cookouts, and food trucks. A time to see the
-                larger brotherhood and be reminded you&apos;re part of something bigger.
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Annual */}
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <div className="rounded-lg bg-bronze/10 p-2.5">
-                  <Mountain className="h-6 w-6 text-bronze" />
-                </div>
-                <div>
-                  <h2 className="text-xl font-bold">Annual Conference & Camping</h2>
-                  <p className="text-sm text-muted-foreground">The Big Gathering — Every Year</p>
-                </div>
-              </div>
-              <p className="text-muted-foreground">
-                Once a year, we head to the wilderness. Campfires under the stars.
-                Stories of transformation. Teaching that goes deep. This is our
-                annual retreat — time away from the noise to hear God clearly and
-                bond with brothers from across the region.
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Group Size Guidelines */}
-          <Card className="border-bronze/30">
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Info className="h-5 w-5 text-bronze" />
-                <h3 className="font-bold">Group Size Guidelines</h3>
-              </div>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <strong className="text-foreground">Ideal size: 2-12 men.</strong>{" "}
-                  Small enough for real conversation, large enough for iron to sharpen iron.
-                </li>
-                <li>
-                  <strong className="text-foreground">If you routinely get over 12, split into two groups.</strong>{" "}
-                  Don&apos;t split because you had 20 show up one weekend — split when it&apos;s consistently over 12.
-                </li>
-                <li>
-                  <strong className="text-foreground">During a split,</strong>{" "}
-                  apply for a new location and identify new leadership. This creates more leaders and extends the brotherhood.
-                </li>
-              </ul>
-            </CardContent>
-          </Card>
+      {/* CTA */}
+      <section className="bg-iron text-bone">
+        <div className="mx-auto max-w-5xl px-6 py-28 text-center md:px-12 md:py-40">
+          <Icon
+            name="sheepdog-rest"
+            size={88}
+            strokeWidth={2}
+            className="mx-auto text-brass"
+          />
+          <h2 className="display-xl mt-10 text-3xl text-bone md:text-5xl">
+            Find a group, or plant one.
+          </h2>
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-4">
+            <Button
+              asChild
+              size="lg"
+              className="lift h-12 rounded-none border border-bone bg-bone px-8 text-base text-iron hover:bg-stone"
+            >
+              <Link href="/locations">
+                <Icon name="map-pin" size={18} className="mr-2" />
+                Find a group
+              </Link>
+            </Button>
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="lift h-12 rounded-none border border-bone/30 bg-transparent px-8 text-base text-bone hover:border-bone hover:bg-bone/5"
+            >
+              <Link href="/locations/request">
+                Start a group
+                <Icon name="arrow-right" size={18} className="ml-2" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
     </>

@@ -38,6 +38,7 @@ const PUBLIC_ROUTES = [
   /^\/merch(\/.*)?$/,
   /^\/statement-of-faith(\/.*)?$/,
   /^\/blog(\/.*)?$/,
+  /^\/acts-20-28$/,
   // Auth pages and API routes
   /^\/admin\/sign-in(\/.*)?$/,
   /^\/admin\/check-email(\/.*)?$/,

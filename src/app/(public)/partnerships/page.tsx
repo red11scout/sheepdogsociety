@@ -1,82 +1,132 @@
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Church, Users, Globe, GraduationCap, Dumbbell, Handshake } from "lucide-react";
+import { Icon, type IconName } from "@/components/icons/Icon";
 
 export const metadata = {
-  title: "Partnerships — SheepDog Society",
-  description: "Partner with Sheepdog Society through your church, men's group, community, school, or athletic team.",
+  title: "Partnerships — Sheepdog Society",
+  description:
+    "Bring the Sheepdog brotherhood to your church, men's group, community, school, or athletic team.",
 };
 
-const partnerships = [
+const partnerships: {
+  icon: IconName;
+  roman: string;
+  title: string;
+  copy: string;
+}[] = [
   {
-    icon: Church,
-    title: "Through a Church",
-    desc: "Partner your church's men's ministry with the Sheepdog framework. We provide the structure, study guides, and support. Your church provides the men and the meeting space. It's a natural extension of what many churches already do.",
+    icon: "watchtower",
+    roman: "I",
+    title: "Through a church",
+    copy: "Partner your church's men's ministry with the Sheepdog framework. We provide the structure, study guides, and support. Your church provides the men and the meeting space. A natural extension of what many churches already do.",
   },
   {
-    icon: Users,
-    title: "Existing Men's Group",
-    desc: "Already have a men's group? Adopt the Sheepdog format — weekly Scripture study, peer-led discussions, Circle of Prayer. We'll help you integrate our resources and connect your group to the larger brotherhood.",
+    icon: "brothers",
+    roman: "II",
+    title: "Existing men's group",
+    copy: "Already have a men's group? Adopt the Sheepdog format. Weekly Scripture study, peer-led discussions, Circle of Prayer. We help you integrate our resources and connect to the larger brotherhood.",
   },
   {
-    icon: Globe,
-    title: "Community Group",
-    desc: "Start a community-based group outside of a church setting. Meet at a coffee shop, a park, a gym, or someone's home. All you need is two men and a Bible. We'll help you get started.",
+    icon: "compass",
+    roman: "III",
+    title: "Community group",
+    copy: "Start a community-based group outside a church setting. Coffee shop, park, gym, someone's home. Two men and a Bible. We help you get started.",
   },
   {
-    icon: GraduationCap,
-    title: "School or College",
-    desc: "Launch a Sheepdog group for young men at your school, college, or university. We're building the next generation — the Young Pups. Same principles, same format, tailored for younger men.",
+    icon: "scroll",
+    roman: "IV",
+    title: "School or college",
+    copy: "Launch a Sheepdog group for young men at your school, college, or university. We are building the next generation. Same principles, same format, tailored for younger men.",
   },
   {
-    icon: Dumbbell,
+    icon: "anchor",
+    roman: "V",
     title: "Athletics",
-    desc: "Incorporate faith-based study with your athletic team or fitness group. Train the body and the spirit. Many groups pair a workout with their weekly study — iron sharpening iron in every sense.",
+    copy: "Pair faith-based study with your team or fitness group. Train the body and the spirit. Many groups pair a workout with their weekly study. Iron sharpening iron in every sense.",
   },
 ];
 
 export default function PartnershipsPage() {
   return (
     <>
-      <section className="bg-card px-4 py-12 sm:px-6">
-        <div className="mx-auto max-w-3xl text-center">
-          <Handshake className="mx-auto mb-4 h-10 w-10 text-bronze" />
-          <h1 className="text-3xl font-bold sm:text-4xl">
-            Partner with Sheepdog
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-bone text-iron">
+        <div className="aurora aurora--soft" aria-hidden />
+        <div className="dotted-grid absolute inset-0 opacity-50" aria-hidden />
+        <div className="relative mx-auto max-w-7xl px-6 py-24 md:px-12 md:py-32">
+          <div className="flex items-center gap-4">
+            <span className="section-mark">§ Partnerships</span>
+            <div className="hairline flex-1" />
+          </div>
+          <h1 className="display-xl mt-10 max-w-4xl text-[clamp(2.5rem,7vw,6rem)]">
+            Five ways to plant.
+            <br />
+            <span className="text-brass">One brotherhood.</span>
           </h1>
-          <p className="mt-2 text-muted-foreground">
-            There are many ways to bring the Sheepdog brotherhood to your
-            community.
-          </p>
         </div>
       </section>
 
-      <section className="px-4 py-12 sm:px-6">
-        <div className="mx-auto max-w-4xl space-y-6">
-          {partnerships.map((p) => (
-            <Card key={p.title}>
-              <CardContent className="p-6">
-                <div className="flex gap-4">
-                  <div className="shrink-0 rounded-lg bg-bronze/10 p-3">
-                    <p.icon className="h-6 w-6 text-bronze" />
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="text-lg font-bold">{p.title}</h2>
-                    <p className="mt-1 text-muted-foreground">{p.desc}</p>
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      className="mt-3"
-                    >
-                      <Link href="/contact">Learn More</Link>
-                    </Button>
-                  </div>
+      {/* Partnership types */}
+      <section className="bg-iron text-bone">
+        <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
+          <ol className="divide-y divide-stone/15 border-y border-stone/15">
+            {partnerships.map((p) => (
+              <li
+                key={p.title}
+                className="grid gap-8 py-12 md:grid-cols-[80px_80px_1fr_auto] md:items-start md:gap-12 md:py-16"
+              >
+                <span className="section-mark text-brass md:pt-3">
+                  § {p.roman}
+                </span>
+                <Icon
+                  name={p.icon}
+                  size={48}
+                  strokeWidth={2}
+                  className="text-brass md:mt-1"
+                />
+                <div className="md:max-w-2xl">
+                  <h2 className="display-xl text-2xl text-bone md:text-4xl">
+                    {p.title}
+                  </h2>
+                  <p className="mt-4 text-base leading-relaxed text-stone md:text-lg">
+                    {p.copy}
+                  </p>
                 </div>
-              </CardContent>
-            </Card>
-          ))}
+                <Link
+                  href="/contact"
+                  className="inline-flex items-center gap-2 section-mark text-brass transition-opacity hover:opacity-70 md:pt-3"
+                >
+                  Learn more
+                  <Icon name="arrow-right" size={14} />
+                </Link>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="bg-bone text-iron">
+        <div className="mx-auto max-w-5xl px-6 py-28 text-center md:px-12 md:py-40">
+          <Icon
+            name="hands"
+            size={64}
+            strokeWidth={2}
+            className="mx-auto text-brass"
+          />
+          <h2 className="display-xl mt-10 text-3xl md:text-5xl">
+            Bring the brotherhood
+            <br />
+            <span className="text-brass">to your community.</span>
+          </h2>
+          <div className="mt-12">
+            <Link
+              href="/contact"
+              className="lift inline-flex h-12 items-center gap-2 border border-iron bg-iron px-8 text-base font-medium text-bone transition-colors hover:bg-iron/90"
+            >
+              Start the conversation
+              <Icon name="arrow-right" size={18} />
+            </Link>
+          </div>
         </div>
       </section>
     </>

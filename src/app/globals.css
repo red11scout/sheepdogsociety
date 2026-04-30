@@ -12,6 +12,7 @@
   --font-scripture: var(--font-merriweather);
   --font-display: var(--font-fraunces);
   --font-pullquote: var(--font-cormorant);
+  --font-mark: var(--font-jetbrains-mono);
 
   /* Pasture & Iron — brand palette per Acts 20:28 brief */
   --color-iron: #1F2A2E;
@@ -157,4 +158,195 @@
 /* Verse numbers */
 .verse-number {
   @apply text-xs text-muted-foreground align-super font-sans mr-0.5;
+}
+
+/* Aurora — slow-pulsing radial wash. Add absolute-positioned inside dark sections. */
+.aurora {
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      55% 45% at 20% 30%,
+      color-mix(in oklab, var(--color-brass) 28%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      45% 35% at 80% 70%,
+      color-mix(in oklab, var(--color-oxblood) 20%, transparent),
+      transparent 70%
+    );
+  filter: blur(60px);
+  opacity: 0.65;
+  animation: auroraDrift 28s ease-in-out infinite alternate;
+  z-index: 0;
+}
+.aurora--soft {
+  opacity: 0.32;
+}
+@keyframes auroraDrift {
+  0% {
+    transform: translate3d(-3%, -2%, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(2%, 3%, 0) scale(1.08);
+  }
+  100% {
+    transform: translate3d(-2%, 2%, 0) scale(1.04);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aurora {
+    animation: none;
+  }
+}
+
+/* Marquee ticker — used for the scripture refs at footer top. */
+.marquee {
+  --marquee-duration: 60s;
+}
+.marquee-track {
+  animation: marqueeScroll var(--marquee-duration) linear infinite;
+}
+.marquee:hover .marquee-track {
+  animation-play-state: paused;
+}
+@keyframes marqueeScroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-33.3333%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .marquee-track {
+    animation: none;
+  }
+}
+
+/* Variable-axis display — push Fraunces into expressive territory at hero scale. */
+.display-xl {
+  font-feature-settings: "ss01", "ss02", "kern";
+  font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 1;
+}
+.display-soft {
+  font-variation-settings: "opsz" 96, "SOFT" 60, "WONK" 0;
+}
+
+/* Glass card — semi-transparent on iron, hairline brass border, lift on hover. */
+.glass-card {
+  background: color-mix(in oklab, var(--color-bone) 4%, transparent);
+  border: 1px solid color-mix(in oklab, var(--color-stone) 22%, transparent);
+  backdrop-filter: blur(8px);
+  transition:
+    border-color 320ms cubic-bezier(0.16, 1, 0.3, 1),
+    background 320ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 320ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-card:hover {
+  border-color: color-mix(in oklab, var(--color-brass) 60%, transparent);
+  background: color-mix(in oklab, var(--color-bone) 6%, transparent);
+}
+
+/* Scroll-driven fade-up — reveal on enter viewport via IntersectionObserver. */
+.reveal {
+  opacity: 0;
+  transform: translateY(24px);
+  transition:
+    opacity 700ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.reveal.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
+/* Faint dotted grid — Vercel-style background for hero/anchor sections. */
+.dotted-grid {
+  background-image: radial-gradient(
+    color-mix(in oklab, var(--color-stone) 30%, transparent) 1px,
+    transparent 1px
+  );
+  background-size: 24px 24px;
+}
+
+/* Section mark — mono small-caps label sitting above a hairline rule. */
+.section-mark {
+  font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--color-brass) 100%, transparent);
+}
+
+/* Hairline rule — 1px @ low opacity, paired with a section-mark above. */
+.hairline {
+  height: 1px;
+  background: color-mix(in oklab, currentColor 14%, transparent);
+}
+
+/* Display headline — Fraunces with tight tracking for hero scale. */
+.display-xl {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+}
+
+/* Cursor-tracked spotlight on dark cards. Pure CSS variables, no JS state. */
+.spotlight {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.spotlight::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  background: radial-gradient(
+    420px circle at var(--spotlight-x, 50%) var(--spotlight-y, 50%),
+    color-mix(in oklab, var(--color-brass) 18%, transparent),
+    transparent 60%
+  );
+  opacity: 0;
+  transition: opacity 320ms cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  z-index: 0;
+}
+.spotlight:hover::before {
+  opacity: 1;
+}
+.spotlight > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Magnetic CTA — 4-6px lift, no scale, no bounce. */
+.lift {
+  transition:
+    transform 200ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+.lift:hover {
+  transform: translateY(-5px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lift,
+  .lift:hover,
+  .spotlight::before {
+    transform: none;
+    transition: none;
+    opacity: 0 !important;
+  }
 }

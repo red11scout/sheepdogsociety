@@ -1,5 +1,11 @@
 import type { Metadata } from "next";
-import { Inter, Merriweather, Fraunces, Cormorant_Garamond } from "next/font/google";
+import {
+  Inter,
+  Merriweather,
+  Fraunces,
+  Cormorant_Garamond,
+  JetBrains_Mono,
+} from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
@@ -28,7 +34,16 @@ const cormorant = Cormorant_Garamond({
   subsets: ["latin"],
 });
 
+const jetbrainsMono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
+  weight: ["400", "500"],
+  subsets: ["latin"],
+});
+
 export const metadata: Metadata = {
+  metadataBase: new URL(
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.acts2028sheepdogsociety.com"
+  ),
   title: "Sheepdog Society",
   description: "Men of Faith Community",
   icons: {
@@ -50,7 +65,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${merriweather.variable} ${fraunces.variable} ${cormorant.variable} font-sans antialiased`}
+        className={`${inter.variable} ${merriweather.variable} ${fraunces.variable} ${cormorant.variable} ${jetbrainsMono.variable} font-sans antialiased`}
       >
         <ThemeProvider
           attribute="class"

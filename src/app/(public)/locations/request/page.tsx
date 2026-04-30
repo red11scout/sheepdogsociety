@@ -2,28 +2,60 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ArrowLeft, CheckCircle, MapPin } from "lucide-react";
+import { Icon } from "@/components/icons/Icon";
+import { Magnetic } from "@/components/motion/Magnetic";
 
 const US_STATES = [
-  "Alabama","Alaska","Arizona","Arkansas","California","Colorado","Connecticut",
-  "Delaware","Florida","Georgia","Hawaii","Idaho","Illinois","Indiana","Iowa",
-  "Kansas","Kentucky","Louisiana","Maine","Maryland","Massachusetts","Michigan",
-  "Minnesota","Mississippi","Missouri","Montana","Nebraska","Nevada",
-  "New Hampshire","New Jersey","New Mexico","New York","North Carolina",
-  "North Dakota","Ohio","Oklahoma","Oregon","Pennsylvania","Rhode Island",
-  "South Carolina","South Dakota","Tennessee","Texas","Utah","Vermont",
-  "Virginia","Washington","West Virginia","Wisconsin","Wyoming",
+  "Alabama",
+  "Alaska",
+  "Arizona",
+  "Arkansas",
+  "California",
+  "Colorado",
+  "Connecticut",
+  "Delaware",
+  "Florida",
+  "Georgia",
+  "Hawaii",
+  "Idaho",
+  "Illinois",
+  "Indiana",
+  "Iowa",
+  "Kansas",
+  "Kentucky",
+  "Louisiana",
+  "Maine",
+  "Maryland",
+  "Massachusetts",
+  "Michigan",
+  "Minnesota",
+  "Mississippi",
+  "Missouri",
+  "Montana",
+  "Nebraska",
+  "Nevada",
+  "New Hampshire",
+  "New Jersey",
+  "New Mexico",
+  "New York",
+  "North Carolina",
+  "North Dakota",
+  "Ohio",
+  "Oklahoma",
+  "Oregon",
+  "Pennsylvania",
+  "Rhode Island",
+  "South Carolina",
+  "South Dakota",
+  "Tennessee",
+  "Texas",
+  "Utah",
+  "Vermont",
+  "Virginia",
+  "Washington",
+  "West Virginia",
+  "Wisconsin",
+  "Wyoming",
 ];
 
 export default function RequestLocationPage() {
@@ -50,7 +82,7 @@ export default function RequestLocationPage() {
       });
       if (res.ok) setSubmitted(true);
     } catch {
-      // fail silently
+      /* fail silently */
     }
     setSubmitting(false);
   }
@@ -61,150 +93,201 @@ export default function RequestLocationPage() {
 
   return (
     <>
-      <title>Start a Group — SheepDog Society</title>
+      <title>Plant a group — Sheepdog Society</title>
       <meta
         name="description"
         content="Request to start a new Sheepdog Society group in your area."
       />
 
-      <div className="mx-auto max-w-2xl space-y-6 p-6">
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/locations">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Locations
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-bone text-iron">
+        <div className="aurora aurora--soft" aria-hidden />
+        <div className="dotted-grid absolute inset-0 opacity-50" aria-hidden />
+        <div className="relative mx-auto max-w-7xl px-6 py-24 md:px-12 md:py-32">
+          <Link
+            href="/locations"
+            className="inline-flex items-center gap-2 section-mark text-iron/60 hover:text-brass"
+          >
+            <Icon name="arrow-right" size={12} className="rotate-180" />
+            All groups
           </Link>
-        </Button>
-
-        <div className="text-center">
-          <MapPin className="mx-auto mb-3 h-10 w-10 text-bronze" />
-          <h1 className="text-3xl font-bold">Start a Group</h1>
-          <p className="mt-2 text-muted-foreground">
-            Ready to lead? Fill out this form and we&apos;ll set up a video call
-            to get you started. Groups are 2-12 men, meeting weekly for
-            Scripture study.
+          <div className="mt-10 flex items-center gap-4">
+            <span className="section-mark">§ Plant a group</span>
+            <div className="hairline flex-1" />
+          </div>
+          <h1 className="display-xl mt-10 max-w-4xl text-[clamp(2.5rem,7vw,6rem)]">
+            Ready to lead?
+            <br />
+            <span className="text-brass">Start one here.</span>
+          </h1>
+          <p className="mt-10 max-w-2xl font-pullquote text-xl italic leading-relaxed text-iron/70 md:text-2xl">
+            Two to twelve men. Weekly Scripture study. Tell us about your
+            vision and we will set up a video call.
           </p>
         </div>
+      </section>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Request a New Location</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {submitted ? (
-              <div className="space-y-3 text-center">
-                <CheckCircle className="mx-auto h-12 w-12 text-bronze" />
-                <h3 className="text-lg font-bold">Request Submitted!</h3>
-                <p className="text-muted-foreground">
-                  We&apos;ll reach out to schedule a video call and help you get
-                  your group started. Welcome to the brotherhood.
-                </p>
-                <Button asChild variant="outline">
-                  <Link href="/locations">View Locations</Link>
-                </Button>
+      {/* Form */}
+      <section className="bg-iron text-bone">
+        <div className="mx-auto max-w-3xl px-6 py-20 md:px-12 md:py-32">
+          {submitted ? (
+            <div className="border border-brass/40 bg-iron/40 p-12 text-center">
+              <Icon
+                name="check"
+                size={48}
+                strokeWidth={2.25}
+                className="mx-auto text-brass"
+              />
+              <h2 className="display-xl mt-8 text-3xl text-bone md:text-4xl">
+                Request received.
+              </h2>
+              <p className="mx-auto mt-4 max-w-md font-pullquote text-lg italic text-stone">
+                We will reach out to schedule a call. Welcome to the
+                brotherhood.
+              </p>
+              <Link
+                href="/locations"
+                className="mt-8 inline-flex items-center gap-2 section-mark text-brass hover:opacity-70"
+              >
+                View all groups
+                <Icon name="arrow-right" size={14} />
+              </Link>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="grid gap-8">
+              <div className="flex items-center gap-4">
+                <span className="section-mark text-brass">§ Your details</span>
+                <div className="hairline flex-1" />
               </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1 block text-sm font-medium">
-                      Your Name *
-                    </label>
-                    <Input
-                      value={form.requesterName}
-                      onChange={(e) => update("requesterName", e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium">
-                      Email *
-                    </label>
-                    <Input
-                      type="email"
-                      value={form.requesterEmail}
-                      onChange={(e) => update("requesterEmail", e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
 
+              <div className="grid gap-6 md:grid-cols-2">
+                <DarkField
+                  label="Your name"
+                  required
+                  value={form.requesterName}
+                  onChange={(v) => update("requesterName", v)}
+                />
+                <DarkField
+                  label="Email"
+                  type="email"
+                  required
+                  value={form.requesterEmail}
+                  onChange={(v) => update("requesterEmail", v)}
+                />
+              </div>
+
+              <DarkField
+                label="Phone (optional)"
+                value={form.requesterPhone}
+                onChange={(v) => update("requesterPhone", v)}
+              />
+
+              <div className="mt-4 flex items-center gap-4">
+                <span className="section-mark text-brass">§ Where</span>
+                <div className="hairline flex-1" />
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <DarkField
+                  label="City"
+                  required
+                  value={form.proposedCity}
+                  onChange={(v) => update("proposedCity", v)}
+                />
                 <div>
-                  <label className="mb-1 block text-sm font-medium">
-                    Phone (optional)
+                  <label className="section-mark text-stone/60">
+                    State<span className="ml-1 text-brass">*</span>
                   </label>
-                  <Input
-                    value={form.requesterPhone}
-                    onChange={(e) => update("requesterPhone", e.target.value)}
-                  />
+                  <select
+                    value={form.proposedState}
+                    onChange={(e) => update("proposedState", e.target.value)}
+                    required
+                    className="mt-3 h-11 w-full border border-stone/25 bg-transparent px-4 text-sm text-bone focus:border-brass focus:outline-none"
+                  >
+                    <option value="" className="bg-iron text-bone">
+                      Select state
+                    </option>
+                    {US_STATES.map((s) => (
+                      <option key={s} value={s} className="bg-iron text-bone">
+                        {s}
+                      </option>
+                    ))}
+                  </select>
                 </div>
+              </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label className="mb-1 block text-sm font-medium">
-                      City *
-                    </label>
-                    <Input
-                      value={form.proposedCity}
-                      onChange={(e) => update("proposedCity", e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium">
-                      State *
-                    </label>
-                    <Select
-                      value={form.proposedState}
-                      onValueChange={(v) => update("proposedState", v)}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select state" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {US_STATES.map((s) => (
-                          <SelectItem key={s} value={s}>
-                            {s}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
+              <div>
+                <label className="section-mark text-stone/60">
+                  Proposed meeting day, time, place
+                </label>
+                <textarea
+                  rows={3}
+                  placeholder="e.g. Saturday mornings 7am at the diner on 5th"
+                  value={form.proposedMeetingDetails}
+                  onChange={(e) =>
+                    update("proposedMeetingDetails", e.target.value)
+                  }
+                  className="mt-3 w-full border border-stone/25 bg-transparent px-4 py-3 text-base leading-relaxed text-bone placeholder:text-stone/40 focus:border-brass focus:outline-none"
+                />
+              </div>
 
-                <div>
-                  <label className="mb-1 block text-sm font-medium">
-                    Proposed Meeting Details
-                  </label>
-                  <Textarea
-                    placeholder="Day, time, and location you're considering..."
-                    value={form.proposedMeetingDetails}
-                    onChange={(e) =>
-                      update("proposedMeetingDetails", e.target.value)
-                    }
-                    rows={3}
-                  />
-                </div>
+              <div>
+                <label className="section-mark text-stone/60">
+                  Why you want to lead a group
+                </label>
+                <textarea
+                  rows={4}
+                  placeholder="Tell us about yourself and your vision."
+                  value={form.reason}
+                  onChange={(e) => update("reason", e.target.value)}
+                  className="mt-3 w-full border border-stone/25 bg-transparent px-4 py-3 text-base leading-relaxed text-bone placeholder:text-stone/40 focus:border-brass focus:outline-none"
+                />
+              </div>
 
-                <div>
-                  <label className="mb-1 block text-sm font-medium">
-                    Why do you want to start a group?
-                  </label>
-                  <Textarea
-                    placeholder="Tell us about yourself and your vision..."
-                    value={form.reason}
-                    onChange={(e) => update("reason", e.target.value)}
-                    rows={3}
-                  />
-                </div>
-
-                <Button type="submit" className="w-full" disabled={submitting}>
-                  {submitting ? "Submitting..." : "Submit Request"}
-                </Button>
-              </form>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+              <Magnetic strength={0.18}>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="lift inline-flex h-12 items-center gap-2 border border-bone bg-bone px-8 text-sm font-medium uppercase tracking-wider text-iron transition-colors hover:bg-stone disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {submitting ? "Submitting..." : "Submit request"}
+                  {!submitting && <Icon name="arrow-right" size={16} />}
+                </button>
+              </Magnetic>
+            </form>
+          )}
+        </div>
+      </section>
     </>
+  );
+}
+
+function DarkField({
+  label,
+  required,
+  type = "text",
+  value,
+  onChange,
+}: {
+  label: string;
+  required?: boolean;
+  type?: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div>
+      <label className="section-mark text-stone/60">
+        {label}
+        {required && <span className="ml-1 text-brass">*</span>}
+      </label>
+      <input
+        type={type}
+        required={required}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-3 h-11 w-full border border-stone/25 bg-transparent px-4 text-base text-bone placeholder:text-stone/40 focus:border-brass focus:outline-none"
+      />
+    </div>
   );
 }

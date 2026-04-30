@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Icon } from "@/components/icons/Icon";
 
 export function NewsletterForm() {
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -33,23 +34,34 @@ export function NewsletterForm() {
 
   if (status === "success") {
     return (
-      <p className="text-sm text-bronze">Welcome to the brotherhood. Watch your inbox.</p>
+      <p className="font-pullquote text-sm italic text-brass">
+        Welcome, brother. Watch your inbox.
+      </p>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
-      <Input
+    <form
+      onSubmit={handleSubmit}
+      className="flex items-center border border-stone/25 transition-colors focus-within:border-brass"
+    >
+      <input
         type="email"
-        placeholder="Your email"
+        placeholder="you@example.com"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
         required
-        className="h-9 text-sm"
+        aria-label="Email address"
+        className="h-11 flex-1 bg-transparent px-4 text-sm text-bone placeholder:text-stone/50 focus:outline-none"
       />
-      <Button type="submit" size="sm" disabled={status === "loading"}>
+      <button
+        type="submit"
+        disabled={status === "loading"}
+        className="lift flex h-11 items-center gap-2 bg-brass px-4 text-xs font-medium uppercase tracking-wider text-iron transition-colors hover:bg-stone disabled:cursor-not-allowed disabled:opacity-60"
+      >
         {status === "loading" ? "..." : "Join"}
-      </Button>
+        {status !== "loading" && <Icon name="arrow-right" size={14} />}
+      </button>
     </form>
   );
 }

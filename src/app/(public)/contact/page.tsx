@@ -1,23 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Mail, CheckCircle } from "lucide-react";
+import { Icon } from "@/components/icons/Icon";
+import { Magnetic } from "@/components/motion/Magnetic";
 
 const TOPICS = [
-  { value: "general", label: "General Question" },
-  { value: "joining", label: "Joining a Group" },
-  { value: "starting", label: "Starting a Group" },
+  { value: "general", label: "General question" },
+  { value: "joining", label: "Joining a group" },
+  { value: "starting", label: "Starting a group" },
   { value: "leadership", label: "Leadership" },
   { value: "partnership", label: "Partnership" },
   { value: "other", label: "Other" },
@@ -44,116 +34,155 @@ export default function ContactPage() {
       });
       if (res.ok) setSubmitted(true);
     } catch {
-      // fail silently
+      /* fail silently */
     }
     setSubmitting(false);
   }
 
   return (
     <>
-      <title>Contact — SheepDog Society</title>
+      <title>Contact — Sheepdog Society</title>
       <meta
         name="description"
-        content="Get in touch with Sheepdog Society. We'd love to hear from you."
+        content="Get in touch with Sheepdog Society. We read every note."
       />
 
-      <section className="bg-card px-4 py-12 sm:px-6">
-        <div className="mx-auto max-w-3xl text-center">
-          <Mail className="mx-auto mb-4 h-10 w-10 text-bronze" />
-          <h1 className="text-3xl font-bold sm:text-4xl">Contact Us</h1>
-          <p className="mt-2 text-muted-foreground">
-            Have a question? Want to get involved? We&apos;d love to hear from
-            you.
-          </p>
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-bone text-iron">
+        <div className="aurora aurora--soft" aria-hidden />
+        <div className="dotted-grid absolute inset-0 opacity-50" aria-hidden />
+        <div className="relative mx-auto max-w-7xl px-6 py-24 md:px-12 md:py-32">
+          <div className="flex items-center gap-4">
+            <span className="section-mark">§ Contact</span>
+            <div className="hairline flex-1" />
+          </div>
+          <h1 className="display-xl mt-10 max-w-4xl text-[clamp(2.5rem,7vw,6rem)]">
+            Send a note.
+            <br />
+            <span className="text-brass">We read every one.</span>
+          </h1>
         </div>
       </section>
 
-      <section className="px-4 py-12 sm:px-6">
-        <div className="mx-auto max-w-xl">
-          <Card>
-            <CardHeader>
-              <CardTitle>Send us a message</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {submitted ? (
-                <div className="space-y-3 text-center py-6">
-                  <CheckCircle className="mx-auto h-12 w-12 text-bronze" />
-                  <h3 className="text-lg font-bold">Message Sent!</h3>
-                  <p className="text-muted-foreground">
-                    Thank you for reaching out. We&apos;ll get back to you soon.
-                  </p>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  <div>
-                    <label className="mb-1 block text-sm font-medium">
-                      Name *
-                    </label>
-                    <Input
-                      value={form.name}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, name: e.target.value }))
-                      }
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium">
-                      Email *
-                    </label>
-                    <Input
-                      type="email"
-                      value={form.email}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, email: e.target.value }))
-                      }
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium">
-                      Topic
-                    </label>
-                    <Select
-                      value={form.topic}
-                      onValueChange={(v) =>
-                        setForm((f) => ({ ...f, topic: v }))
-                      }
+      {/* Form */}
+      <section className="bg-iron text-bone">
+        <div className="mx-auto max-w-3xl px-6 py-20 md:px-12 md:py-32">
+          {submitted ? (
+            <div className="border border-brass/40 bg-iron/40 p-12 text-center">
+              <Icon
+                name="check"
+                size={48}
+                strokeWidth={2.25}
+                className="mx-auto text-brass"
+              />
+              <h2 className="display-xl mt-8 text-3xl text-bone md:text-4xl">
+                Message received.
+              </h2>
+              <p className="mx-auto mt-4 max-w-md font-pullquote text-lg italic text-stone">
+                Thank you, brother. We will get back to you soon.
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="grid gap-8">
+              <div className="flex items-center gap-4">
+                <span className="section-mark text-brass">§ Your message</span>
+                <div className="hairline flex-1" />
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2">
+                <Field
+                  label="Name"
+                  required
+                  value={form.name}
+                  onChange={(v) => setForm((f) => ({ ...f, name: v }))}
+                />
+                <Field
+                  label="Email"
+                  type="email"
+                  required
+                  value={form.email}
+                  onChange={(v) => setForm((f) => ({ ...f, email: v }))}
+                />
+              </div>
+
+              <div>
+                <label className="section-mark text-stone/60">Topic</label>
+                <select
+                  value={form.topic}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, topic: e.target.value }))
+                  }
+                  className="mt-3 h-11 w-full border border-stone/25 bg-transparent px-4 text-sm text-bone focus:border-brass focus:outline-none"
+                >
+                  {TOPICS.map((t) => (
+                    <option
+                      key={t.value}
+                      value={t.value}
+                      className="bg-iron text-bone"
                     >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {TOPICS.map((t) => (
-                          <SelectItem key={t.value} value={t.value}>
-                            {t.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium">
-                      Message *
-                    </label>
-                    <Textarea
-                      value={form.message}
-                      onChange={(e) =>
-                        setForm((f) => ({ ...f, message: e.target.value }))
-                      }
-                      rows={5}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={submitting}>
-                    {submitting ? "Sending..." : "Send Message"}
-                  </Button>
-                </form>
-              )}
-            </CardContent>
-          </Card>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="section-mark text-stone/60">Message</label>
+                <textarea
+                  required
+                  rows={6}
+                  value={form.message}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, message: e.target.value }))
+                  }
+                  className="mt-3 w-full border border-stone/25 bg-transparent px-4 py-3 text-base leading-relaxed text-bone placeholder:text-stone/40 focus:border-brass focus:outline-none"
+                />
+              </div>
+
+              <Magnetic strength={0.18}>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="lift inline-flex h-12 items-center gap-2 border border-bone bg-bone px-8 text-sm font-medium uppercase tracking-wider text-iron transition-colors hover:bg-stone disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {submitting ? "Sending..." : "Send message"}
+                  {!submitting && <Icon name="arrow-right" size={16} />}
+                </button>
+              </Magnetic>
+            </form>
+          )}
         </div>
       </section>
     </>
+  );
+}
+
+function Field({
+  label,
+  required,
+  type = "text",
+  value,
+  onChange,
+}: {
+  label: string;
+  required?: boolean;
+  type?: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div>
+      <label className="section-mark text-stone/60">
+        {label}
+        {required && <span className="ml-1 text-brass">*</span>}
+      </label>
+      <input
+        type={type}
+        required={required}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-3 h-11 w-full border border-stone/25 bg-transparent px-4 text-base text-bone placeholder:text-stone/40 focus:border-brass focus:outline-none"
+      />
+    </div>
   );
 }

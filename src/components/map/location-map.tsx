@@ -3,8 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
-import { Button } from "@/components/ui/button";
-import { LocateFixed } from "lucide-react";
+import { Icon } from "@/components/icons/Icon";
 
 export type LocationPin = {
   id: string;
@@ -26,6 +25,10 @@ type LocationMapProps = {
   onSelectLocation?: (id: string) => void;
   className?: string;
 };
+
+const BRASS = "#A6803A";
+const IRON = "#1F2A2E";
+const BONE = "#F2EBDD";
 
 export function LocationMap({
   locations,
@@ -49,12 +52,20 @@ export function LocationMap({
 
     map.current = new mapboxgl.Map({
       container: mapContainer.current,
-      style: "mapbox://styles/mapbox/navigation-night-v1",
-      center: [-84.39, 33.75], // Default: Atlanta area
+      style: "mapbox://styles/mapbox/dark-v11",
+      center: [-84.39, 33.75],
       zoom: 5,
+      attributionControl: false,
     });
 
-    map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
+    map.current.addControl(
+      new mapboxgl.NavigationControl({ showCompass: false }),
+      "top-right"
+    );
+    map.current.addControl(
+      new mapboxgl.AttributionControl({ compact: true }),
+      "bottom-right"
+    );
 
     map.current.on("load", () => {
       setMapLoaded(true);
@@ -66,11 +77,9 @@ export function LocationMap({
     };
   }, []);
 
-  // Add markers when locations or map load state changes
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
 
-    // Clear existing markers
     const existingMarkers = document.querySelectorAll(".sheepdog-marker");
     existingMarkers.forEach((el) => el.remove());
 
@@ -79,61 +88,54 @@ export function LocationMap({
       const lng = parseFloat(loc.longitude);
       if (isNaN(lat) || isNaN(lng)) return;
 
-      // Create custom marker element
       const el = document.createElement("div");
       el.className = "sheepdog-marker";
       el.style.cssText = `
-        width: 32px;
-        height: 32px;
-        background: #D4A574;
-        border: 2px solid #fff;
-        border-radius: 50%;
+        width: 16px;
+        height: 16px;
+        background: ${BRASS};
+        border: 2px solid ${BONE};
+        border-radius: 0;
         cursor: pointer;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 14px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-        transition: transform 0.15s;
+        box-shadow: 0 0 0 4px rgba(166, 128, 58, 0.18);
+        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s;
       `;
-      el.innerHTML = "🛡️";
-      el.onmouseenter = () => (el.style.transform = "scale(1.2)");
-      el.onmouseleave = () => (el.style.transform = "scale(1)");
+      el.onmouseenter = () => {
+        el.style.transform = "rotate(45deg) scale(1.15)";
+        el.style.boxShadow = `0 0 0 6px rgba(166, 128, 58, 0.28)`;
+      };
+      el.onmouseleave = () => {
+        el.style.transform = "rotate(45deg) scale(1)";
+        el.style.boxShadow = `0 0 0 4px rgba(166, 128, 58, 0.18)`;
+      };
+      el.style.transform = "rotate(45deg)";
+
+      const memberPart =
+        loc.groupSize != null
+          ? `${loc.groupSize} ${loc.groupSize === 1 ? "man" : "men"}`
+          : null;
+      const meta = [memberPart, loc.meetingDay, loc.meetingTime]
+        .filter(Boolean)
+        .join(" · ");
 
       const popup = new mapboxgl.Popup({
-        offset: 25,
-        closeButton: true,
-        maxWidth: "280px",
+        offset: 18,
+        closeButton: false,
+        maxWidth: "300px",
+        className: "sheepdog-popup",
       }).setHTML(`
-        <div style="font-family: system-ui, sans-serif; padding: 4px;">
-          <h3 style="font-weight: 700; font-size: 14px; margin: 0 0 6px;">${loc.name}</h3>
-          <p style="font-size: 12px; color: #888; margin: 0 0 4px;">
-            ${loc.city}, ${loc.state}
-          </p>
-          ${
-            loc.meetingDay
-              ? `<p style="font-size: 12px; margin: 0 0 2px;">
-                  <strong>${loc.meetingDay}</strong>${loc.meetingTime ? ` at ${loc.meetingTime}` : ""}
-                </p>`
-              : ""
-          }
-          ${
-            loc.meetingPlace
-              ? `<p style="font-size: 12px; color: #888; margin: 0 0 4px;">${loc.meetingPlace}</p>`
-              : ""
-          }
-          ${
-            loc.groupSize != null
-              ? `<p style="font-size: 11px; color: #999; margin: 0 0 6px;">${loc.groupSize} of ${loc.maxSize} members</p>`
-              : ""
-          }
-          <a href="/locations/${loc.id}" style="font-size: 12px; color: #D4A574; text-decoration: none; font-weight: 600;">
-            View Details →
+        <div style="font-family: var(--font-inter), system-ui, sans-serif; padding: 14px 16px; background: ${IRON}; color: ${BONE}; min-width: 220px;">
+          <div style="font-family: var(--font-jetbrains-mono), monospace; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: ${BRASS};">${loc.city}, ${loc.state}</div>
+          <h3 style="font-family: var(--font-fraunces), Georgia, serif; font-weight: 500; font-size: 18px; line-height: 1.1; margin: 8px 0 0; letter-spacing: -0.01em;">${loc.name}</h3>
+          ${meta ? `<div style="font-family: var(--font-jetbrains-mono), monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: ${BRASS}; margin-top: 12px;">${meta}</div>` : ""}
+          ${loc.meetingPlace ? `<p style="font-size: 13px; opacity: 0.7; margin: 8px 0 0; line-height: 1.5;">${loc.meetingPlace}</p>` : ""}
+          <a href="/locations/${loc.id}" style="display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-jetbrains-mono), monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: ${BRASS}; text-decoration: none; margin-top: 14px; border-top: 1px solid rgba(199, 183, 154, 0.15); padding-top: 14px;">
+            View details →
           </a>
         </div>
       `);
 
-      const marker = new mapboxgl.Marker(el)
+      new mapboxgl.Marker(el)
         .setLngLat([lng, lat])
         .setPopup(popup)
         .addTo(map.current!);
@@ -143,7 +145,6 @@ export function LocationMap({
       });
     });
 
-    // Fit bounds if we have locations
     if (locations.length > 0) {
       const bounds = new mapboxgl.LngLatBounds();
       locations.forEach((loc) => {
@@ -166,24 +167,21 @@ export function LocationMap({
           zoom: 10,
         });
       },
-      () => {
-        // Silently fail
-      }
+      () => {}
     );
   }
 
   return (
     <div className={`relative ${className}`}>
-      <div ref={mapContainer} className="h-full w-full rounded-lg" />
-      <Button
-        variant="secondary"
-        size="sm"
-        className="absolute bottom-4 left-4 z-10 shadow-lg"
+      <div ref={mapContainer} className="h-full w-full" />
+      <button
+        type="button"
         onClick={handleLocateMe}
+        className="lift absolute bottom-4 left-4 z-10 inline-flex items-center gap-2 border border-bone/30 bg-iron px-4 py-2 text-xs font-medium uppercase tracking-wider text-bone transition-colors hover:border-brass hover:text-brass"
       >
-        <LocateFixed className="mr-2 h-4 w-4" />
-        Near Me
-      </Button>
+        <Icon name="locate" size={14} />
+        Near me
+      </button>
     </div>
   );
 }

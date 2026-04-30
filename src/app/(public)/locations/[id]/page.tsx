@@ -3,19 +3,8 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  MapPin,
-  Clock,
-  Users,
-  Mail,
-  MessageCircle,
-  ArrowLeft,
-  CheckCircle,
-} from "lucide-react";
+import { Icon } from "@/components/icons/Icon";
+import { Magnetic } from "@/components/motion/Magnetic";
 
 type LocationDetail = {
   id: string;
@@ -73,204 +62,283 @@ export default function LocationDetailPage() {
       });
       if (res.ok) setSubmitted(true);
     } catch {
-      // fail silently
+      /* fail silently */
     }
     setSubmitting(false);
   }
 
   if (loading) {
     return (
-      <div className="mx-auto max-w-3xl p-6">
-        <div className="h-8 w-48 animate-pulse rounded bg-muted" />
-        <div className="mt-4 h-64 animate-pulse rounded-lg bg-muted" />
+      <div className="bg-bone">
+        <div className="mx-auto max-w-5xl px-6 py-32 md:px-12">
+          <div className="h-8 w-48 animate-pulse bg-iron/10" />
+          <div className="mt-6 h-72 animate-pulse bg-iron/10" />
+        </div>
       </div>
     );
   }
 
   if (!location) {
     return (
-      <div className="mx-auto max-w-3xl p-6 text-center">
-        <h1 className="text-2xl font-bold">Location Not Found</h1>
-        <p className="mt-2 text-muted-foreground">
-          This location may no longer be active.
-        </p>
-        <Button asChild variant="outline" className="mt-4">
-          <Link href="/locations">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Locations
+      <div className="bg-bone">
+        <div className="mx-auto max-w-3xl px-6 py-32 text-center md:px-12">
+          <Icon
+            name="map-pin"
+            size={48}
+            strokeWidth={2}
+            className="mx-auto text-iron/30"
+          />
+          <h1 className="display-xl mt-8 text-3xl text-iron md:text-4xl">
+            Group not found.
+          </h1>
+          <p className="mx-auto mt-4 max-w-md font-pullquote text-lg italic text-iron/60">
+            This group may no longer be active.
+          </p>
+          <Link
+            href="/locations"
+            className="mt-10 inline-flex items-center gap-2 section-mark text-brass hover:opacity-70"
+          >
+            <Icon name="arrow-right" size={14} className="rotate-180" />
+            All groups
           </Link>
-        </Button>
+        </div>
       </div>
     );
   }
 
+  const memberPart =
+    location.groupSize != null
+      ? `${location.groupSize} ${location.groupSize === 1 ? "man" : "men"}`
+      : null;
+  const meta = [memberPart, location.meetingDay, location.meetingTime]
+    .filter(Boolean)
+    .join(" · ");
+
   return (
     <>
-      <title>{`${location.name} — SheepDog Society`}</title>
+      <title>{`${location.name} — Sheepdog Society`}</title>
 
-      <div className="mx-auto max-w-3xl space-y-6 p-6">
-        <Button asChild variant="ghost" size="sm">
-          <Link href="/locations">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            All Locations
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-iron text-bone">
+        <div className="aurora" aria-hidden />
+        <div className="dotted-grid absolute inset-0 opacity-[0.04]" aria-hidden />
+        <div className="relative mx-auto max-w-7xl px-6 py-24 md:px-12 md:py-32">
+          <Link
+            href="/locations"
+            className="inline-flex items-center gap-2 section-mark text-stone/60 hover:text-brass"
+          >
+            <Icon name="arrow-right" size={12} className="rotate-180" />
+            All groups
           </Link>
-        </Button>
-
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold">{location.name}</h1>
-          <p className="mt-1 text-muted-foreground">
-            {location.city}, {location.state}
-          </p>
-        </div>
-
-        {location.description && (
-          <p className="text-muted-foreground">{location.description}</p>
-        )}
-
-        {/* Details Grid */}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <Clock className="mt-0.5 h-5 w-5 text-bronze" />
-                <div>
-                  <p className="font-medium">Meeting Time</p>
-                  <p className="text-sm text-muted-foreground">
-                    {location.meetingDay || "TBD"}
-                    {location.meetingTime
-                      ? ` at ${location.meetingTime}`
-                      : ""}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <MapPin className="mt-0.5 h-5 w-5 text-bronze" />
-                <div>
-                  <p className="font-medium">Meeting Place</p>
-                  <p className="text-sm text-muted-foreground">
-                    {location.meetingPlace || location.address || "TBD"}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-start gap-3">
-                <Users className="mt-0.5 h-5 w-5 text-bronze" />
-                <div>
-                  <p className="font-medium">Group Size</p>
-                  <p className="text-sm text-muted-foreground">
-                    {location.groupSize ?? 0} of {location.maxSize} members
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {location.contactName && (
-            <Card>
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <Mail className="mt-0.5 h-5 w-5 text-bronze" />
-                  <div>
-                    <p className="font-medium">Contact</p>
-                    <p className="text-sm text-muted-foreground">
-                      {location.contactName}
-                    </p>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+          <div className="mt-10 flex items-center gap-4">
+            <span className="section-mark">
+              § {location.city}, {location.state}
+            </span>
+            <div className="hairline flex-1" />
+          </div>
+          <h1 className="display-xl mt-8 max-w-4xl text-[clamp(2.5rem,7vw,6rem)] text-bone">
+            {location.name}
+          </h1>
+          {meta && <p className="mt-8 section-mark text-brass">{meta}</p>}
+          {location.description && (
+            <p className="mt-8 max-w-2xl font-pullquote text-xl italic leading-relaxed text-stone md:text-2xl">
+              {location.description}
+            </p>
           )}
         </div>
+      </section>
 
-        {/* Signal Group */}
-        {location.signalGroupUrl && (
-          <Card>
-            <CardContent className="flex items-center gap-3 p-4">
-              <MessageCircle className="h-5 w-5 text-bronze" />
-              <div className="flex-1">
-                <p className="font-medium">Join our Signal group</p>
-                <p className="text-sm text-muted-foreground">
-                  We use Signal for group communication
-                </p>
+      {/* Details */}
+      <section className="bg-bone text-iron">
+        <div className="mx-auto max-w-7xl px-6 py-20 md:px-12 md:py-28">
+          <div className="flex items-center gap-4">
+            <span className="section-mark">§ Details</span>
+            <div className="hairline flex-1" />
+          </div>
+          <div className="mt-10 grid gap-px bg-iron/10 md:grid-cols-2 lg:grid-cols-4">
+            <Detail
+              icon="clock"
+              label="When"
+              value={
+                location.meetingDay
+                  ? `${location.meetingDay}${location.meetingTime ? ` · ${location.meetingTime}` : ""}`
+                  : "TBD"
+              }
+            />
+            <Detail
+              icon="map-pin"
+              label="Where"
+              value={location.meetingPlace || location.address || "TBD"}
+            />
+            <Detail
+              icon="brothers"
+              label="Group size"
+              value={`${location.groupSize ?? 0} of ${location.maxSize} men`}
+            />
+            {location.contactName && (
+              <Detail
+                icon="mail"
+                label="Contact"
+                value={location.contactName}
+              />
+            )}
+          </div>
+
+          {location.signalGroupUrl && (
+            <div className="mt-10 flex items-center justify-between border border-iron/10 bg-bone p-6 md:p-8">
+              <div className="flex items-center gap-4">
+                <Icon
+                  name="message"
+                  size={28}
+                  strokeWidth={2}
+                  className="text-brass"
+                />
+                <div>
+                  <p className="display-xl text-lg text-iron md:text-xl">
+                    Signal group
+                  </p>
+                  <p className="text-sm text-iron/60">
+                    Join for between-meeting comms.
+                  </p>
+                </div>
               </div>
-              <Button asChild variant="outline" size="sm">
+              <Magnetic strength={0.18}>
                 <a
                   href={location.signalGroupUrl}
                   target="_blank"
                   rel="noopener noreferrer"
+                  className="lift inline-flex h-11 items-center gap-2 border border-iron px-5 text-xs font-medium uppercase tracking-wider text-iron transition-colors hover:bg-iron hover:text-bone"
                 >
                   Join Signal
+                  <Icon name="arrow-up-right" size={14} />
                 </a>
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+              </Magnetic>
+            </div>
+          )}
+        </div>
+      </section>
 
-        {/* Interest Form */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Interested in joining this group?</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {submitted ? (
-              <div className="flex items-center gap-3 text-bronze">
-                <CheckCircle className="h-5 w-5" />
-                <p>
-                  Thanks for your interest! The group leader will be in touch.
-                </p>
-              </div>
-            ) : (
-              <form onSubmit={handleInterest} className="space-y-3">
-                <Input
-                  placeholder="Your name"
-                  value={interestForm.name}
-                  onChange={(e) =>
-                    setInterestForm((f) => ({ ...f, name: e.target.value }))
-                  }
-                  required
-                />
-                <Input
-                  type="email"
-                  placeholder="Your email"
-                  value={interestForm.email}
-                  onChange={(e) =>
-                    setInterestForm((f) => ({ ...f, email: e.target.value }))
-                  }
-                  required
-                />
-                <Input
-                  placeholder="Phone (optional)"
-                  value={interestForm.phone}
-                  onChange={(e) =>
-                    setInterestForm((f) => ({ ...f, phone: e.target.value }))
-                  }
-                />
-                <Textarea
-                  placeholder="Any questions or comments? (optional)"
+      {/* Interest form */}
+      <section className="bg-iron text-bone">
+        <div className="mx-auto max-w-3xl px-6 py-20 md:px-12 md:py-28">
+          <div className="flex items-center gap-4">
+            <span className="section-mark">§ Interested?</span>
+            <div className="hairline flex-1" />
+          </div>
+          <h2 className="display-xl mt-10 text-3xl text-bone md:text-5xl">
+            Show up. We will be there.
+          </h2>
+
+          {submitted ? (
+            <div className="mt-10 flex items-start gap-4 border border-brass/40 bg-iron/40 p-6 md:p-8">
+              <Icon name="check" size={24} className="text-brass" />
+              <p className="font-pullquote text-lg italic leading-relaxed text-bone md:text-xl">
+                Thank you, brother. The group leader will be in touch.
+              </p>
+            </div>
+          ) : (
+            <form onSubmit={handleInterest} className="mt-10 grid gap-6">
+              <DarkField
+                label="Name"
+                required
+                value={interestForm.name}
+                onChange={(v) =>
+                  setInterestForm((f) => ({ ...f, name: v }))
+                }
+              />
+              <DarkField
+                label="Email"
+                type="email"
+                required
+                value={interestForm.email}
+                onChange={(v) =>
+                  setInterestForm((f) => ({ ...f, email: v }))
+                }
+              />
+              <DarkField
+                label="Phone (optional)"
+                value={interestForm.phone}
+                onChange={(v) =>
+                  setInterestForm((f) => ({ ...f, phone: v }))
+                }
+              />
+              <div>
+                <label className="section-mark text-stone/60">
+                  Anything you want the leader to know
+                </label>
+                <textarea
+                  rows={4}
                   value={interestForm.message}
                   onChange={(e) =>
                     setInterestForm((f) => ({ ...f, message: e.target.value }))
                   }
-                  rows={3}
+                  className="mt-3 w-full border border-stone/25 bg-transparent px-4 py-3 text-base leading-relaxed text-bone placeholder:text-stone/40 focus:border-brass focus:outline-none"
                 />
-                <Button type="submit" disabled={submitting}>
-                  {submitting ? "Sending..." : "I'm Interested"}
-                </Button>
-              </form>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+              </div>
+              <Magnetic strength={0.18}>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="lift inline-flex h-12 items-center gap-2 border border-bone bg-bone px-8 text-sm font-medium uppercase tracking-wider text-iron transition-colors hover:bg-stone disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {submitting ? "Sending..." : "I'm interested"}
+                  {!submitting && <Icon name="arrow-right" size={16} />}
+                </button>
+              </Magnetic>
+            </form>
+          )}
+        </div>
+      </section>
     </>
+  );
+}
+
+function Detail({
+  icon,
+  label,
+  value,
+}: {
+  icon: "clock" | "map-pin" | "brothers" | "mail";
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="bg-bone p-8">
+      <div className="flex items-center gap-3">
+        <Icon name={icon} size={20} className="text-brass" />
+        <span className="section-mark">{label}</span>
+      </div>
+      <p className="display-xl mt-6 text-lg text-iron md:text-xl">{value}</p>
+    </div>
+  );
+}
+
+function DarkField({
+  label,
+  required,
+  type = "text",
+  value,
+  onChange,
+}: {
+  label: string;
+  required?: boolean;
+  type?: string;
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div>
+      <label className="section-mark text-stone/60">
+        {label}
+        {required && <span className="ml-1 text-brass">*</span>}
+      </label>
+      <input
+        type={type}
+        required={required}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-3 h-11 w-full border border-stone/25 bg-transparent px-4 text-base text-bone placeholder:text-stone/40 focus:border-brass focus:outline-none"
+      />
+    </div>
   );
 }

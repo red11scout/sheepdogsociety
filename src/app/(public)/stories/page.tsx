@@ -4,14 +4,13 @@ import Link from "next/link";
 import { db } from "@/db";
 import { testimonies, users } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Sparkles, User } from "lucide-react";
 import { format } from "date-fns";
+import { Icon } from "@/components/icons/Icon";
 
 export const metadata = {
-  title: "Stories — SheepDog Society",
-  description: "Real stories of transformation from Sheepdog Society brothers.",
+  title: "Stories — Sheepdog Society",
+  description:
+    "Real stories of transformation from brothers across the Sheepdog Society.",
 };
 
 export default async function StoriesPage() {
@@ -31,60 +30,103 @@ export default async function StoriesPage() {
 
   return (
     <>
-      <section className="bg-card px-4 py-12 sm:px-6">
-        <div className="mx-auto max-w-3xl text-center">
-          <Sparkles className="mx-auto mb-4 h-10 w-10 text-bronze" />
-          <h1 className="text-3xl font-bold sm:text-4xl">Stories</h1>
-          <p className="mt-2 text-muted-foreground">
-            Real stories of transformation from brothers in the Sheepdog
-            Society.
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-bone text-iron">
+        <div className="aurora aurora--soft" aria-hidden />
+        <div className="dotted-grid absolute inset-0 opacity-50" aria-hidden />
+        <div className="relative mx-auto max-w-7xl px-6 py-24 md:px-12 md:py-32">
+          <div className="flex items-center gap-4">
+            <span className="section-mark">§ Stories</span>
+            <div className="hairline flex-1" />
+          </div>
+          <h1 className="display-xl mt-10 max-w-4xl text-[clamp(2.5rem,7vw,6rem)]">
+            Wolves transformed.
+            <br />
+            <span className="text-brass">Sheepdogs sent.</span>
+          </h1>
+          <p className="mt-10 max-w-2xl font-pullquote text-xl italic leading-relaxed text-iron/70 md:text-2xl">
+            Real stories from brothers across the Sheepdog Society.
           </p>
         </div>
       </section>
 
-      <section className="px-4 py-12 sm:px-6">
-        <div className="mx-auto max-w-4xl">
+      {/* Stories grid */}
+      <section className="bg-bone text-iron">
+        <div className="mx-auto max-w-7xl px-6 py-20 md:px-12 md:py-28">
           {stories.length > 0 ? (
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid gap-px bg-iron/10 md:grid-cols-2">
               {stories.map((story) => (
-                <Card key={story.id}>
-                  <CardContent className="p-6">
-                    <h3 className="text-lg font-bold">{story.title}</h3>
-                    <p className="mt-2 text-sm text-muted-foreground line-clamp-4">
-                      {story.content.slice(0, 200)}
-                      {story.content.length > 200 ? "..." : ""}
-                    </p>
-                    <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-                      <User className="h-3 w-3" />
-                      <span>
-                        {story.authorFirstName || "A brother"}
-                      </span>
-                      <span>·</span>
-                      <span>
-                        {format(new Date(story.createdAt), "MMM d, yyyy")}
-                      </span>
-                    </div>
-                  </CardContent>
-                </Card>
+                <article
+                  key={story.id}
+                  className="group/c lift border-0 bg-bone p-10 transition-colors md:p-12"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <Icon
+                      name="flame"
+                      size={28}
+                      strokeWidth={2}
+                      className="text-brass"
+                    />
+                    <span className="section-mark text-iron/40">
+                      {format(new Date(story.createdAt), "MMM yyyy")}
+                    </span>
+                  </div>
+                  <h3 className="display-xl mt-10 text-2xl text-iron md:text-3xl">
+                    {story.title}
+                  </h3>
+                  <p className="mt-4 line-clamp-5 text-base leading-relaxed text-iron/70">
+                    {story.content.slice(0, 240)}
+                    {story.content.length > 240 ? "..." : ""}
+                  </p>
+                  <div className="mt-8 flex items-center justify-between">
+                    <span className="section-mark text-brass">
+                      {story.authorFirstName || "A brother"}
+                    </span>
+                    <Icon
+                      name="arrow-up-right"
+                      size={16}
+                      className="text-iron/30 transition-all group-hover/c:translate-x-0.5 group-hover/c:-translate-y-0.5 group-hover/c:text-brass"
+                    />
+                  </div>
+                </article>
               ))}
             </div>
           ) : (
-            <div className="rounded-lg border border-dashed border-border p-12 text-center">
-              <Sparkles className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
-              <h3 className="text-lg font-bold">No stories yet</h3>
-              <p className="mt-1 text-muted-foreground">
-                Be the first to share your story of transformation.
+            <div className="border border-dashed border-iron/15 p-16 text-center">
+              <Icon
+                name="flame"
+                size={48}
+                strokeWidth={2}
+                className="mx-auto text-brass"
+              />
+              <h3 className="display-xl mt-8 text-2xl text-iron md:text-3xl">
+                Stories on the way.
+              </h3>
+              <p className="mx-auto mt-4 max-w-md font-pullquote text-lg italic text-iron/60">
+                Brothers are writing them now.
               </p>
             </div>
           )}
+        </div>
+      </section>
 
-          <div className="mt-8 text-center">
-            <p className="text-muted-foreground">
-              Have a story to share? Sign in to submit your testimony.
-            </p>
-            <Button asChild variant="outline" className="mt-3">
-              <Link href="/sign-in">Share Your Story</Link>
-            </Button>
+      {/* CTA */}
+      <section className="bg-iron text-bone">
+        <div className="mx-auto max-w-5xl px-6 py-28 text-center md:px-12 md:py-40">
+          <h2 className="display-xl text-3xl text-bone md:text-5xl">
+            Have a story?
+          </h2>
+          <p className="mx-auto mt-6 max-w-xl font-pullquote text-xl italic leading-relaxed text-stone md:text-2xl">
+            Send it to us. We share what God has done.
+          </p>
+          <div className="mt-12">
+            <Link
+              href="/contact"
+              className="lift inline-flex h-12 items-center gap-2 border border-bone bg-bone px-8 text-base font-medium text-iron transition-colors hover:bg-stone"
+            >
+              Share your story
+              <Icon name="arrow-right" size={18} />
+            </Link>
           </div>
         </div>
       </section>

@@ -5,21 +5,12 @@ import { scriptureOfDay, devotionals } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { format } from "date-fns";
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import {
-  BookOpen,
-  Calendar,
-  MessageSquareQuote,
-  Sparkles,
-  ChevronRight,
-} from "lucide-react";
+import { Icon } from "@/components/icons/Icon";
 
 export const metadata = {
-  title: "Daily Scripture — SheepDog Society",
+  title: "Daily Scripture — Sheepdog Society",
   description:
-    "Start each day grounded in God's Word. Daily scripture readings, devotionals, and discussion questions for men of faith.",
+    "Start each day grounded in God's Word. Daily scripture, devotionals, discussion questions for men of faith.",
 };
 
 export default async function DailyScripturePage() {
@@ -41,203 +32,213 @@ export default async function DailyScripturePage() {
     .orderBy(desc(scriptureOfDay.date))
     .limit(14);
 
-  // Filter out today from the recent list for the grid
   const pastScriptures = recentScriptures.filter((s) => s.date !== today);
 
   return (
-    <div className="mx-auto max-w-4xl space-y-10 px-4 py-10 sm:px-6">
-      {/* Hero Section */}
-      <div className="text-center">
-        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-bronze/30 bg-bronze/10 px-4 py-1.5 text-sm text-bronze">
-          <BookOpen className="h-4 w-4" />
-          Daily Scripture
+    <>
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-iron text-bone">
+        <div className="aurora" aria-hidden />
+        <div className="dotted-grid absolute inset-0 opacity-[0.04]" aria-hidden />
+        <div className="relative mx-auto max-w-7xl px-6 py-24 md:px-12 md:py-32">
+          <div className="flex items-center gap-4">
+            <span className="section-mark">
+              § {format(new Date(), "EEEE, MMMM d, yyyy")}
+            </span>
+            <div className="hairline flex-1" />
+          </div>
+          <h1 className="display-xl mt-10 max-w-4xl text-[clamp(2.5rem,7vw,6rem)] text-bone">
+            Today&rsquo;s word.
+          </h1>
         </div>
-        <h1 className="text-3xl font-bold sm:text-4xl">
-          Today&apos;s Word
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          {format(new Date(), "EEEE, MMMM d, yyyy")}
-        </p>
-      </div>
+      </section>
 
       {/* Today's Scripture */}
-      {todayScripture ? (
-        <Card className="border-bronze/30">
-          <CardContent className="space-y-5 p-6 sm:p-8">
-            <div className="flex flex-wrap items-center gap-3">
-              <h2 className="text-xl font-bold text-bronze sm:text-2xl">
-                {todayScripture.reference}
-              </h2>
-              <Badge variant="secondary">{todayScripture.translation}</Badge>
-            </div>
-
-            {todayScripture.text && (
-              <blockquote className="border-l-4 border-bronze/40 pl-4 font-scripture text-lg italic leading-[1.8] sm:pl-6 sm:text-xl">
-                {todayScripture.text}
-              </blockquote>
-            )}
-
-            {todayScripture.theme && (
-              <div className="flex items-start gap-3 rounded-lg bg-muted/50 p-4">
-                <Sparkles className="mt-0.5 h-5 w-5 shrink-0 text-bronze" />
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                    Theme
-                  </p>
-                  <p className="mt-1">{todayScripture.theme}</p>
-                </div>
+      <section className="bg-iron text-bone">
+        <div className="mx-auto max-w-5xl px-6 pb-20 md:px-12 md:pb-32">
+          {todayScripture ? (
+            <article className="border-y border-stone/15 py-16 md:py-24">
+              <div className="flex flex-wrap items-center gap-4">
+                <span className="display-xl text-3xl text-brass md:text-5xl">
+                  {todayScripture.reference}
+                </span>
+                <span className="section-mark text-stone/60">
+                  {todayScripture.translation}
+                </span>
               </div>
-            )}
 
-            {todayScripture.reflection && (
-              <div className="flex items-start gap-3 rounded-lg bg-muted/50 p-4">
-                <MessageSquareQuote className="mt-0.5 h-5 w-5 shrink-0 text-bronze" />
-                <div>
-                  <p className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                    Reflection
+              {todayScripture.text && (
+                <blockquote className="mt-10 border-l-2 border-brass pl-8 font-pullquote text-2xl italic leading-relaxed text-bone md:text-4xl">
+                  {todayScripture.text}
+                </blockquote>
+              )}
+
+              {todayScripture.theme && (
+                <div className="mt-12">
+                  <span className="section-mark text-brass">§ Theme</span>
+                  <p className="mt-3 text-lg leading-relaxed text-bone">
+                    {todayScripture.theme}
                   </p>
-                  <p className="mt-1 leading-relaxed">
+                </div>
+              )}
+
+              {todayScripture.reflection && (
+                <div className="mt-10">
+                  <span className="section-mark text-brass">§ Reflection</span>
+                  <p className="mt-3 text-base leading-relaxed text-stone md:text-lg">
                     {todayScripture.reflection}
                   </p>
                 </div>
+              )}
+
+              {todayScripture.seriesName && (
+                <p className="mt-12 section-mark text-stone/60">
+                  {todayScripture.seriesName}
+                  {todayScripture.dayInSeries != null
+                    ? ` · Day ${todayScripture.dayInSeries}`
+                    : ""}
+                </p>
+              )}
+            </article>
+          ) : (
+            <article className="border border-dashed border-stone/20 p-12 text-center md:p-16">
+              <Icon
+                name="scroll"
+                size={48}
+                strokeWidth={2}
+                className="mx-auto text-brass"
+              />
+              <h2 className="display-xl mt-8 text-2xl text-bone md:text-3xl">
+                Today&rsquo;s scripture is being prepared.
+              </h2>
+              <p className="mx-auto mt-4 max-w-md font-pullquote text-lg italic text-stone">
+                Open your Bible to wherever God leads. His Word never returns
+                void.
+              </p>
+              <p className="mt-8 section-mark text-brass">Psalm 119:105</p>
+            </article>
+          )}
+        </div>
+      </section>
+
+      {/* Devotional */}
+      {todayDevotional && (
+        <section className="bg-bone text-iron">
+          <div className="mx-auto max-w-5xl px-6 py-20 md:px-12 md:py-32">
+            <div className="flex items-center gap-4">
+              <span className="section-mark">§ Devotional</span>
+              <div className="hairline flex-1" />
+            </div>
+            <h2 className="display-xl mt-10 text-4xl md:text-6xl">
+              {todayDevotional.title}
+            </h2>
+            <p className="mt-4 section-mark text-brass">
+              {todayDevotional.scriptureReference}
+            </p>
+            <p className="mt-10 whitespace-pre-line text-base leading-relaxed text-iron/80 md:text-lg">
+              {todayDevotional.content}
+            </p>
+
+            {todayDevotional.prayerPrompt && (
+              <div className="mt-12 border-l-2 border-brass pl-6">
+                <span className="section-mark text-brass">§ Prayer prompt</span>
+                <p className="mt-3 font-pullquote text-lg italic leading-relaxed text-iron md:text-xl">
+                  {todayDevotional.prayerPrompt}
+                </p>
               </div>
             )}
 
-            {todayScripture.seriesName && (
-              <p className="text-sm text-muted-foreground">
-                Part of the{" "}
-                <span className="font-medium text-foreground">
-                  {todayScripture.seriesName}
-                </span>{" "}
-                series
-                {todayScripture.dayInSeries != null &&
-                  ` — Day ${todayScripture.dayInSeries}`}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <BookOpen className="mx-auto mb-4 h-12 w-12 text-bronze/50" />
-            <h2 className="text-lg font-semibold">
-              Today&apos;s scripture is being prepared
-            </h2>
-            <p className="mt-2 max-w-md mx-auto text-muted-foreground">
-              Check back soon. In the meantime, open your Bible to wherever
-              God leads you today. His Word never returns void.
-            </p>
-            <p className="mt-4 font-scripture italic text-muted-foreground">
-              &ldquo;Your word is a lamp to my feet and a light to my
-              path.&rdquo; &mdash; Psalm 119:105
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Today's Devotional */}
-      {todayDevotional && (
-        <>
-          <Separator />
-          <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Today&apos;s Devotional</h2>
-
-            <Card>
-              <CardContent className="space-y-5 p-6 sm:p-8">
-                <h3 className="text-xl font-bold">{todayDevotional.title}</h3>
-                <p className="text-sm text-muted-foreground">
-                  {todayDevotional.scriptureReference}
-                </p>
-                <p className="whitespace-pre-line leading-relaxed">
-                  {todayDevotional.content}
-                </p>
-
-                {todayDevotional.prayerPrompt && (
-                  <div className="rounded-lg bg-muted/50 p-4">
-                    <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                      Prayer Prompt
-                    </p>
-                    <p className="leading-relaxed text-muted-foreground">
-                      {todayDevotional.prayerPrompt}
-                    </p>
-                  </div>
-                )}
-
-                {todayDevotional.discussionQuestions &&
-                  (todayDevotional.discussionQuestions as string[]).length >
-                    0 && (
-                    <div>
-                      <p className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-                        Discussion Questions
-                      </p>
-                      <ol className="space-y-2">
-                        {(todayDevotional.discussionQuestions as string[]).map(
-                          (q, i) => (
-                            <li
-                              key={i}
-                              className="flex gap-3 text-muted-foreground"
-                            >
-                              <span className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-bronze/10 text-xs font-semibold text-bronze">
-                                {i + 1}
-                              </span>
-                              <span className="leading-relaxed">{q}</span>
-                            </li>
-                          )
-                        )}
-                      </ol>
-                    </div>
-                  )}
-              </CardContent>
-            </Card>
+            {todayDevotional.discussionQuestions &&
+              (todayDevotional.discussionQuestions as string[]).length > 0 && (
+                <div className="mt-12">
+                  <span className="section-mark text-brass">
+                    § Discussion questions
+                  </span>
+                  <ol className="mt-6 divide-y divide-iron/10 border-y border-iron/10">
+                    {(todayDevotional.discussionQuestions as string[]).map(
+                      (q, i) => (
+                        <li
+                          key={i}
+                          className="grid grid-cols-[60px_1fr] gap-4 py-6"
+                        >
+                          <span className="section-mark text-brass">
+                            § {romanize(i + 1)}
+                          </span>
+                          <p className="text-base leading-relaxed text-iron/80 md:text-lg">
+                            {q}
+                          </p>
+                        </li>
+                      )
+                    )}
+                  </ol>
+                </div>
+              )}
           </div>
-        </>
+        </section>
       )}
 
-      {/* Past 14 Days */}
+      {/* Recent */}
       {pastScriptures.length > 0 && (
-        <>
-          <Separator />
-          <div>
-            <h2 className="mb-4 text-2xl font-bold">Recent Scriptures</h2>
-            <div className="grid gap-3 sm:grid-cols-2">
+        <section className="bg-iron text-bone">
+          <div className="mx-auto max-w-7xl px-6 py-20 md:px-12 md:py-28">
+            <div className="flex items-center gap-4">
+              <span className="section-mark">§ Recent</span>
+              <div className="hairline flex-1" />
+            </div>
+            <div className="mt-10 grid gap-px bg-stone/10 md:grid-cols-2 lg:grid-cols-3">
               {pastScriptures.map((s) => {
                 const dateObj = new Date(s.date + "T12:00:00");
                 return (
                   <Link
                     key={s.id}
                     href={`/daily-scripture?date=${s.date}`}
-                    className="group"
+                    className="group/c lift bg-iron p-6 transition-colors hover:bg-iron/80 md:p-8"
                   >
-                    <Card className="h-full transition-colors hover:border-bronze/30">
-                      <CardContent className="flex items-center gap-4 p-4">
-                        <div className="flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-lg bg-muted text-center">
-                          <span className="text-xs font-medium uppercase text-muted-foreground">
-                            {format(dateObj, "MMM")}
-                          </span>
-                          <span className="text-lg font-bold leading-tight">
-                            {format(dateObj, "d")}
-                          </span>
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="font-semibold text-bronze">
-                            {s.reference}
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <span className="section-mark text-stone/60">
+                          {format(dateObj, "MMM d")}
+                        </span>
+                        <p className="display-xl mt-3 text-xl text-bone md:text-2xl">
+                          {s.reference}
+                        </p>
+                        {s.theme && (
+                          <p className="mt-2 line-clamp-1 text-sm text-stone">
+                            {s.theme}
                           </p>
-                          {s.theme && (
-                            <p className="truncate text-sm text-muted-foreground">
-                              {s.theme}
-                            </p>
-                          )}
-                        </div>
-                        <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-1" />
-                      </CardContent>
-                    </Card>
+                        )}
+                      </div>
+                      <Icon
+                        name="arrow-up-right"
+                        size={16}
+                        className="mt-1 shrink-0 text-stone/40 transition-all group-hover/c:translate-x-0.5 group-hover/c:-translate-y-0.5 group-hover/c:text-brass"
+                      />
+                    </div>
                   </Link>
                 );
               })}
             </div>
           </div>
-        </>
+        </section>
       )}
-    </div>
+    </>
   );
+}
+
+function romanize(n: number): string {
+  const numerals = [
+    "I",
+    "II",
+    "III",
+    "IV",
+    "V",
+    "VI",
+    "VII",
+    "VIII",
+    "IX",
+    "X",
+    "XI",
+    "XII",
+  ];
+  return numerals[n - 1] ?? String(n);
 }

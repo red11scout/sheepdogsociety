@@ -1,102 +1,157 @@
 import Link from "next/link";
 import Image from "next/image";
+import { Icon } from "@/components/icons/Icon";
 import { NewsletterForm } from "./newsletter-form";
+import { ScriptureMarquee } from "@/components/motion/ScriptureMarquee";
 
 export function PublicFooter() {
   return (
-    <footer className="border-t border-border bg-card">
-      <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6">
-        <div className="grid gap-8 md:grid-cols-4">
-          {/* Brand */}
-          <div className="space-y-3">
-            <Link href="/" className="flex items-center gap-2">
+    <footer className="bg-iron text-bone">
+      <ScriptureMarquee />
+      <div className="mx-auto max-w-7xl px-6 py-20 md:px-12 md:py-28">
+        <div className="grid gap-12 md:grid-cols-12">
+          <div className="space-y-5 md:col-span-4">
+            <Link
+              href="/"
+              className="flex items-center gap-3"
+              aria-label="Sheepdog Society home"
+            >
               <Image
                 src="/logo.png"
-                alt="Sheepdog Society"
-                width={32}
-                height={32}
-                className="rounded"
+                alt=""
+                width={40}
+                height={40}
+                className="rounded-none"
               />
-              <span className="font-bold">SheepDog Society</span>
+              <div className="leading-tight">
+                <div className="display-xl text-base text-bone">
+                  Sheepdog Society
+                </div>
+                <div className="section-mark text-[0.625rem] text-brass">
+                  Acts 20:28
+                </div>
+              </div>
             </Link>
-            <p className="text-sm text-muted-foreground">
+            <p className="max-w-sm text-sm leading-relaxed text-stone">
               Men of faith standing guard, protecting the flock, living with
-              purpose. Acts 20:28.
+              purpose.
             </p>
+            <Link
+              href="/acts-20-28"
+              className="group inline-flex items-center gap-2 section-mark text-brass transition-opacity hover:opacity-70"
+            >
+              Read the verse
+              <Icon
+                name="arrow-up-right"
+                size={14}
+                className="transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5"
+              />
+            </Link>
           </div>
 
-          {/* Quick Links */}
-          <div>
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Get Involved
-            </h3>
-            <ul className="space-y-2 text-sm">
+          <div className="md:col-span-2">
+            <h3 className="section-mark text-stone/60">Get involved</h3>
+            <ul className="mt-5 space-y-3 text-sm">
               <li>
-                <Link href="/get-started" className="text-muted-foreground hover:text-foreground">
-                  New to Sheepdog
+                <Link
+                  href="/get-started"
+                  className="text-bone/80 transition-colors hover:text-brass"
+                >
+                  New here
                 </Link>
               </li>
               <li>
-                <Link href="/locations" className="text-muted-foreground hover:text-foreground">
-                  Find a Location
+                <Link
+                  href="/locations"
+                  className="text-bone/80 transition-colors hover:text-brass"
+                >
+                  Find a group
                 </Link>
               </li>
               <li>
-                <Link href="/locations/request" className="text-muted-foreground hover:text-foreground">
-                  Start a Group
+                <Link
+                  href="/locations/request"
+                  className="text-bone/80 transition-colors hover:text-brass"
+                >
+                  Start a group
                 </Link>
               </li>
               <li>
-                <Link href="/giving" className="text-muted-foreground hover:text-foreground">
+                <Link
+                  href="/giving"
+                  className="text-bone/80 transition-colors hover:text-brass"
+                >
                   Give
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Resources */}
-          <div>
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Resources
-            </h3>
-            <ul className="space-y-2 text-sm">
+          <div className="md:col-span-2">
+            <h3 className="section-mark text-stone/60">Resources</h3>
+            <ul className="mt-5 space-y-3 text-sm">
               <li>
-                <Link href="/about" className="text-muted-foreground hover:text-foreground">
-                  About Us
+                <Link
+                  href="/about"
+                  className="text-bone/80 transition-colors hover:text-brass"
+                >
+                  About
                 </Link>
               </li>
               <li>
-                <Link href="/faq" className="text-muted-foreground hover:text-foreground">
-                  FAQ
+                <Link
+                  href="/how-we-gather"
+                  className="text-bone/80 transition-colors hover:text-brass"
+                >
+                  How we gather
                 </Link>
               </li>
               <li>
-                <Link href="/stories" className="text-muted-foreground hover:text-foreground">
+                <Link
+                  href="/stories"
+                  className="text-bone/80 transition-colors hover:text-brass"
+                >
                   Stories
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-muted-foreground hover:text-foreground">
+                <Link
+                  href="/faq"
+                  className="text-bone/80 transition-colors hover:text-brass"
+                >
+                  FAQ
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/contact"
+                  className="text-bone/80 transition-colors hover:text-brass"
+                >
                   Contact
                 </Link>
               </li>
             </ul>
           </div>
 
-          {/* Newsletter */}
-          <div>
-            <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Stay Updated
-            </h3>
-            <p className="mb-3 text-sm text-muted-foreground">
-              Get the Yarn — our newsletter for the brotherhood.
+          <div className="md:col-span-4">
+            <h3 className="section-mark text-stone/60">The Letter</h3>
+            <p className="mt-5 max-w-sm text-sm leading-relaxed text-stone">
+              A weekly word for men of faith. Delivered Sunday mornings before
+              the day starts.
             </p>
-            <NewsletterForm />
+            <div className="mt-5">
+              <NewsletterForm />
+            </div>
           </div>
         </div>
 
-        <div className="mt-8 border-t border-border pt-6 text-center text-sm text-muted-foreground">
-          <p>&copy; {new Date().getFullYear()} SheepDog Society. All rights reserved.</p>
+        <div className="hairline mt-16 bg-stone/15" />
+        <div className="mt-8 flex flex-col-reverse items-start gap-3 text-xs text-stone/60 md:flex-row md:items-center md:justify-between">
+          <p>
+            &copy; {new Date().getFullYear()} Sheepdog Society. All rights
+            reserved.
+          </p>
+          <p className="section-mark">Forth as sheepdogs &middot; Glory to God</p>
         </div>
       </div>
     </footer>
