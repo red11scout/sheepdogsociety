@@ -8,6 +8,7 @@ import { Magnetic } from "@/components/motion/Magnetic";
 import { Spotlight } from "@/components/motion/Spotlight";
 import { HintTooltip } from "@/components/admin/HintTooltip";
 import { EmptyState } from "@/components/admin/EmptyState";
+import { SetupChecklist } from "@/components/admin/SetupChecklist";
 import { cn } from "@/lib/utils";
 
 type DashboardStats = {
@@ -200,6 +201,16 @@ export function AdminDashboard({ greetingName = "brother" }: AdminDashboardProps
           </ul>
         </div>
       </section>
+
+      {/* First-week onboarding — auto-hides once every step is done */}
+      <SetupChecklist
+        stats={{
+          totalGroups: stats.totalGroups,
+          activeSubscribers: stats.activeSubscribers,
+          publishedLetters: stats.publishedLetters,
+          upcomingEvents: stats.upcomingEvents,
+        }}
+      />
 
       {/* Stats row */}
       <section className="mt-4 grid gap-4 md:grid-cols-4">

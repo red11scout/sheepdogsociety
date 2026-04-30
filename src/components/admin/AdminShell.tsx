@@ -6,6 +6,7 @@ import { AdminSidebar } from "./AdminSidebar";
 import { AdminTopbar } from "./AdminTopbar";
 import { CommandPalette } from "./CommandPalette";
 import { AIAssistant } from "./AIAssistant";
+import { AdminHelp } from "./AdminHelp";
 
 interface AdminShellProps {
   user: { id: string; name: string | null; email: string | null };
@@ -110,6 +111,8 @@ export function AdminShell({
         }}
         initialPrompt={seedPrompt}
       />
+
+      <AdminHelp />
     </div>
   );
 }

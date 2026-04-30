@@ -9,6 +9,7 @@ import Underline from "@tiptap/extension-underline";
 import LinkExtension from "@tiptap/extension-link";
 import Image from "@tiptap/extension-image";
 import { autosaveLetter, publishLetter } from "@/server/letters";
+import { ImageField } from "@/components/admin/ImageField";
 
 interface LetterEditorProps {
   letterId: string;
@@ -21,6 +22,7 @@ interface LetterEditorProps {
     status: string;
     slug: string;
     issueNumber: number;
+    coverImageUrl?: string;
   };
 }
 
@@ -28,6 +30,7 @@ export function LetterEditor({ letterId, initial }: LetterEditorProps) {
   const [title, setTitle] = useState(initial.title);
   const [subtitle, setSubtitle] = useState(initial.subtitle);
   const [themeWord, setThemeWord] = useState(initial.themeWord);
+  const [coverImageUrl, setCoverImageUrl] = useState(initial.coverImageUrl ?? "");
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [savingState, setSavingState] = useState<"idle" | "saving" | "error">("idle");
   const [aiBusy, setAiBusy] = useState(false);
@@ -70,6 +73,7 @@ export function LetterEditor({ letterId, initial }: LetterEditorProps) {
           themeWord: themeWord || undefined,
           body: json,
           bodyHtml: html,
+          coverImageUrl: coverImageUrl || undefined,
           excerpt:
             (editor.getText().slice(0, 200).replace(/\s+/g, " ").trim() ||
               undefined),
@@ -81,7 +85,7 @@ export function LetterEditor({ letterId, initial }: LetterEditorProps) {
         setSavingState("error");
       }
     }, 500);
-  }, [editor, letterId, title, subtitle, themeWord]);
+  }, [editor, letterId, title, subtitle, themeWord, coverImageUrl]);
 
   useEffect(() => {
     if (!editor) return;
@@ -96,7 +100,7 @@ export function LetterEditor({ letterId, initial }: LetterEditorProps) {
   useEffect(() => {
     triggerSave();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [title, subtitle, themeWord]);
+  }, [title, subtitle, themeWord, coverImageUrl]);
 
   // AI: Draft with Claude
   async function draftWithClaude() {
@@ -188,6 +192,22 @@ export function LetterEditor({ letterId, initial }: LetterEditorProps) {
 
       <main className="px-6 pt-12 pb-32">
         <div className="max-w-[65ch] mx-auto">
+          <div className="mb-8">
+            <p className="font-body text-xs uppercase tracking-[0.18em] text-muted-foreground mb-3">
+              Cover image
+            </p>
+            <ImageField
+              value={coverImageUrl}
+              onChange={(url) => setCoverImageUrl(url)}
+              folder="letters"
+              defaultPrompt={
+                title && title !== "Untitled letter"
+                  ? `Cover image for an editorial letter titled "${title}"${themeWord ? `, theme: ${themeWord}` : ""}.`
+                  : "Editorial cover image, brass-on-iron palette, dignified, masculine, scriptural."
+              }
+            />
+          </div>
+
           <input
             type="text"
             placeholder="Theme word (one word, e.g. Joy)"
@@ -216,10 +236,13 @@ export function LetterEditor({ letterId, initial }: LetterEditorProps) {
               className="flex gap-1 bg-foreground rounded-md shadow-lg p-1"
             >
               <BubbleAction onClick={() => improveSelection("rephrase")} disabled={aiBusy}>
-                ✦ Rephrase
+                ✦ Match voice
               </BubbleAction>
               <BubbleAction onClick={() => improveSelection("shorten")} disabled={aiBusy}>
-                Shorten
+                Tighten
+              </BubbleAction>
+              <BubbleAction onClick={() => improveSelection("sharpen-verbs")} disabled={aiBusy}>
+                Sharpen verbs
               </BubbleAction>
               <BubbleAction onClick={() => improveSelection("expand")} disabled={aiBusy}>
                 Expand

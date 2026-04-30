@@ -34,6 +34,7 @@ export default async function LetterEditPage({ params }: PageProps) {
         status: letter.status,
         slug: letter.slug,
         issueNumber: letter.issueNumber,
+        coverImageUrl: letter.coverImageUrl ?? "",
       }}
     />
   );

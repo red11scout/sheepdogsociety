@@ -4,24 +4,26 @@ import { aiGenerations, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { streamText } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
-import { SYSTEM_PROMPT } from "@/lib/ai/system-prompt";
+import { BRAND_VOICE, MODELS, withBrandVoice } from "@/lib/ai/prompts";
 
 export const maxDuration = 60;
 
-const MODEL = "claude-sonnet-4-5";
-const PROMPT_VERSION = "improve.v1";
+const MODEL = MODELS.default;
+const PROMPT_VERSION = "improve.v2";
 
 const ACTION_INSTRUCTIONS: Record<string, string> = {
   rephrase:
-    "Rephrase this passage in Jeremy's voice. Keep meaning. Cut filler. Same length or slightly shorter.",
+    "Rewrite this passage in the brand voice. Keep meaning. Cut filler. Same length or slightly shorter.",
   shorten:
-    "Cut this passage to roughly half its length without losing the central point. Use shorter sentences.",
+    "Tighten this passage to roughly half its length without losing the central point. Use shorter sentences and stronger verbs.",
   expand:
     "Expand this passage by ~50%. Add a concrete image, an example, or a rhetorical move that lands the point. No filler.",
   "fix-grammar":
     "Fix grammar, punctuation, and obvious typos. Keep the voice. Do not rephrase.",
   pastoralize:
     "Rewrite to sound more pastoral — gentler, more inviting, less commanding. Same content.",
+  "sharpen-verbs":
+    "Replace every weak or generic verb with a stronger, more concrete one. Keep meaning, length, and structure. The result should read 10–20% punchier without changing what the passage says.",
 };
 
 export async function POST(req: Request) {
@@ -39,18 +41,16 @@ export async function POST(req: Request) {
   }
   const instruction = ACTION_INSTRUCTIONS[action];
 
-  const userPrompt = `${instruction}
+  const userPrompt = withBrandVoice(`${instruction}
 
 Original text:
 """
 ${text}
-"""
-
-Reply with ONLY the rewritten text — no preamble, no quotes around it, no explanation.`;
+"""`);
 
   const result = streamText({
     model: anthropic(MODEL),
-    system: SYSTEM_PROMPT,
+    system: BRAND_VOICE,
     prompt: userPrompt,
     onFinish: async ({ text: output, usage }) => {
       try {

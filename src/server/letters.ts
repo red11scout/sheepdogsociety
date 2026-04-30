@@ -67,6 +67,7 @@ interface AutosaveInput {
   body: object; // Tiptap ProseMirror JSON
   bodyHtml: string;
   excerpt?: string;
+  coverImageUrl?: string;
 }
 
 export async function autosaveLetter(input: AutosaveInput) {
@@ -81,6 +82,7 @@ export async function autosaveLetter(input: AutosaveInput) {
       body: input.body,
       bodyHtml: input.bodyHtml,
       excerpt: input.excerpt ?? null,
+      coverImageUrl: input.coverImageUrl ?? null,
       updatedAt: new Date(),
     })
     .where(eq(letters.id, input.id));

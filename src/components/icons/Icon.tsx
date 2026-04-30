@@ -17,6 +17,8 @@ export type IconName =
   | "plus"
   | "check"
   | "chevron-down"
+  | "chevron-left"
+  | "chevron-right"
   | "sheepdog-rest"
   | "watchtower"
   | "oak"
@@ -425,6 +427,16 @@ const PATHS: Record<IconName, React.ReactElement> = {
   "chevron-down": (
     <g {...STROKE_GROUP_PROPS}>
       <path d="M5 9L12 16L19 9" />
+    </g>
+  ),
+  "chevron-left": (
+    <g {...STROKE_GROUP_PROPS}>
+      <path d="M15 5L8 12L15 19" />
+    </g>
+  ),
+  "chevron-right": (
+    <g {...STROKE_GROUP_PROPS}>
+      <path d="M9 5L16 12L9 19" />
     </g>
   ),
   search: (

@@ -7,14 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import {
-  BookOpen,
-  ChevronLeft,
-  ChevronRight,
-  ChevronDown,
-  X,
-  Sparkles,
-} from "lucide-react";
+import { Icon } from "@/components/icons/Icon";
 
 const popularTranslations = AVAILABLE_TRANSLATIONS.filter((t) => t.popular);
 const otherTranslations = AVAILABLE_TRANSLATIONS.filter((t) => !t.popular);
@@ -152,7 +145,7 @@ export default function PublicBiblePage() {
         <div className="border-b border-border bg-card/50 backdrop-blur-sm">
           {/* Verse of the Day link */}
           <div className="flex items-center gap-2 border-b border-border/50 px-4 py-1.5">
-            <Sparkles className="h-3.5 w-3.5 text-bronze" />
+            <Icon name="sparkles" size={14} className="text-brass" />
             <Link
               href="/daily-scripture"
               className="text-xs font-medium text-bronze hover:underline"
@@ -163,7 +156,7 @@ export default function PublicBiblePage() {
 
           {/* Main nav row */}
           <div className="flex items-center gap-2 px-4 py-2.5">
-            <BookOpen className="hidden h-5 w-5 shrink-0 text-bronze sm:block" />
+            <Icon name="scroll" size={20} className="hidden shrink-0 text-brass sm:block" />
 
             {/* Book/Chapter selector button */}
             <Button
@@ -177,7 +170,7 @@ export default function PublicBiblePage() {
               className="max-w-[200px] truncate font-medium"
             >
               {book} {chapter}
-              <ChevronDown className="ml-1 h-3 w-3" />
+              <Icon name="chevron-down" size={12} className="ml-1" />
             </Button>
 
             {/* Chapter nav arrows */}
@@ -189,7 +182,7 @@ export default function PublicBiblePage() {
                 onClick={prevChapter}
                 title="Previous chapter (Left arrow)"
               >
-                <ChevronLeft className="h-4 w-4" />
+                <Icon name="chevron-left" size={16} />
               </Button>
 
               {/* Chapter number grid toggle */}
@@ -213,7 +206,7 @@ export default function PublicBiblePage() {
                 onClick={nextChapter}
                 title="Next chapter (Right arrow)"
               >
-                <ChevronRight className="h-4 w-4" />
+                <Icon name="chevron-right" size={16} />
               </Button>
             </div>
 
@@ -254,7 +247,7 @@ export default function PublicBiblePage() {
                   {otherTranslations.some((t) => t.abbr === translation)
                     ? translation
                     : "More"}
-                  <ChevronDown className="h-3 w-3" />
+                  <Icon name="chevron-down" size={12} />
                 </button>
               </div>
             </div>
@@ -272,7 +265,7 @@ export default function PublicBiblePage() {
                 onClick={() => setShowTranslations(false)}
                 className="rounded p-1 hover:bg-secondary"
               >
-                <X className="h-4 w-4 text-muted-foreground" />
+                <Icon name="close" size={16} className="text-muted-foreground" />
               </button>
             </div>
             <div className="grid grid-cols-2 gap-1 sm:grid-cols-3 md:grid-cols-4">
@@ -310,7 +303,7 @@ export default function PublicBiblePage() {
                 onClick={() => setShowChapterGrid(false)}
                 className="rounded p-1 hover:bg-secondary"
               >
-                <X className="h-4 w-4 text-muted-foreground" />
+                <Icon name="close" size={16} className="text-muted-foreground" />
               </button>
             </div>
             <div className="grid grid-cols-10 gap-1 sm:grid-cols-15 md:grid-cols-20">
@@ -344,7 +337,7 @@ export default function PublicBiblePage() {
                 onClick={() => setShowBookPicker(false)}
                 className="rounded p-1 hover:bg-secondary"
               >
-                <X className="h-4 w-4 text-muted-foreground" />
+                <Icon name="close" size={16} className="text-muted-foreground" />
               </button>
             </div>
 
@@ -447,7 +440,7 @@ export default function PublicBiblePage() {
               </div>
             ) : error ? (
               <div className="rounded-lg border border-destructive/30 bg-destructive/5 p-6 text-center">
-                <BookOpen className="mx-auto mb-3 h-10 w-10 text-muted-foreground" />
+                <Icon name="scroll" size={40} className="mx-auto mb-3 text-muted-foreground" />
                 <p className="font-medium">{error}</p>
                 <p className="mt-2 text-sm text-muted-foreground">
                   Try switching to a different translation or check back later.

@@ -81,6 +81,12 @@ export function AdminSidebar({
         { href: "/admin/groups", label: "Groups", icon: "brothers" },
         { href: "/admin/locations", label: "Locations", icon: "map-pin" },
         {
+          href: "/admin/members",
+          label: "Members",
+          icon: "users-group",
+          hint: "Every signup from /join. Read-only this phase; status edits in Phase E.",
+        },
+        {
           href: "/admin/location-requests",
           label: "Plant Requests",
           icon: "plus",
@@ -96,7 +102,11 @@ export function AdminSidebar({
     },
     {
       label: "Settings",
-      items: [{ href: "/admin/users", label: "Admins", icon: "shield" }],
+      items: [
+        { href: "/admin/users", label: "Admins", icon: "shield" },
+        { href: "/admin/audit", label: "Audit log", icon: "clipboard" },
+        { href: "/admin/settings", label: "Settings", icon: "settings" },
+      ],
     },
   ];
 
