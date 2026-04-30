@@ -50,10 +50,16 @@ export function AdminSidebar({
       label: "Content",
       items: [
         {
+          href: "/admin/encouragements",
+          label: "Weekly Encouragements",
+          icon: "sparkles",
+          hint: "Structured weekly newsletter: intro, updates, scriptures, guidance, notes. With AI helpers per section + image gen.",
+        },
+        {
           href: "/admin/letters",
           label: "The Letter",
           icon: "pen",
-          hint: "Weekly newsletter. Tiptap editor with Claude AI co-pilot.",
+          hint: "Free-form weekly editorial. Tiptap editor with Claude bubble menu.",
         },
         { href: "/admin/devotionals", label: "Devotionals", icon: "scroll" },
         { href: "/admin/scripture", label: "Daily Scripture", icon: "lamp" },

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { AdminSidebar } from "./AdminSidebar";
 import { AdminTopbar } from "./AdminTopbar";
 import { CommandPalette } from "./CommandPalette";
@@ -21,11 +22,18 @@ export function AdminShell({
   pendingLocationRequests,
   children,
 }: AdminShellProps) {
+  const pathname = usePathname();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [assistantOpen, setAssistantOpen] = useState(false);
   const [seedPrompt, setSeedPrompt] = useState<string | undefined>();
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  // ⌘K to open palette
+  // Close mobile nav when route changes
+  useEffect(() => {
+    setMobileNavOpen(false);
+  }, [pathname]);
+
+  // ⌘K to open palette / ⌘J for AI
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
@@ -47,17 +55,40 @@ export function AdminShell({
 
   return (
     <div className="flex h-screen overflow-hidden bg-iron text-bone">
-      <AdminSidebar
-        pendingCount={pendingCount}
-        pendingTestimonies={pendingTestimonies}
-        pendingLocationRequests={pendingLocationRequests}
-      />
+      {/* Desktop sidebar — always visible at lg+ */}
+      <div className="hidden lg:flex">
+        <AdminSidebar
+          pendingCount={pendingCount}
+          pendingTestimonies={pendingTestimonies}
+          pendingLocationRequests={pendingLocationRequests}
+        />
+      </div>
+
+      {/* Mobile drawer overlay */}
+      {mobileNavOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-iron/85 backdrop-blur-md lg:hidden"
+          onClick={() => setMobileNavOpen(false)}
+        >
+          <div
+            className="h-full w-72 max-w-[85%] shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <AdminSidebar
+              pendingCount={pendingCount}
+              pendingTestimonies={pendingTestimonies}
+              pendingLocationRequests={pendingLocationRequests}
+            />
+          </div>
+        </div>
+      )}
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <AdminTopbar
           user={user}
           onOpenCommand={() => setPaletteOpen(true)}
           onOpenAssistant={() => setAssistantOpen(true)}
+          onOpenMobileNav={() => setMobileNavOpen(true)}
         />
         <main className="flex-1 overflow-y-auto bg-iron">{children}</main>
       </div>

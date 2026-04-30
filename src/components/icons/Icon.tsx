@@ -50,7 +50,9 @@ export type IconName =
   | "target"
   | "trash"
   | "send"
-  | "logout";
+  | "logout"
+  | "sun"
+  | "moon";
 
 const STROKE_GROUP_PROPS = {
   fill: "none",
@@ -358,6 +360,27 @@ const PATHS: Record<IconName, React.ReactElement> = {
       <path d="M16 16L20 12L16 8" />
       <path d="M20 12H10" />
     </g>
+  ),
+  sun: (
+    <g fill={FILL}>
+      <circle cx="12" cy="12" r="4.5" />
+      <g {...STROKE_GROUP_PROPS}>
+        <path d="M12 2V4" />
+        <path d="M12 20V22" />
+        <path d="M2 12H4" />
+        <path d="M20 12H22" />
+        <path d="M4.93 4.93L6.34 6.34" />
+        <path d="M17.66 17.66L19.07 19.07" />
+        <path d="M4.93 19.07L6.34 17.66" />
+        <path d="M17.66 6.34L19.07 4.93" />
+      </g>
+    </g>
+  ),
+  moon: (
+    <path
+      fill={FILL}
+      d="M21 14.5C19.7 15.5 18.1 16 16.5 16C12.4 16 9 12.6 9 8.5C9 6.9 9.5 5.3 10.5 4C6.5 4.5 3.5 7.9 3.5 12C3.5 16.4 7.1 20 11.5 20C15.6 20 19 17 19.5 13Z"
+    />
   ),
 
   // ============================================================

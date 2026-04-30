@@ -39,6 +39,7 @@ const PUBLIC_ROUTES = [
   /^\/statement-of-faith(\/.*)?$/,
   /^\/blog(\/.*)?$/,
   /^\/acts-20-28$/,
+  /^\/encouragements(\/.*)?$/,
   // Auth pages and API routes
   /^\/admin\/sign-in(\/.*)?$/,
   /^\/admin\/check-email(\/.*)?$/,

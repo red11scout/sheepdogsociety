@@ -5,13 +5,14 @@ import Image from "next/image";
 import { useState } from "react";
 import { Icon } from "@/components/icons/Icon";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const navLinks = [
   { href: "/locations", label: "Groups" },
-  { href: "/how-we-gather", label: "How we gather" },
+  { href: "/encouragements", label: "Encouragements" },
+  { href: "/resources", label: "Resources" },
   { href: "/about", label: "About" },
   { href: "/stories", label: "Stories" },
-  { href: "/daily-scripture", label: "Daily scripture" },
   { href: "/faq", label: "FAQ" },
   { href: "/giving", label: "Give" },
 ];
@@ -57,6 +58,7 @@ export function PublicNav() {
         </div>
 
         <div className="hidden items-center gap-3 lg:flex">
+          <ThemeToggle className="inline-flex h-9 w-9 items-center justify-center border border-iron/15 text-iron/70 transition-colors hover:border-iron hover:text-iron" />
           <Button
             asChild
             size="sm"
@@ -69,15 +71,18 @@ export function PublicNav() {
           </Button>
         </div>
 
-        <button
-          type="button"
-          className="rounded-none p-2 text-iron lg:hidden"
-          onClick={() => setMobileOpen((v) => !v)}
-          aria-label={mobileOpen ? "Close menu" : "Open menu"}
-          aria-expanded={mobileOpen}
-        >
-          <Icon name={mobileOpen ? "close" : "menu"} size={22} />
-        </button>
+        <div className="flex items-center gap-2 lg:hidden">
+          <ThemeToggle className="inline-flex h-9 w-9 items-center justify-center border border-iron/15 text-iron/70 transition-colors hover:border-iron hover:text-iron" />
+          <button
+            type="button"
+            className="rounded-none p-2 text-iron"
+            onClick={() => setMobileOpen((v) => !v)}
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+            aria-expanded={mobileOpen}
+          >
+            <Icon name={mobileOpen ? "close" : "menu"} size={22} />
+          </button>
+        </div>
       </nav>
 
       {mobileOpen && (

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Icon } from "@/components/icons/Icon";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
 const PATH_LABELS: Record<string, string> = {
@@ -28,12 +29,14 @@ interface AdminTopbarProps {
   user: { name: string | null; email: string | null };
   onOpenCommand: () => void;
   onOpenAssistant: () => void;
+  onOpenMobileNav?: () => void;
 }
 
 export function AdminTopbar({
   user,
   onOpenCommand,
   onOpenAssistant,
+  onOpenMobileNav,
 }: AdminTopbarProps) {
   const pathname = usePathname();
   const [time, setTime] = useState<string>("");
@@ -67,7 +70,19 @@ export function AdminTopbar({
     "?";
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-4 border-b border-stone/15 bg-iron/85 px-6 backdrop-blur-md">
+    <header className="sticky top-0 z-30 flex h-16 shrink-0 items-center gap-4 border-b border-stone/15 bg-iron/85 px-4 backdrop-blur-md md:px-6">
+      {/* Mobile menu button */}
+      {onOpenMobileNav && (
+        <button
+          type="button"
+          onClick={onOpenMobileNav}
+          className="rounded-none p-2 text-stone/70 transition-colors hover:text-bone lg:hidden"
+          aria-label="Open menu"
+        >
+          <Icon name="menu" size={20} />
+        </button>
+      )}
+
       {/* Breadcrumb */}
       <div className="flex min-w-0 items-center gap-2 text-sm text-stone/70">
         {crumbs.length === 0 ? (
@@ -122,9 +137,12 @@ export function AdminTopbar({
       </button>
 
       {/* Time */}
-      <span className="hidden section-mark text-stone/40 lg:inline">
+      <span className="hidden section-mark text-stone/40 xl:inline">
         {time}
       </span>
+
+      {/* Theme toggle */}
+      <ThemeToggle />
 
       {/* User */}
       <div className="flex h-9 w-9 items-center justify-center border border-stone/20 bg-iron text-xs font-medium text-stone">
