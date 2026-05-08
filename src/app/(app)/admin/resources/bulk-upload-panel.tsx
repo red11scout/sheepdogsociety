@@ -172,7 +172,7 @@ export function BulkUploadPanel({
             <button
               type="button"
               onClick={() => fileInput.current?.click()}
-              className="lift mt-4 inline-flex h-9 items-center gap-2 border border-bone bg-bone px-4 text-xs font-medium uppercase tracking-wider text-ink transition-colors hover:bg-stone"
+              className="lift mt-4 inline-flex h-9 items-center gap-2 border border-bone bg-bone px-4 text-xs font-medium uppercase tracking-wider text-iron transition-colors hover:bg-stone"
             >
               <Icon name="plus" size={12} />
               Pick files
