@@ -8,7 +8,7 @@ A weekly editorial newsletter for Christian men, anchored in Acts 20:28. Brief a
 - **UI**: shadcn/ui + Tailwind CSS v4 + Radix UI + Lucide icons
 - **Brand**: Pasture & Iron palette (bone, iron, navy, brass, olive, oxblood, stone) + Fraunces (display) + Cormorant Garamond (pull-quotes/scripture) + Inter (UI/body) + Merriweather (legacy scripture class)
 - **Auth**: Auth.js v5 (NextAuth) + Resend magic-link + Drizzle adapter (allowlist via `ADMIN_EMAILS`)
-- **Database**: Supabase Postgres in production (`DATABASE_URL`, transaction-mode pooler on port 6543). The original "Phase G" plan to move to Neon never shipped; treat earlier "Neon" references as "the prod Postgres". The Realtime chat broker is decommissioned per the architecture decision.
+- **Database**: Neon Postgres in production (`DATABASE_URL` = pooled endpoint, host suffix `-pooler`; `DATABASE_URL_UNPOOLED` available for migrations). Wired into Vercel via the Marketplace integration so env vars sync automatically. Previous Supabase install was retired 2026-05-08.
 - **ORM**: Drizzle ORM (`src/db/schema.ts`, 38 tables)
 - **AI**: Vercel AI SDK (`ai` + `@ai-sdk/anthropic`) streaming via `claude-sonnet-4-5`. NEVER LangChain.
 - **Email**: Resend (transactional + Broadcasts) + React Email templates (`src/emails/`)
@@ -49,13 +49,13 @@ Pastoral, warm, direct, masculine without macho. Short Anglo-Saxon sentences. Im
 ## Required Env Vars
 **Auth:** `AUTH_SECRET`, `AUTH_RESEND_KEY`, `ADMIN_EMAILS`, `NEXT_PUBLIC_SITE_URL`
 **Email:** `RESEND_API_KEY`, `RESEND_AUDIENCE_ID`, `RESEND_FROM_AUTH`, `RESEND_FROM_NEWSLETTER`
-**DB:** `DATABASE_URL` (Supabase Postgres pooler — used by the entire runtime: app queries + Auth.js + every feature). Migrations applied via the GitHub Action at `.github/workflows/apply-migrations.yml` (auto on push to main when `drizzle/*.sql` changes) using the `DATABASE_URL_PRODUCTION` env secret.
+**DB:** `DATABASE_URL` (Neon pooled endpoint — used by the entire runtime: app queries + Auth.js + every feature). `DATABASE_URL_UNPOOLED` for migration scripts that need a stable session. Migrations applied via the GitHub Action at `.github/workflows/apply-migrations.yml` (auto on push to main when `drizzle/*.sql` changes) using the `DATABASE_URL_PRODUCTION` env secret.
 **AI:** `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` (for `gpt-image-1`, optional)
 **Maps:** `NEXT_PUBLIC_MAPBOX_TOKEN`
 **Storage:** `BLOB_READ_WRITE_TOKEN`
 **Bible:** `ESV_API_KEY`, `API_BIBLE_KEY`
 **Cron:** `CRON_SECRET`
-**Legacy / dead weight on Vercel (safe to remove):** `CLERK_*`, `NEXT_PUBLIC_CLERK_*`, `CLERK_WEBHOOK_SECRET`, `NEON_DATABASE_URL` (was unused at runtime — runtime reads `DATABASE_URL`). Supabase Realtime keys can stay or go; the chat broker is decommissioned.
+**Legacy / dead weight on Vercel (safe to remove):** `CLERK_*`, `NEXT_PUBLIC_CLERK_*`, `CLERK_WEBHOOK_SECRET`, all `SUPABASE_*` keys (the chat broker is decommissioned and prod is on Neon as of 2026-05-08), `NEON_DATABASE_URL` (already removed; the marketplace integration uses `DATABASE_URL` directly).
 
 ## Vercel
 - Project: `drew-godwins-projects/sheepdogsociety`

@@ -1,12 +1,16 @@
 # Database migrations
 
-The Sheepdog Society site uses **Supabase** (Postgres) in production. The
-`DATABASE_URL` env var on Vercel is the source of truth for which DB the
-runtime app talks to. The original "Phase G — move to Neon" plan in CLAUDE.md
-hasn't shipped; treat any reference to "Neon" in older docs as "the prod
-Postgres", whatever it currently is. Migrations live as plain SQL files
-under `drizzle/`. Every file starts with `IF NOT EXISTS` /
+The Sheepdog Society site uses **Neon** (Postgres) in production. The
+`DATABASE_URL` env var on Vercel is the pooled endpoint (host suffix
+`-pooler`); `DATABASE_URL_UNPOOLED` is the direct connection used by
+migration scripts that need a stable session. Both are auto-injected
+by the Vercel + Neon Marketplace integration. Migrations live as plain
+SQL files under `drizzle/`. Every file starts with `IF NOT EXISTS` /
 `ON CONFLICT DO NOTHING` guards so they're idempotent and re-runnable.
+
+History: prior to 2026-05-08 the prod database was Supabase. We cut
+over to Neon for first-class Vercel env-var sync, per-preview database
+branching, and to stop bleeding hours on the dual-system tax.
 
 ## How migrations apply to production
 
@@ -15,12 +19,12 @@ There are three paths. Use the first one that's reasonable for the change.
 ### 1. Automatic — push a new SQL file to `main`
 
 When a new file under `drizzle/*.sql` lands on `main`, the
-`Apply Neon migrations` GitHub Action runs `scripts/apply-neon-migration.mjs`
+`Apply database migrations` GitHub Action runs `scripts/apply-neon-migration.mjs`
 against prod Neon. This is the default.
 
 **Required setup (one time):**
 
-1. In Supabase, copy the **transaction-mode pooled connection string** (port 6543) for the production project.
+1. In Neon, copy the **unpooled** connection string (the one without `-pooler` in the host). Migration scripts need a stable session, which the pooler can't guarantee.
 2. In GitHub repo: **Settings → Environments → New environment** named
    `production`. Add a secret to that environment called
    `DATABASE_URL_PRODUCTION` with the full URL.
