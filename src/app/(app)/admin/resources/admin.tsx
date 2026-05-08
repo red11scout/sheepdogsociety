@@ -12,8 +12,10 @@ import {
   createResource,
   updateResource,
   deleteResource,
+  recategorizeResource,
 } from "@/server/resources-admin";
 import { format } from "date-fns";
+import { BulkUploadPanel } from "./bulk-upload-panel";
 
 interface Section {
   id: string;
@@ -27,14 +29,24 @@ interface Section {
 interface ResourceRow {
   id: string;
   title: string;
+  slug?: string;
+  summary?: string | null;
   description: string | null;
   type: string;
   url: string | null;
   fileKey: string | null;
+  sourceFilename?: string | null;
+  sectionId?: string | null;
   category: string | null;
   isPublic: boolean;
   level: string | null;
+  audience?: string | null;
   seriesName: string | null;
+  topics?: string[] | null;
+  themes?: string[] | null;
+  booksOfBible?: string[] | null;
+  estimatedMinutes?: number | null;
+  aiCategorizedAt?: Date | string | null;
   createdAt: Date | string;
 }
 
@@ -75,9 +87,15 @@ export function ResourcesAdmin({
   const activeSection = sections.find((s) => s.slug === activeSlug);
   const filteredResources = useMemo(
     () =>
-      resources.filter((r) => (r.category ?? "general") === activeSlug),
-    [resources, activeSlug]
+      resources.filter((r) => {
+        if (!activeSection) return false;
+        if (r.sectionId && r.sectionId === activeSection.id) return true;
+        // legacy rows: match by category slug
+        return (r.category ?? "general") === activeSlug;
+      }),
+    [resources, activeSlug, activeSection]
   );
+  const [editingSectionId, setEditingSectionId] = useState<string | null>(null);
 
   function refresh() {
     startTransition(() => router.refresh());
@@ -262,6 +280,14 @@ export function ResourcesAdmin({
                 <div className="flex items-center gap-3">
                   <button
                     type="button"
+                    onClick={() => setEditingSectionId(activeSection.id)}
+                    className="inline-flex h-9 items-center gap-1.5 border border-stone/20 px-3 text-xs text-stone/65 transition-colors hover:border-brass hover:text-brass"
+                  >
+                    <Icon name="pen" size={12} />
+                    Edit section
+                  </button>
+                  <button
+                    type="button"
                     onClick={() => handleDeleteSection(activeSection.id)}
                     className="inline-flex h-9 items-center gap-1.5 border border-stone/20 px-3 text-xs text-stone/65 transition-colors hover:border-oxblood hover:text-oxblood"
                   >
@@ -275,10 +301,34 @@ export function ResourcesAdmin({
                       className="lift inline-flex h-9 items-center gap-2 border border-bone bg-bone px-4 text-xs font-medium uppercase tracking-wider text-ink transition-colors hover:bg-stone"
                     >
                       <Icon name="plus" size={12} />
-                      Add resource
+                      Add one
                     </button>
                   </Magnetic>
                 </div>
+              </div>
+
+              {editingSectionId === activeSection.id && (
+                <EditSectionForm
+                  initial={activeSection}
+                  onSubmit={async (patch) => {
+                    await updateSection({ id: activeSection.id, ...patch });
+                    setSections((prev) =>
+                      prev.map((s) =>
+                        s.id === activeSection.id ? { ...s, ...patch } : s
+                      )
+                    );
+                    setEditingSectionId(null);
+                  }}
+                  onCancel={() => setEditingSectionId(null)}
+                />
+              )}
+
+              <div className="mt-6">
+                <BulkUploadPanel
+                  sectionId={activeSection.id}
+                  sectionName={activeSection.name}
+                  onUploaded={refresh}
+                />
               </div>
 
               {showNewResource && (
@@ -563,6 +613,26 @@ function ResourceRow({
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(resource.title);
   const [description, setDescription] = useState(resource.description ?? "");
+  const [recat, setRecat] = useState<"idle" | "busy" | "error">("idle");
+  const [recatError, setRecatError] = useState("");
+  const tags = [
+    ...(resource.topics ?? []),
+    ...(resource.themes ?? []),
+    ...(resource.booksOfBible ?? []),
+  ];
+
+  async function handleRecategorize() {
+    setRecat("busy");
+    setRecatError("");
+    try {
+      await recategorizeResource(resource.id);
+      setRecat("idle");
+      window.location.reload();
+    } catch (e) {
+      setRecat("error");
+      setRecatError(e instanceof Error ? e.message : "Failed");
+    }
+  }
 
   return (
     <li className="group/item border border-stone/15 bg-iron/30 px-4 py-3 transition-colors hover:border-stone/30">
@@ -599,32 +669,99 @@ function ResourceRow({
           </div>
         </div>
       ) : (
-        <div className="flex items-center gap-4">
+        <div className="flex items-start gap-4">
           <Icon
             name={resource.fileKey ? "download" : "arrow-up-right"}
             size={16}
-            className="text-stone/55"
+            className="mt-1 text-stone/55"
           />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-bone">
-              {resource.title}
-            </p>
-            {resource.description && (
-              <p className="line-clamp-1 text-xs text-stone/60">
-                {resource.description}
+            <div className="flex items-center gap-2">
+              {resource.slug ? (
+                <a
+                  href={`/resources/${resource.slug}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="truncate text-sm font-medium text-bone hover:text-brass"
+                >
+                  {resource.title}
+                </a>
+              ) : (
+                <p className="truncate text-sm font-medium text-bone">
+                  {resource.title}
+                </p>
+              )}
+              {resource.audience && resource.audience !== "all" && (
+                <span className="inline-flex h-5 items-center border border-stone/20 bg-iron/40 px-1.5 text-[0.5625rem] uppercase tracking-wider text-stone/65">
+                  {resource.audience}
+                </span>
+              )}
+              {resource.aiCategorizedAt ? (
+                <span
+                  title={`AI tagged ${format(new Date(resource.aiCategorizedAt), "MMM d, yyyy")}`}
+                  className="inline-flex h-5 items-center gap-1 border border-brass/40 bg-brass/10 px-1.5 text-[0.5625rem] uppercase tracking-wider text-brass"
+                >
+                  <Icon name="sparkles" size={9} />
+                  Tagged
+                </span>
+              ) : (
+                <span className="inline-flex h-5 items-center border border-stone/20 px-1.5 text-[0.5625rem] uppercase tracking-wider text-stone/55">
+                  Untagged
+                </span>
+              )}
+            </div>
+            {(resource.summary || resource.description) && (
+              <p className="mt-1 line-clamp-2 text-xs text-stone/65">
+                {resource.summary || resource.description}
               </p>
             )}
-            <p className="mt-1 flex items-center gap-2 text-[0.625rem] text-stone/40">
+            {tags.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {tags.slice(0, 8).map((t) => (
+                  <span
+                    key={t}
+                    className="inline-flex h-5 items-center border border-stone/15 bg-iron/30 px-1.5 text-[0.5625rem] text-stone/70"
+                  >
+                    {t}
+                  </span>
+                ))}
+                {tags.length > 8 && (
+                  <span className="text-[0.5625rem] text-stone/45">
+                    +{tags.length - 8} more
+                  </span>
+                )}
+              </div>
+            )}
+            <p className="mt-2 flex flex-wrap items-center gap-2 text-[0.625rem] text-stone/40">
               <span>{resource.type}</span>
               <span>·</span>
               <span>
-                Added{" "}
-                {format(new Date(resource.createdAt), "MMM d, yyyy")}
+                Added {format(new Date(resource.createdAt), "MMM d, yyyy")}
               </span>
+              {resource.estimatedMinutes != null && (
+                <>
+                  <span>·</span>
+                  <span>{resource.estimatedMinutes} min read</span>
+                </>
+              )}
+              {resource.sourceFilename && (
+                <>
+                  <span>·</span>
+                  <span title={resource.sourceFilename} className="truncate max-w-[200px]">
+                    {resource.sourceFilename}
+                  </span>
+                </>
+              )}
               {!resource.isPublic && (
                 <>
                   <span>·</span>
                   <span className="text-oxblood">Hidden</span>
+                </>
+              )}
+              {recat === "error" && (
+                <>
+                  <span>·</span>
+                  <span className="text-oxblood">{recatError}</span>
                 </>
               )}
             </p>
@@ -636,11 +773,20 @@ function ResourceRow({
                 target="_blank"
                 rel="noopener"
                 className="rounded-none p-1.5 text-stone/55 transition-colors hover:text-bone"
-                title="Open"
+                title="Open file"
               >
                 <Icon name="arrow-up-right" size={14} />
               </a>
             )}
+            <button
+              type="button"
+              onClick={handleRecategorize}
+              disabled={recat === "busy"}
+              className="rounded-none p-1.5 text-stone/55 transition-colors hover:text-brass disabled:opacity-50"
+              title="Re-tag with AI"
+            >
+              <Icon name="sparkles" size={14} />
+            </button>
             <button
               type="button"
               onClick={onToggleVisibility}
@@ -669,6 +815,94 @@ function ResourceRow({
         </div>
       )}
     </li>
+  );
+}
+
+function EditSectionForm({
+  initial,
+  onSubmit,
+  onCancel,
+}: {
+  initial: Section;
+  onSubmit: (patch: { name?: string; description?: string; icon?: string; sortOrder?: number }) => void;
+  onCancel: () => void;
+}) {
+  const [name, setName] = useState(initial.name);
+  const [description, setDescription] = useState(initial.description ?? "");
+  const [icon, setIcon] = useState<string>(initial.icon ?? "scroll");
+  const [sortOrder, setSortOrder] = useState<number>(initial.sortOrder);
+
+  return (
+    <div className="mt-6 border border-brass/30 bg-iron/40 p-5">
+      <div className="flex items-center gap-3">
+        <Icon name="pen" size={14} className="text-brass" />
+        <span className="section-mark text-brass">§ Edit section</span>
+      </div>
+      <div className="mt-3 grid gap-3 md:grid-cols-2">
+        <label className="block">
+          <span className="block text-[0.625rem] uppercase tracking-wider text-stone/55">Name</span>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="mt-1 block w-full border border-stone/15 bg-transparent px-3 py-2 text-sm text-bone focus:border-brass focus:outline-none"
+          />
+        </label>
+        <label className="block">
+          <span className="block text-[0.625rem] uppercase tracking-wider text-stone/55">Sort order</span>
+          <input
+            type="number"
+            value={sortOrder}
+            onChange={(e) => setSortOrder(Number(e.target.value) || 0)}
+            className="mt-1 block w-full border border-stone/15 bg-transparent px-3 py-2 text-sm text-bone focus:border-brass focus:outline-none"
+          />
+        </label>
+      </div>
+      <label className="mt-3 block">
+        <span className="block text-[0.625rem] uppercase tracking-wider text-stone/55">Description (one short line)</span>
+        <input
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          className="mt-1 block w-full border border-stone/15 bg-transparent px-3 py-2 text-sm text-bone focus:border-brass focus:outline-none"
+        />
+      </label>
+      <div className="mt-3">
+        <span className="block text-[0.625rem] uppercase tracking-wider text-stone/55">Icon</span>
+        <div className="mt-2 flex flex-wrap gap-1.5">
+          {ICON_OPTIONS.map((opt) => (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => setIcon(opt)}
+              className={`flex h-8 w-8 items-center justify-center border ${
+                icon === opt
+                  ? "border-brass bg-brass/20 text-bone"
+                  : "border-stone/15 text-stone/55 hover:border-brass/50"
+              }`}
+              title={opt}
+            >
+              <Icon name={opt} size={14} />
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="mt-4 flex gap-2">
+        <button
+          type="button"
+          onClick={() => onSubmit({ name, description, icon, sortOrder })}
+          disabled={!name.trim()}
+          className="lift inline-flex h-8 items-center gap-1.5 bg-brass px-3 text-[0.625rem] font-medium uppercase tracking-wider text-ink transition-colors hover:bg-gold disabled:opacity-60"
+        >
+          Save changes
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-xs text-stone/65 transition-colors hover:text-bone"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
   );
 }
 

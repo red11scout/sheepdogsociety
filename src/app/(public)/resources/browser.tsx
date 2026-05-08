@@ -1,0 +1,408 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import Link from "next/link";
+import { Icon, type IconName } from "@/components/icons/Icon";
+
+interface SectionLite {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  icon: string;
+}
+
+interface ItemLite {
+  id: string;
+  title: string;
+  slug: string;
+  summary: string;
+  description: string;
+  url: string;
+  fileKey: string;
+  type: string;
+  category: string;
+  sectionId: string;
+  audience: "all" | "newcomer" | "leader";
+  topics: string[];
+  themes: string[];
+  booksOfBible: string[];
+  estimatedMinutes: number | null;
+  hasBody: boolean;
+}
+
+interface BrowserProps {
+  sections: SectionLite[];
+  items: ItemLite[];
+}
+
+function uniq(xs: string[]): string[] {
+  return Array.from(new Set(xs.filter(Boolean))).sort((a, b) => a.localeCompare(b));
+}
+
+export function ResourcesBrowser({ sections, items }: BrowserProps) {
+  const [query, setQuery] = useState("");
+  const [activeSectionId, setActiveSectionId] = useState<string>("");
+  const [activeTopic, setActiveTopic] = useState<string>("");
+  const [activeBook, setActiveBook] = useState<string>("");
+  const [activeAudience, setActiveAudience] = useState<string>("");
+
+  const allTopics = useMemo(() => uniq(items.flatMap((i) => i.topics)), [items]);
+  const allBooks = useMemo(() => uniq(items.flatMap((i) => i.booksOfBible)), [items]);
+  const allAudiences = useMemo(() => uniq(items.map((i) => i.audience)), [items]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return items.filter((it) => {
+      if (activeSectionId && it.sectionId !== activeSectionId) {
+        // also accept legacy category-slug match if sectionId not set on the item
+        const section = sections.find((s) => s.id === activeSectionId);
+        if (!(section && it.category === section.slug)) return false;
+      }
+      if (activeTopic && !it.topics.includes(activeTopic)) return false;
+      if (activeBook && !it.booksOfBible.includes(activeBook)) return false;
+      if (activeAudience && it.audience !== activeAudience) return false;
+      if (q) {
+        const hay = (
+          it.title +
+          " " +
+          it.summary +
+          " " +
+          it.description +
+          " " +
+          it.topics.join(" ") +
+          " " +
+          it.themes.join(" ") +
+          " " +
+          it.booksOfBible.join(" ")
+        ).toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+  }, [items, query, activeSectionId, activeTopic, activeBook, activeAudience, sections]);
+
+  const grouped = useMemo(() => {
+    const map: Record<string, ItemLite[]> = {};
+    for (const it of filtered) {
+      const key =
+        sections.find(
+          (s) => s.id === it.sectionId || s.slug === it.category
+        )?.id ?? "_none";
+      map[key] = map[key] ?? [];
+      map[key].push(it);
+    }
+    return map;
+  }, [filtered, sections]);
+
+  const sectionsWithItems = sections.filter(
+    (s) => (grouped[s.id]?.length ?? 0) > 0
+  );
+
+  const anyFilter =
+    query || activeSectionId || activeTopic || activeBook || activeAudience;
+
+  function clearFilters() {
+    setQuery("");
+    setActiveSectionId("");
+    setActiveTopic("");
+    setActiveBook("");
+    setActiveAudience("");
+  }
+
+  return (
+    <>
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-bone text-ink">
+        <div className="aurora aurora--soft" aria-hidden />
+        <div className="dotted-grid absolute inset-0 opacity-50" aria-hidden />
+        <div className="relative mx-auto max-w-7xl px-6 py-20 md:px-12 md:py-28">
+          <div className="flex items-center gap-4">
+            <span className="section-mark">§ Resources</span>
+            <div className="hairline flex-1" />
+          </div>
+          <h1 className="display-xl mt-10 max-w-4xl text-[clamp(2.5rem,7vw,6rem)]">
+            Take, read,
+            <br />
+            <span className="text-brass">use it Tuesday.</span>
+          </h1>
+          <p className="mt-10 max-w-2xl font-pullquote text-xl italic leading-relaxed text-iron/70 md:text-2xl">
+            Studies, leader guides, devotionals, sermon notes. Search by topic, theme, or book of the Bible. Free. Bring it to your group.
+          </p>
+        </div>
+      </section>
+
+      {/* Search bar */}
+      <section className="sticky top-16 z-20 border-b border-iron/10 bg-bone/95 backdrop-blur">
+        <div className="mx-auto max-w-7xl px-6 py-4 md:px-12">
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="relative flex flex-1 min-w-[220px] items-center">
+              <Icon
+                name="search"
+                size={16}
+                className="absolute left-3 text-iron/40"
+              />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search title, topic, theme, or book of the Bible"
+                className="block h-11 w-full border border-iron/15 bg-white/60 pl-10 pr-3 text-sm text-iron placeholder:text-iron/40 focus:border-brass focus:outline-none"
+              />
+              {query && (
+                <button
+                  type="button"
+                  onClick={() => setQuery("")}
+                  className="absolute right-2 text-iron/40 hover:text-iron"
+                  aria-label="Clear"
+                >
+                  <Icon name="close" size={14} />
+                </button>
+              )}
+            </label>
+            {anyFilter && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-xs text-iron/55 underline-offset-4 hover:text-brass hover:underline"
+              >
+                Clear all
+              </button>
+            )}
+            <span className="text-xs text-iron/55">
+              {filtered.length} {filtered.length === 1 ? "item" : "items"}
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* Body: facets + grid */}
+      <section className="bg-bone text-ink">
+        <div className="mx-auto grid max-w-7xl gap-10 px-6 py-12 md:grid-cols-[260px_1fr] md:px-12 md:py-20">
+          {/* Facets */}
+          <aside className="space-y-8">
+            <Facet
+              title="Section"
+              options={sections.map((s) => ({ value: s.id, label: s.name }))}
+              value={activeSectionId}
+              onChange={setActiveSectionId}
+            />
+            {allBooks.length > 0 && (
+              <Facet
+                title="Book of the Bible"
+                options={allBooks.map((b) => ({ value: b, label: b }))}
+                value={activeBook}
+                onChange={setActiveBook}
+              />
+            )}
+            {allTopics.length > 0 && (
+              <Facet
+                title="Topic"
+                options={allTopics.map((t) => ({ value: t, label: t }))}
+                value={activeTopic}
+                onChange={setActiveTopic}
+              />
+            )}
+            {allAudiences.length > 1 && (
+              <Facet
+                title="For"
+                options={allAudiences.map((a) => ({
+                  value: a,
+                  label:
+                    a === "newcomer"
+                      ? "Newcomers"
+                      : a === "leader"
+                      ? "Leaders"
+                      : "Anyone",
+                }))}
+                value={activeAudience}
+                onChange={setActiveAudience}
+              />
+            )}
+          </aside>
+
+          {/* Results */}
+          <div className="min-w-0">
+            {filtered.length === 0 ? (
+              <div className="border border-dashed border-iron/15 p-16 text-center">
+                <Icon name="search" size={36} className="mx-auto text-brass" />
+                <h2 className="display-xl mt-6 text-2xl text-iron">
+                  Nothing matches that yet.
+                </h2>
+                <p className="mx-auto mt-3 max-w-md font-pullquote text-base italic text-iron/60">
+                  Adjust the filters or clear them. New material is added regularly.
+                </p>
+              </div>
+            ) : (
+              sectionsWithItems.map((section) => {
+                const sectionItems = grouped[section.id] ?? [];
+                return (
+                  <div key={section.id} className="mb-16 last:mb-0">
+                    <div className="flex flex-wrap items-end justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <Icon
+                          name={(section.icon as IconName) || "scroll"}
+                          size={24}
+                          className="text-brass"
+                        />
+                        <h2 className="display-xl text-2xl text-iron md:text-3xl">
+                          {section.name}
+                        </h2>
+                      </div>
+                      <span className="section-mark text-iron/45">
+                        {sectionItems.length}{" "}
+                        {sectionItems.length === 1 ? "item" : "items"}
+                      </span>
+                    </div>
+                    {section.description && (
+                      <p className="mt-2 max-w-2xl text-sm text-iron/65">
+                        {section.description}
+                      </p>
+                    )}
+                    <div className="hairline mt-6" />
+                    <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      {sectionItems.map((item) => (
+                        <li key={item.id}>
+                          <ResourceCard item={item} />
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+
+function Facet({
+  title,
+  options,
+  value,
+  onChange,
+}: {
+  title: string;
+  options: { value: string; label: string }[];
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <span className="section-mark text-iron/55">{title}</span>
+        {value && (
+          <button
+            type="button"
+            onClick={() => onChange("")}
+            className="text-[0.625rem] uppercase tracking-wider text-iron/45 hover:text-brass"
+          >
+            Clear
+          </button>
+        )}
+      </div>
+      <ul className="mt-3 space-y-1">
+        {options.map((opt) => {
+          const active = value === opt.value;
+          return (
+            <li key={opt.value}>
+              <button
+                type="button"
+                onClick={() => onChange(active ? "" : opt.value)}
+                className={`block w-full px-2 py-1 text-left text-sm transition-colors ${
+                  active
+                    ? "bg-brass/15 text-iron"
+                    : "text-iron/70 hover:bg-iron/5 hover:text-iron"
+                }`}
+              >
+                {opt.label}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
+function ResourceCard({ item }: { item: ItemLite }) {
+  const detailHref = item.hasBody ? `/resources/${item.slug}` : null;
+  const downloadUrl = item.fileKey || item.url || "#";
+  const isExternal = !!item.url && !item.fileKey;
+
+  // Primary action: read inline if hasBody, otherwise open the file/link directly.
+  const primaryHref = detailHref ?? downloadUrl;
+  const primaryLabel = detailHref
+    ? "Read"
+    : isExternal
+    ? "Open link"
+    : "Download";
+
+  return (
+    <article className="lift group/card flex h-full flex-col border border-iron/10 bg-bone p-6 transition-colors hover:border-brass">
+      <Link
+        href={primaryHref}
+        target={isExternal && !detailHref ? "_blank" : undefined}
+        rel={isExternal && !detailHref ? "noopener noreferrer" : undefined}
+        className="flex flex-1 flex-col"
+      >
+        <div className="flex items-start justify-between gap-3">
+          <Icon
+            name={item.fileKey ? "scroll" : "arrow-up-right"}
+            size={18}
+            className="text-brass"
+          />
+          {item.audience !== "all" && (
+            <span className="section-mark text-iron/40">
+              {item.audience === "leader" ? "Leader" : "Newcomer"}
+            </span>
+          )}
+        </div>
+        <h3 className="display-xl mt-6 text-lg text-iron md:text-xl">
+          {item.title}
+        </h3>
+        {(item.summary || item.description) && (
+          <p className="mt-3 line-clamp-3 flex-1 text-sm leading-relaxed text-iron/70">
+            {item.summary || item.description}
+          </p>
+        )}
+        {(item.booksOfBible.length > 0 || item.topics.length > 0) && (
+          <div className="mt-4 flex flex-wrap gap-1">
+            {item.booksOfBible.slice(0, 3).map((b) => (
+              <span
+                key={`b-${b}`}
+                className="inline-flex h-5 items-center border border-brass/40 bg-brass/10 px-1.5 text-[0.5625rem] uppercase tracking-wider text-brass"
+              >
+                {b}
+              </span>
+            ))}
+            {item.topics.slice(0, 4).map((t) => (
+              <span
+                key={`t-${t}`}
+                className="inline-flex h-5 items-center border border-iron/15 bg-bone px-1.5 text-[0.5625rem] text-iron/65"
+              >
+                {t}
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="mt-6 flex items-center justify-between">
+          <span className="inline-flex items-center gap-2 section-mark text-brass">
+            {primaryLabel}
+            <Icon
+              name="arrow-right"
+              size={12}
+              className="transition-transform group-hover/card:translate-x-1"
+            />
+          </span>
+          {item.estimatedMinutes != null && (
+            <span className="text-[0.625rem] uppercase tracking-wider text-iron/45">
+              {item.estimatedMinutes} min
+            </span>
+          )}
+        </div>
+      </Link>
+    </article>
+  );
+}

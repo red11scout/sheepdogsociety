@@ -422,3 +422,150 @@
     opacity: 0 !important;
   }
 }
+
+/* ====================================================================
+   Resource detail typography — for mammoth-converted Word documents.
+   The sanitizer at upload strips inline styles; everything is restyled here.
+==================================================================== */
+.resource-prose {
+  font-family: var(--font-merriweather), Georgia, serif;
+  color: var(--color-iron, #1a1a1a);
+  line-height: 1.7;
+  font-size: 1.0625rem;
+}
+.resource-prose p { margin: 0 0 1.1em; }
+.resource-prose h1,
+.resource-prose h2,
+.resource-prose h3,
+.resource-prose h4 {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--color-iron, #1a1a1a);
+  margin: 2em 0 0.6em;
+  line-height: 1.2;
+}
+.resource-prose h1 { font-size: 2rem; }
+.resource-prose h2 { font-size: 1.625rem; }
+.resource-prose h3 { font-size: 1.3rem; }
+.resource-prose h4 { font-size: 1.1rem; }
+.resource-prose blockquote {
+  border-left: 3px solid var(--color-brass, #b89668);
+  padding: 0.25em 0 0.25em 1em;
+  margin: 1.6em 0;
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-style: italic;
+  font-size: 1.2rem;
+  color: rgba(0, 0, 0, 0.78);
+}
+.resource-prose blockquote.intense { border-left-color: var(--color-oxblood, #6e1f1f); }
+.resource-prose ul,
+.resource-prose ol { margin: 1em 0 1.4em 1.4em; }
+.resource-prose ul { list-style: disc outside; }
+.resource-prose ol { list-style: decimal outside; }
+.resource-prose li { margin: 0.4em 0; }
+.resource-prose li > p { margin: 0; }
+.resource-prose strong { font-weight: 600; }
+.resource-prose em { font-style: italic; }
+.resource-prose a {
+  color: var(--color-brass, #b89668);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.resource-prose hr {
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  margin: 2.4em 0;
+}
+.resource-prose table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.6em 0;
+  font-size: 0.95em;
+}
+.resource-prose th,
+.resource-prose td {
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  padding: 0.5em 0.75em;
+  text-align: left;
+  vertical-align: top;
+}
+.resource-prose th {
+  background: rgba(184, 150, 104, 0.08);
+  font-weight: 600;
+}
+.resource-prose img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 1.4em auto;
+}
+.resource-prose .resource-title { display: none; }
+.resource-prose .resource-subtitle {
+  font-family: var(--font-cormorant), Georgia, serif;
+  font-style: italic;
+  font-size: 1.25rem;
+  color: rgba(0, 0, 0, 0.7);
+  margin-bottom: 1.4em;
+}
+
+/* ====================================================================
+   Print stylesheet — Sheepdog letterhead.
+   Hide site chrome, header/nav, dark UI. Render the document
+   on a clean white page with a small brand bar at top + footer.
+==================================================================== */
+@media print {
+  @page {
+    size: Letter;
+    margin: 0.85in 0.75in 0.95in 0.75in;
+  }
+
+  html, body {
+    background: #ffffff !important;
+    color: #111 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* Hide everything globally, then unhide the resource document. */
+  body > * { display: none !important; }
+  .resource-doc,
+  .resource-doc * { display: revert !important; }
+  /* Re-hide pieces inside the doc that should not print. */
+  .resource-doc .no-print,
+  .no-print { display: none !important; }
+  .resource-doc .print-letterhead,
+  .resource-doc .print-footer { display: block !important; }
+
+  .resource-doc {
+    background: #ffffff !important;
+    color: #111 !important;
+    max-width: 100%;
+    padding: 0;
+  }
+  .resource-doc header,
+  .resource-doc article,
+  .resource-doc div { background: transparent !important; }
+  .resource-doc h1 {
+    color: #111 !important;
+    font-size: 1.9rem !important;
+    margin-top: 0.5em;
+  }
+  .resource-prose {
+    font-size: 11pt !important;
+    line-height: 1.55 !important;
+    color: #111 !important;
+  }
+  .resource-prose h1,
+  .resource-prose h2,
+  .resource-prose h3,
+  .resource-prose h4 { page-break-after: avoid; }
+  .resource-prose img,
+  .resource-prose blockquote,
+  .resource-prose table { page-break-inside: avoid; }
+
+  /* Flatten brand accents for print */
+  .text-brass { color: #8b6f3f !important; }
+  .border-brass\/40 { border-color: #b89668 !important; }
+  .bg-brass\/10 { background: #f4ecdb !important; }
+}
