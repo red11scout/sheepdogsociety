@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { weeklyEncouragements } from "@/db/schema-new";
 import { and, eq, inArray, isNull, lte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { broadcastEncouragement } from "@/server/encouragements";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -93,6 +94,29 @@ export async function GET(req: Request) {
     );
   }
 
+  // Fire Resend broadcasts for each newly-published letter. Idempotent:
+  // broadcastEncouragement skips rows where broadcast_id is already set.
+  // Failures don't block the publish — admin can retry from the editor.
+  const broadcastResults: Array<{
+    id: string;
+    title: string;
+    sent: boolean;
+    reason?: string;
+  }> = [];
+  for (const row of due) {
+    try {
+      const r = await broadcastEncouragement(row.id);
+      broadcastResults.push({ id: row.id, title: row.title, ...r });
+    } catch (err) {
+      broadcastResults.push({
+        id: row.id,
+        title: row.title,
+        sent: false,
+        reason: err instanceof Error ? err.message.slice(0, 200) : "",
+      });
+    }
+  }
+
   // Revalidate public surfaces so the newly-published letters render.
   try {
     revalidatePath("/encouragements");
@@ -107,6 +131,7 @@ export async function GET(req: Request) {
     ok: true,
     published: due.length,
     titles: due.map((r) => r.title),
+    broadcasts: broadcastResults,
     at: now.toISOString(),
   });
 }

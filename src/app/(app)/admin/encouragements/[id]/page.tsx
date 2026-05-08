@@ -28,6 +28,12 @@ export default async function EncouragementEditPage({
     ? (row.scriptures as { ref: string; note?: string }[])
     : [];
 
+  const r = row as typeof row & {
+    theme?: string | null;
+    voice?: string | null;
+    broadcastId?: string | null;
+    broadcastAt?: Date | string | null;
+  };
   return (
     <EncouragementEditor
       id={row.id}
@@ -44,8 +50,10 @@ export default async function EncouragementEditPage({
         notes: row.notes ?? "",
         coverImageUrl: row.coverImageUrl ?? "",
         coverImageAlt: row.coverImageAlt ?? "",
-        theme: (row as { theme?: string | null }).theme ?? "",
-        voice: (row as { voice?: string | null }).voice ?? "",
+        theme: r.theme ?? "",
+        voice: r.voice ?? "",
+        broadcastId: r.broadcastId ?? null,
+        broadcastAt: r.broadcastAt ? String(r.broadcastAt) : null,
       }}
     />
   );

@@ -31,6 +31,8 @@ interface EncouragementEditorProps {
     coverImageAlt: string;
     theme: string;
     voice: string;
+    broadcastId: string | null;
+    broadcastAt: string | null;
   };
 }
 
@@ -112,10 +114,29 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
     theme,
   ]);
 
+  const [sendBroadcast, setSendBroadcast] = useState(true);
+  const [broadcastInfo, setBroadcastInfo] = useState<{
+    id: string | null;
+    at: string | null;
+  }>({ id: initial.broadcastId, at: initial.broadcastAt });
+  const [broadcastError, setBroadcastError] = useState<string>("");
+
   async function publishNow() {
+    setBroadcastError("");
     startTransition(async () => {
-      await setEncouragementStatus(id, "published");
+      const result = await setEncouragementStatus(id, "published", {
+        sendBroadcast,
+      });
       setStatus("published");
+      const b = result?.broadcast;
+      if (b?.sent && b.broadcastId) {
+        setBroadcastInfo({ id: b.broadcastId, at: new Date().toISOString() });
+      } else if (b?.broadcastId && b.reason === "already sent") {
+        // Already sent earlier — just reflect it.
+        setBroadcastInfo({ id: b.broadcastId, at: initial.broadcastAt });
+      } else if (b?.reason && sendBroadcast) {
+        setBroadcastError(b.reason);
+      }
     });
   }
 
@@ -218,6 +239,15 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
           No. {initial.issueNumber}
         </span>
         <StatusPill status={status} />
+        {broadcastInfo.id && (
+          <span
+            title={`Resend broadcast ${broadcastInfo.id}${broadcastInfo.at ? ` · sent ${broadcastInfo.at}` : ""}`}
+            className="inline-flex items-center gap-1.5 border border-olive/40 bg-olive/10 px-2 py-1 text-[0.625rem] uppercase tracking-wider text-olive"
+          >
+            <Icon name="mail" size={10} />
+            Sent
+          </span>
+        )}
         <div className="flex-1" />
         <span className="text-xs text-stone/55">
           {saveState === "saving"
@@ -231,6 +261,20 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
               })}`
             : "Auto-saving"}
         </span>
+        {status !== "published" && !broadcastInfo.id && (
+          <label
+            className="inline-flex items-center gap-1.5 text-[0.6875rem] text-stone/75"
+            title="Send the letter to subscribers via Resend when published"
+          >
+            <input
+              type="checkbox"
+              checked={sendBroadcast}
+              onChange={(e) => setSendBroadcast(e.target.checked)}
+              className="h-3 w-3 accent-brass"
+            />
+            Email subscribers
+          </label>
+        )}
         {status === "published" ? (
           <button
             type="button"
@@ -254,6 +298,12 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
           </Magnetic>
         )}
       </div>
+
+      {broadcastError && (
+        <div className="-mt-6 mb-6 border border-oxblood/40 bg-oxblood/15 px-4 py-2 text-xs text-bone">
+          Letter is published, but the email broadcast failed: {broadcastError}
+        </div>
+      )}
 
       {/* Title */}
       <section>

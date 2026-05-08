@@ -9,6 +9,9 @@ import {
 import { users } from "@/db/schema";
 import { eq, and, isNull, desc, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { render } from "@react-email/render";
+import { resend, FROM_NEWSLETTER } from "@/lib/email";
+import { EncouragementEmail } from "@/emails/encouragement";
 
 async function requireAdmin(): Promise<string> {
   const { userId } = await auth();
@@ -187,7 +190,11 @@ export async function applyDraft(input: {
   revalidatePath(`/admin/encouragements/${input.id}`);
 }
 
-export async function setEncouragementStatus(id: string, status: string) {
+export async function setEncouragementStatus(
+  id: string,
+  status: string,
+  options?: { sendBroadcast?: boolean }
+) {
   await requireAdmin();
   const valid = ["draft", "scheduled", "published", "archived"];
   if (!valid.includes(status)) throw new Error("Invalid status");
@@ -195,8 +202,138 @@ export async function setEncouragementStatus(id: string, status: string) {
     .update(weeklyEncouragements)
     .set({ status, updatedAt: new Date() })
     .where(eq(weeklyEncouragements.id, id));
+
+  // If we're flipping to published AND the admin opted in to broadcast,
+  // fire it. broadcastEncouragement is idempotent — it skips if already
+  // sent.
+  let broadcastResult: { sent: boolean; broadcastId?: string; reason?: string } | null = null;
+  if (status === "published" && options?.sendBroadcast !== false) {
+    broadcastResult = await broadcastEncouragement(id);
+  }
+
   revalidatePath("/admin/encouragements");
   revalidatePath("/encouragements");
+  return { broadcast: broadcastResult };
+}
+
+/**
+ * Send the encouragement to the Resend audience as a broadcast. Idempotent:
+ * if broadcast_id is already populated, returns early without sending.
+ *
+ * Uses the same shape as the legacy publishLetter pattern in
+ * src/server/letters.ts: create the broadcast, immediately send it, store
+ * the broadcast id back on the row. Failures don't throw — the caller
+ * gets a structured result and the letter stays published on the website.
+ */
+export async function broadcastEncouragement(
+  id: string
+): Promise<{ sent: boolean; broadcastId?: string; reason?: string }> {
+  const [row] = await db
+    .select()
+    .from(weeklyEncouragements)
+    .where(eq(weeklyEncouragements.id, id));
+  if (!row) return { sent: false, reason: "not found" };
+  if (row.broadcastId) {
+    return { sent: false, broadcastId: row.broadcastId, reason: "already sent" };
+  }
+  if (!process.env.RESEND_AUDIENCE_ID || !process.env.RESEND_API_KEY) {
+    return {
+      sent: false,
+      reason:
+        "RESEND_AUDIENCE_ID and RESEND_API_KEY must both be set on the server",
+    };
+  }
+  if (row.status !== "published") {
+    return { sent: false, reason: "letter is not published yet" };
+  }
+
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.acts2028sheepdogsociety.com";
+  const publicUrl = `${siteUrl}/encouragements/${row.slug}`;
+
+  const scriptures = Array.isArray(row.scriptures)
+    ? (row.scriptures as ScriptureRef[])
+    : [];
+
+  let html: string;
+  try {
+    html = await render(
+      EncouragementEmail({
+        issueNumber: row.issueNumber,
+        theme: row.theme,
+        title: row.title,
+        intro: row.intro,
+        scriptures,
+        guidance: row.guidance,
+        notes: row.notes,
+        publicUrl,
+        unsubscribeUrl: "{{{RESEND_UNSUBSCRIBE_URL}}}",
+      })
+    );
+  } catch (err) {
+    console.error("EncouragementEmail render failed:", err);
+    return {
+      sent: false,
+      reason:
+        err instanceof Error
+          ? `email render failed: ${err.message.slice(0, 200)}`
+          : "email render failed",
+    };
+  }
+
+  const text = [
+    `${row.title}`,
+    row.theme ? `(${row.theme})` : null,
+    "",
+    row.intro ?? "",
+    "",
+    ...scriptures.map((s) => `${s.ref}${s.note ? ` — ${s.note}` : ""}`),
+    "",
+    row.guidance ?? "",
+    "",
+    row.notes ?? "",
+    "",
+    `Read on the site: ${publicUrl}`,
+  ]
+    .filter((l) => l !== null)
+    .join("\n");
+
+  const subject = row.title;
+
+  try {
+    const broadcast = await resend().broadcasts.create({
+      audienceId: process.env.RESEND_AUDIENCE_ID,
+      from: FROM_NEWSLETTER,
+      subject,
+      replyTo: process.env.RESEND_FROM_AUTH ?? FROM_NEWSLETTER,
+      html,
+      text,
+    });
+    if (!broadcast.data?.id) {
+      return {
+        sent: false,
+        reason: `resend broadcasts.create returned no id: ${
+          broadcast.error ? JSON.stringify(broadcast.error).slice(0, 200) : "(unknown)"
+        }`,
+      };
+    }
+    const broadcastId = broadcast.data.id;
+    await resend().broadcasts.send(broadcastId);
+    await db
+      .update(weeklyEncouragements)
+      .set({ broadcastId, broadcastAt: new Date(), updatedAt: new Date() })
+      .where(eq(weeklyEncouragements.id, id));
+    return { sent: true, broadcastId };
+  } catch (err) {
+    console.error("Resend broadcast failed:", err);
+    return {
+      sent: false,
+      reason:
+        err instanceof Error
+          ? `resend send failed: ${err.message.slice(0, 200)}`
+          : "resend send failed",
+    };
+  }
 }
 
 export async function softDeleteEncouragement(id: string) {

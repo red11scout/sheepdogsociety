@@ -41,6 +41,8 @@ export const weeklyEncouragements = pgTable(
     seriesId: uuid("series_id"),
     seriesPosition: integer("series_position"),
     scheduledFor: timestamp("scheduled_for"),
+    broadcastId: text("broadcast_id"),
+    broadcastAt: timestamp("broadcast_at"),
     authorId: text("author_id").references(() => users.id, {
       onDelete: "set null",
     }),
