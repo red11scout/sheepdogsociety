@@ -4,8 +4,10 @@ import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
 import { resourceSections } from "@/db/schema-new";
 import { resources, users } from "@/db/schema";
-import { eq, and, isNull, asc } from "drizzle-orm";
+import { eq, isNull, asc, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { categorizeResource } from "@/lib/resources/categorize";
+import { uniqueResourceSlug } from "@/lib/resources/slug";
 
 async function requireAdmin(): Promise<string> {
   const { userId } = await auth();
@@ -108,17 +110,30 @@ export async function listResourcesForAdmin() {
     .select({
       id: resources.id,
       title: resources.title,
+      slug: resources.slug,
+      summary: resources.summary,
       description: resources.description,
       type: resources.type,
       url: resources.url,
       fileKey: resources.fileKey,
+      sourceFilename: resources.sourceFilename,
+      sectionId: resources.sectionId,
       category: resources.category,
       isPublic: resources.isPublic,
       level: resources.level,
+      audience: resources.audience,
       seriesName: resources.seriesName,
+      topics: resources.topics,
+      themes: resources.themes,
+      booksOfBible: resources.booksOfBible,
+      estimatedMinutes: resources.estimatedMinutes,
+      aiCategorizedAt: resources.aiCategorizedAt,
       createdAt: resources.createdAt,
     })
-    .from(resources);
+    .from(resources)
+    .where(isNull(resources.deletedAt))
+    .orderBy(desc(resources.createdAt))
+    .limit(500);
 }
 
 export async function createResource(input: {
@@ -131,10 +146,12 @@ export async function createResource(input: {
   level?: string;
 }) {
   const userId = await requireAdmin();
+  const slug = await uniqueResourceSlug(input.title);
   const [row] = await db
     .insert(resources)
     .values({
       title: input.title,
+      slug,
       description: input.description ?? "",
       url: input.url ?? "",
       fileKey: input.fileKey ?? "",
@@ -176,7 +193,77 @@ export async function updateResource(input: {
 
 export async function deleteResource(id: string) {
   await requireAdmin();
-  await db.delete(resources).where(eq(resources.id, id));
+  // Soft delete so the unique slug index frees up after the WHERE deleted_at clause.
+  await db
+    .update(resources)
+    .set({ deletedAt: new Date(), isPublic: false })
+    .where(eq(resources.id, id));
+  revalidatePath("/admin/resources");
+  revalidatePath("/resources");
+}
+
+export async function recategorizeResource(id: string) {
+  await requireAdmin();
+  const [row] = await db
+    .select({
+      id: resources.id,
+      title: resources.title,
+      bodyText: resources.bodyText,
+      sectionId: resources.sectionId,
+    })
+    .from(resources)
+    .where(eq(resources.id, id));
+  if (!row) throw new Error("Not found");
+  if (!row.bodyText || row.bodyText.trim().length < 100) {
+    throw new Error(
+      "No extracted body text to categorize. PDFs and short docs need to be tagged manually."
+    );
+  }
+
+  let sectionName: string | undefined;
+  if (row.sectionId) {
+    const [s] = await db
+      .select({ name: resourceSections.name })
+      .from(resourceSections)
+      .where(eq(resourceSections.id, row.sectionId));
+    sectionName = s?.name;
+  }
+
+  const cat = await categorizeResource({
+    title: row.title,
+    bodyText: row.bodyText,
+    sectionName,
+  });
+
+  await db
+    .update(resources)
+    .set({
+      summary: cat.summary,
+      topics: cat.topics,
+      themes: cat.themes,
+      booksOfBible: cat.booksOfBible,
+      audience: cat.audience,
+      aiCategorizedAt: new Date(),
+    })
+    .where(eq(resources.id, id));
+
+  revalidatePath("/admin/resources");
+  revalidatePath("/resources");
+  revalidatePath(`/resources/${row.id}`);
+  return cat;
+}
+
+export async function moveResourceToSection(id: string, sectionId: string) {
+  await requireAdmin();
+  const [section] = await db
+    .select({ slug: resourceSections.slug })
+    .from(resourceSections)
+    .where(eq(resourceSections.id, sectionId));
+  if (!section) throw new Error("Section not found");
+  await db
+    .update(resources)
+    .set({ sectionId, category: section.slug })
+    .where(eq(resources.id, id));
   revalidatePath("/admin/resources");
   revalidatePath("/resources");
 }
@@ -192,17 +279,74 @@ export async function listSectionsAndResourcesForPublic() {
     .select({
       id: resources.id,
       title: resources.title,
+      slug: resources.slug,
+      summary: resources.summary,
       description: resources.description,
       url: resources.url,
       fileKey: resources.fileKey,
       type: resources.type,
       category: resources.category,
+      sectionId: resources.sectionId,
       level: resources.level,
+      audience: resources.audience,
       seriesName: resources.seriesName,
+      topics: resources.topics,
+      themes: resources.themes,
+      booksOfBible: resources.booksOfBible,
+      estimatedMinutes: resources.estimatedMinutes,
+      hasBody: resources.bodyHtml,
       createdAt: resources.createdAt,
     })
     .from(resources)
     .where(eq(resources.isPublic, true));
 
-  return { sections, items };
+  // Map hasBody (text) → boolean for the client.
+  const itemsClient = items.map((it) => ({
+    ...it,
+    hasBody: !!it.hasBody && it.hasBody.length > 0,
+  }));
+
+  return { sections, items: itemsClient };
+}
+
+export async function getPublicResourceBySlug(slug: string) {
+  const [row] = await db
+    .select({
+      id: resources.id,
+      title: resources.title,
+      slug: resources.slug,
+      summary: resources.summary,
+      bodyHtml: resources.bodyHtml,
+      bodyText: resources.bodyText,
+      url: resources.url,
+      fileKey: resources.fileKey,
+      sourceFilename: resources.sourceFilename,
+      sourceMime: resources.sourceMime,
+      type: resources.type,
+      sectionId: resources.sectionId,
+      audience: resources.audience,
+      topics: resources.topics,
+      themes: resources.themes,
+      booksOfBible: resources.booksOfBible,
+      estimatedMinutes: resources.estimatedMinutes,
+      createdAt: resources.createdAt,
+    })
+    .from(resources)
+    .where(eq(resources.slug, slug));
+
+  if (!row || !row.id) return null;
+
+  let section: { name: string; slug: string; icon: string | null } | null = null;
+  if (row.sectionId) {
+    const [s] = await db
+      .select({
+        name: resourceSections.name,
+        slug: resourceSections.slug,
+        icon: resourceSections.icon,
+      })
+      .from(resourceSections)
+      .where(eq(resourceSections.id, row.sectionId));
+    section = s ?? null;
+  }
+  return { ...row, section };
 }

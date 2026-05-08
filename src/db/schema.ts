@@ -560,24 +560,39 @@ export const resources = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     title: text("title").notNull(),
+    slug: text("slug").notNull(),
     description: text("description").default(""),
+    summary: text("summary").default(""),
+    bodyHtml: text("body_html").default(""),
+    bodyText: text("body_text").default(""),
     type: resourceTypeEnum("type").notNull().default("link"),
     url: text("url").default(""),
-    fileKey: text("file_key").default(""), // Supabase Storage key
+    fileKey: text("file_key").default(""), // Vercel Blob URL for the source file
+    sourceFilename: text("source_filename"),
+    sourceMime: text("source_mime"),
     uploadedBy: text("uploaded_by")
       .notNull()
       .references(() => users.id),
     groupId: uuid("group_id").references(() => groups.id),
     originalResourceId: uuid("original_resource_id"),
+    sectionId: uuid("section_id"), // FK to resource_sections.id (resource_sections lives in schema-new.ts)
     isPublic: boolean("is_public").notNull().default(false),
-    category: text("category").default("general"), // general, study_guide, book, reference
-    level: text("level").default("all"), // all, entry, mid, advanced
+    category: text("category").default("general"), // legacy free-form category
+    level: text("level").default("all"), // legacy: all, entry, mid, advanced
+    audience: text("audience").default("all"), // newcomer | leader | all
     seriesName: text("series_name").default(""),
+    topics: jsonb("topics").$type<string[]>().notNull().default([]),
+    themes: jsonb("themes").$type<string[]>().notNull().default([]),
+    booksOfBible: jsonb("books_of_bible").$type<string[]>().notNull().default([]),
+    estimatedMinutes: integer("estimated_minutes"),
+    aiCategorizedAt: timestamp("ai_categorized_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
+    deletedAt: timestamp("deleted_at"),
   },
   (table) => [
     index("resources_group_idx").on(table.groupId),
     index("resources_uploaded_by_idx").on(table.uploadedBy),
+    index("resources_section_idx").on(table.sectionId),
   ]
 );
 

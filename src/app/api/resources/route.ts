@@ -4,6 +4,7 @@ import { resources, users } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { uniqueResourceSlug } from "@/lib/resources/slug";
 
 export async function GET() {
   const { userId } = await auth();
@@ -60,10 +61,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
+  const slug = await uniqueResourceSlug(parsed.data.title);
   const [resource] = await db
     .insert(resources)
     .values({
       title: parsed.data.title,
+      slug,
       description: parsed.data.description ?? "",
       type: parsed.data.type,
       url: parsed.data.url ?? "",

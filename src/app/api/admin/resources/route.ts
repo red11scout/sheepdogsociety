@@ -4,6 +4,7 @@ import { resources, users } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod/v4";
+import { uniqueResourceSlug } from "@/lib/resources/slug";
 
 const createSchema = z.object({
   title: z.string().min(1).max(200),
@@ -49,10 +50,12 @@ export async function POST(req: Request) {
 
   const { title, description, type, url, category, level, isPublic } = parsed.data;
 
+  const slug = await uniqueResourceSlug(title);
   const [resource] = await db
     .insert(resources)
     .values({
       title,
+      slug,
       description: description ?? "",
       type,
       url: url ?? "",
