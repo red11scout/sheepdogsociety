@@ -124,7 +124,7 @@ export function ImageField({
               type="button"
               onClick={() => fileRef.current?.click()}
               disabled={busy !== "none"}
-              className="lift inline-flex h-9 items-center gap-2 border border-bone bg-bone px-4 text-xs font-medium uppercase tracking-wider text-ink transition-colors hover:bg-stone disabled:opacity-60"
+              className="lift inline-flex h-9 items-center gap-2 border border-bone bg-bone px-4 text-xs font-medium uppercase tracking-wider text-iron transition-colors hover:bg-stone disabled:opacity-60"
             >
               <Icon name="download" size={12} className="rotate-180" />
               {busy === "uploading" ? "Uploading..." : "Upload"}

@@ -28,7 +28,7 @@ export function EmptyState({
           {primary && (
             <Link
               href={primary.href}
-              className="lift inline-flex h-11 items-center gap-2 border border-bone bg-bone px-6 text-sm font-medium text-ink transition-colors hover:bg-stone"
+              className="lift inline-flex h-11 items-center gap-2 border border-bone bg-bone px-6 text-sm font-medium text-iron transition-colors hover:bg-stone"
             >
               {primary.label}
               <Icon name="arrow-right" size={14} />

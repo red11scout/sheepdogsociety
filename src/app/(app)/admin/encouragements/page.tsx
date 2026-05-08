@@ -36,7 +36,7 @@ export default async function EncouragementsAdminPage() {
           <Magnetic>
             <Link
               href="/admin/encouragements/new"
-              className="lift group inline-flex h-11 items-center gap-2 border border-bone bg-bone px-6 text-sm font-medium text-ink transition-colors hover:bg-stone"
+              className="lift group inline-flex h-11 items-center gap-2 border border-bone bg-bone px-6 text-sm font-medium text-iron transition-colors hover:bg-stone"
             >
               <Icon name="sparkles" size={14} />
               Compose this week&rsquo;s encouragement

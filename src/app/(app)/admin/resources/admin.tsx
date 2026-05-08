@@ -272,7 +272,7 @@ export function ResourcesAdmin({
                     <button
                       type="button"
                       onClick={() => setShowNewResource(true)}
-                      className="lift inline-flex h-9 items-center gap-2 border border-bone bg-bone px-4 text-xs font-medium uppercase tracking-wider text-ink transition-colors hover:bg-stone"
+                      className="lift inline-flex h-9 items-center gap-2 border border-bone bg-bone px-4 text-xs font-medium uppercase tracking-wider text-iron transition-colors hover:bg-stone"
                     >
                       <Icon name="plus" size={12} />
                       Add resource
