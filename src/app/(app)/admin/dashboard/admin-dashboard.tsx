@@ -230,44 +230,38 @@ export function AdminDashboard({ greetingName = "brother" }: AdminDashboardProps
           for a man who is hurting. Press ⌘ K to jump anywhere. Press ⌘ J to
           open the assistant.
         </p>
-        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-8 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <AiActionCard
-            icon="pen"
-            title="Draft a Letter"
-            body="Open Letter editor with Tiptap + Claude bubble menu."
-            href="/admin/letters/new"
+            icon="sparkles"
+            title="Compose a Letter"
+            body="Theme, image, voice, AI draft. The standard weekly post."
+            href="/admin/encouragements/new"
           />
           <AiActionCard
-            icon="lamp"
-            title="Daily scripture"
-            body="Curate today&rsquo;s verse, theme, and reflection."
-            href="/admin/scripture"
+            icon="calendar"
+            title="Schedule a series"
+            body="Generate four to twelve letters around a theme. Auto-publish on a cadence."
+            href="/admin/encouragements/series/new"
           />
           <AiActionCard
-            icon="scroll"
-            title="Devotional"
-            body="Generate a scripture-anchored devotional from a seed thought."
-            href="/admin/devotionals"
-          />
-          <AiActionCard
-            icon="compass"
-            title="Reading plan"
-            body="Build a multi-day plan from a theme or book of the Bible."
-            href="/admin/reading-plans"
+            icon="flame"
+            title="Approve a story"
+            body="Review pending testimonies. Publish to the public Stories page."
+            href="/admin/testimonies"
           />
         </div>
       </section>
 
-      {/* Recent letters */}
+      {/* Recent letters from the legacy /admin/letters table — read-only history */}
       <section className="mt-14">
         <div className="flex items-center gap-4">
-          <span className="section-mark text-brass">§ Recent Letters</span>
+          <span className="section-mark text-brass">§ Recent Letters (legacy)</span>
           <div className="hairline flex-1" />
           <Link
-            href="/admin/letters"
+            href="/admin/encouragements"
             className="section-mark text-stone/55 transition-colors hover:text-brass"
           >
-            See all
+            Go to The Letter
           </Link>
         </div>
         {data.recentLetters.length > 0 ? (

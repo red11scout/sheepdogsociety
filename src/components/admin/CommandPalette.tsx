@@ -48,14 +48,6 @@ export function CommandPalette({ open, onClose, onAskAi }: CommandPaletteProps) 
         keywords: "gathering meetup",
       },
       {
-        id: "new-devotional",
-        label: "Draft a devotional",
-        hint: "AI helper available",
-        icon: "lamp",
-        href: "/admin/devotionals",
-        group: "Quick action",
-      },
-      {
         id: "send-broadcast",
         label: "Send a Resend broadcast",
         icon: "send",
@@ -80,31 +72,10 @@ export function CommandPalette({ open, onClose, onAskAi }: CommandPaletteProps) 
         group: "Page",
       },
       {
-        id: "page-letters",
+        id: "page-letter",
         label: "The Letter",
-        icon: "pen",
-        href: "/admin/letters",
-        group: "Page",
-      },
-      {
-        id: "page-devotionals",
-        label: "Devotionals",
-        icon: "scroll",
-        href: "/admin/devotionals",
-        group: "Page",
-      },
-      {
-        id: "page-scripture",
-        label: "Daily Scripture",
-        icon: "lamp",
-        href: "/admin/scripture",
-        group: "Page",
-      },
-      {
-        id: "page-reading-plans",
-        label: "Reading Plans",
-        icon: "compass",
-        href: "/admin/reading-plans",
+        icon: "sparkles",
+        href: "/admin/encouragements",
         group: "Page",
       },
       {
@@ -112,13 +83,6 @@ export function CommandPalette({ open, onClose, onAskAi }: CommandPaletteProps) 
         label: "Stories (Testimonies)",
         icon: "flame",
         href: "/admin/testimonies",
-        group: "Page",
-      },
-      {
-        id: "page-blog",
-        label: "Blog",
-        icon: "scroll",
-        href: "/admin/blog",
         group: "Page",
       },
       {

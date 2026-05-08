@@ -1,6 +1,7 @@
 import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
+import { scrubAiText } from "@/lib/ai/scrub";
 
 const MODEL = "claude-haiku-4-5-20251001";
 export const CATEGORIZE_PROMPT_VERSION = "resource-categorize.v1";
@@ -93,7 +94,7 @@ Categorize this resource per the schema.`;
       .join(" ");
 
   return {
-    summary: result.object.summary,
+    summary: scrubAiText(result.object.summary),
     topics: norm(result.object.topics),
     themes: norm(result.object.themes),
     booksOfBible: Array.from(

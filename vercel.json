@@ -1,11 +1,13 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
-    { "path": "/api/cron/generate-daily", "schedule": "0 5 * * *" },
     { "path": "/api/cron/purge", "schedule": "0 4 * * *" },
-    { "path": "/api/cron/group-followup", "schedule": "0 * * * *" }
+    { "path": "/api/cron/group-followup", "schedule": "0 * * * *" },
+    { "path": "/api/cron/publish-scheduled-letters", "schedule": "*/15 * * * *" }
   ],
   "functions": {
-    "src/app/api/ai/**/route.ts": { "maxDuration": 60 }
+    "src/app/api/ai/**/route.ts": { "maxDuration": 60 },
+    "src/app/api/admin/encouragements/**/route.ts": { "maxDuration": 60 },
+    "src/app/api/cron/publish-scheduled-letters/route.ts": { "maxDuration": 120 }
   }
 }

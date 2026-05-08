@@ -8,6 +8,7 @@ import { users, aiGenerations } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { SYSTEM_PROMPT } from "@/lib/ai/system-prompt";
 import { findVoice } from "@/lib/ai/voices";
+import { scrubAiPayload } from "@/lib/ai/scrub";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -110,7 +111,9 @@ Honor every voice rule. No em-dashes when commas work. Never invent verse text â
       temperature: 0.6,
       maxRetries: 1,
     });
-    draft = result.object;
+    // Scrub em-dashes and hashtags belt-and-braces â€” system prompt forbids
+    // them but the model still slips them in.
+    draft = scrubAiPayload(result.object);
 
     // Best-effort logging. Don't block the user on log failure.
     try {

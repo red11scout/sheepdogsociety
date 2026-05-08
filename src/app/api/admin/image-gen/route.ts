@@ -9,7 +9,7 @@ export const runtime = "nodejs";
 export const maxDuration = 60;
 
 const HARD_SUFFIX =
-  " — reverent and dignified, suitable for a Christian audience, no crosses or religious iconography unless explicitly requested, no stereotypical imagery, no text or lettering in image.";
+  ". Natural and candid, never staged or stock-photo. Reverent and dignified, suitable for a Christian audience. No crosses or religious iconography unless explicitly requested. No stereotypical imagery. No text, lettering, watermarks, or signatures anywhere in the image.";
 
 const STYLE_FRAGMENTS: Record<string, string> = {
   documentary: "Documentary photography, natural lighting, candid composition.",

@@ -33,23 +33,32 @@ export default async function EncouragementsAdminPage() {
             <br />
             <span className="text-brass">a week.</span>
           </h1>
-          <Magnetic>
+          <div className="flex flex-wrap items-center gap-3">
             <Link
-              href="/admin/encouragements/new"
-              className="lift group inline-flex h-11 items-center gap-2 border border-bone bg-bone px-6 text-sm font-medium text-iron transition-colors hover:bg-stone"
+              href="/admin/encouragements/series/new"
+              className="inline-flex h-11 items-center gap-2 border border-stone/30 px-5 text-sm font-medium text-stone transition-colors hover:border-brass hover:text-brass"
             >
-              <Icon name="sparkles" size={14} />
-              Compose this week&rsquo;s letter
-              <Icon
-                name="arrow-right"
-                size={14}
-                className="transition-transform group-hover:translate-x-1"
-              />
+              <Icon name="calendar" size={14} />
+              Schedule a series
             </Link>
-          </Magnetic>
+            <Magnetic>
+              <Link
+                href="/admin/encouragements/new"
+                className="lift group inline-flex h-11 items-center gap-2 border border-bone bg-bone px-6 text-sm font-medium text-iron transition-colors hover:bg-stone"
+              >
+                <Icon name="sparkles" size={14} />
+                Compose this week&rsquo;s letter
+                <Icon
+                  name="arrow-right"
+                  size={14}
+                  className="transition-transform group-hover:translate-x-1"
+                />
+              </Link>
+            </Magnetic>
+          </div>
         </div>
         <p className="mt-6 max-w-2xl font-pullquote text-base italic leading-relaxed text-stone/80">
-          Pick a theme, a cover image, and a voice. Claude drafts the rest. Edit, publish, the public page goes live.
+          One letter at a time, or schedule a whole series on a theme. Claude drafts. You review. The cron publishes on cadence.
         </p>
       </header>
 
@@ -88,6 +97,11 @@ export default async function EncouragementsAdminPage() {
               >
                 <span className="section-mark text-stone/45">
                   No. {row.issueNumber}
+                  {(row as { seriesPosition?: number | null; }).seriesPosition && (
+                    <span className="ml-1 text-brass/65">
+                      · {(row as { seriesPosition?: number | null }).seriesPosition} of series
+                    </span>
+                  )}
                 </span>
                 <div className="min-w-0">
                   <p className="truncate display-xl text-base text-bone group-hover/row:text-brass md:text-lg">

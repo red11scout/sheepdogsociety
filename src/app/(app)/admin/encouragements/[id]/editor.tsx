@@ -11,6 +11,7 @@ import {
   setEncouragementStatus,
 } from "@/server/encouragements";
 import { THEOLOGIAN_VOICES } from "@/lib/ai/voices";
+import { scrubAiText } from "@/lib/ai/scrub";
 import { cn } from "@/lib/utils";
 
 interface EncouragementEditorProps {
@@ -153,12 +154,20 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
         const { value, done } = await reader.read();
         if (done) break;
         acc += decoder.decode(value, { stream: true });
+        // Stream the raw text into the textarea so the user sees progress.
         if (target === "intro") setIntro(acc);
         else if (target === "updates") setUpdates(acc);
         else if (target === "guidance") setGuidance(acc);
         else if (target === "notes") setNotes(acc);
         // scripture: handled at the end
       }
+      // Scrub em-dashes and hashtags from the FINAL text — system prompt
+      // forbids them but the model still slips them in.
+      const cleaned = scrubAiText(acc);
+      if (target === "intro") setIntro(cleaned);
+      else if (target === "updates") setUpdates(cleaned);
+      else if (target === "guidance") setGuidance(cleaned);
+      else if (target === "notes") setNotes(cleaned);
       if (target === "scripture") {
         try {
           const match = acc.match(/\[[\s\S]*\]/);

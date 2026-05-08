@@ -38,6 +38,9 @@ export const weeklyEncouragements = pgTable(
     coverImageAlt: text("cover_image_alt").default(""),
     theme: text("theme").default(""),
     voice: text("voice").default(""),
+    seriesId: uuid("series_id"),
+    seriesPosition: integer("series_position"),
+    scheduledFor: timestamp("scheduled_for"),
     authorId: text("author_id").references(() => users.id, {
       onDelete: "set null",
     }),
@@ -83,6 +86,35 @@ export const resourceSections = pgTable(
 export type ResourceSection = typeof resourceSections.$inferSelect;
 export type ResourceSectionInsert = typeof resourceSections.$inferInsert;
 
+// ============================================================
+// Letter Series — a themed batch of weekly encouragements published
+// on a recurring cadence. Created by the admin via the "Schedule a
+// series" composer; the cron at /api/cron/publish-scheduled-letters
+// publishes each letter when its scheduled_for window arrives.
+// ============================================================
+export const letterSeries = pgTable(
+  "letter_series",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    theme: text("theme").notNull(),
+    voice: text("voice").default(""),
+    totalCount: integer("total_count").notNull(),
+    cadence: text("cadence").notNull().default("weekly"), // weekly | biweekly | monthly | custom
+    startDate: date("start_date").notNull(),
+    publishHour: integer("publish_hour").notNull().default(6),
+    createdBy: text("created_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    deletedAt: timestamp("deleted_at"),
+  },
+  (table) => [index("letter_series_created_idx").on(table.createdAt)]
+);
+
+export type LetterSeries = typeof letterSeries.$inferSelect;
+export type LetterSeriesInsert = typeof letterSeries.$inferInsert;
+
 // Relations
 export const weeklyEncouragementsRelations = relations(
   weeklyEncouragements,
@@ -93,3 +125,10 @@ export const weeklyEncouragementsRelations = relations(
     }),
   })
 );
+
+export const letterSeriesRelations = relations(letterSeries, ({ one }) => ({
+  creator: one(users, {
+    fields: [letterSeries.createdBy],
+    references: [users.id],
+  }),
+}));
