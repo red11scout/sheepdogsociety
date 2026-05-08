@@ -1,7 +1,11 @@
 # Database migrations
 
-The Sheepdog Society site uses **Neon** (Postgres) and writes migrations as
-plain SQL files under `drizzle/`. Every file starts with `IF NOT EXISTS` /
+The Sheepdog Society site uses **Supabase** (Postgres) in production. The
+`DATABASE_URL` env var on Vercel is the source of truth for which DB the
+runtime app talks to. The original "Phase G — move to Neon" plan in CLAUDE.md
+hasn't shipped; treat any reference to "Neon" in older docs as "the prod
+Postgres", whatever it currently is. Migrations live as plain SQL files
+under `drizzle/`. Every file starts with `IF NOT EXISTS` /
 `ON CONFLICT DO NOTHING` guards so they're idempotent and re-runnable.
 
 ## How migrations apply to production
@@ -16,10 +20,10 @@ against prod Neon. This is the default.
 
 **Required setup (one time):**
 
-1. In Neon, copy the **pooled connection string** for the production branch.
+1. In Supabase, copy the **transaction-mode pooled connection string** (port 6543) for the production project.
 2. In GitHub repo: **Settings → Environments → New environment** named
    `production`. Add a secret to that environment called
-   `NEON_DATABASE_URL_PRODUCTION` with the full URL.
+   `DATABASE_URL_PRODUCTION` with the full URL.
 3. (Recommended) Under that environment, add **Required reviewers** = yourself
    so prod migrations can't fire without an approval click.
 
@@ -29,7 +33,7 @@ automatically when merged. The workflow is in
 
 ### 2. Manual — re-run the Action from the GitHub UI
 
-Go to **Actions → Apply Neon migrations → Run workflow** on `main`. Use this
+Go to **Actions → Apply database migrations → Run workflow** on `main`. Use this
 after rotating the Neon password, swapping to a new Neon project, or to
 verify a migration ran cleanly. Safe to re-run because of the `IF NOT EXISTS`
 guards.

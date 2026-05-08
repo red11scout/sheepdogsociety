@@ -1,13 +1,14 @@
-name: Apply Neon migrations
+name: Apply database migrations
 
-# Runs scripts/apply-neon-migration.mjs against prod Neon whenever a
+# Runs scripts/apply-neon-migration.mjs (despite the name, the script
+# works against any Postgres — currently Supabase in prod) whenever a
 # new SQL file is committed under drizzle/ on main. Also runnable on
 # demand from the Actions tab so you can re-apply after a DB swap or
 # password rotation without dropping into a terminal.
 #
-# Required repo secret:
-#   NEON_DATABASE_URL_PRODUCTION  — full pooled connection string from
-#   Neon. Set in Settings → Secrets and variables → Actions.
+# Required GitHub Environment secret:
+#   DATABASE_URL_PRODUCTION  — full pooled connection string for the
+#   prod Postgres. Set in Settings → Environments → production.
 
 on:
   push:
@@ -31,7 +32,7 @@ concurrency:
 
 jobs:
   migrate:
-    name: Apply drizzle/*.sql to prod Neon
+    name: Apply drizzle/*.sql to prod Postgres
     runs-on: ubuntu-latest
     timeout-minutes: 5
     environment:
@@ -53,13 +54,13 @@ jobs:
 
       - name: Apply migrations
         env:
-          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL_PRODUCTION }}
+          NEON_DATABASE_URL: ${{ secrets.DATABASE_URL_PRODUCTION }}
         run: |
           if [ -z "$NEON_DATABASE_URL" ]; then
-            echo "::error::NEON_DATABASE_URL_PRODUCTION secret is empty. Set it under Settings → Environments → production → Secrets."
+            echo "::error::DATABASE_URL_PRODUCTION secret is empty. Set it under Settings → Environments → production → Secrets."
             exit 1
           fi
           node scripts/apply-neon-migration.mjs
 
       - name: Done
-        run: echo "Migrations applied to production Neon."
+        run: echo "Migrations applied to production database."
