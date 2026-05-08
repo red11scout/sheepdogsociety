@@ -10,6 +10,7 @@ import {
   updateEncouragement,
   setEncouragementStatus,
 } from "@/server/encouragements";
+import { THEOLOGIAN_VOICES } from "@/lib/ai/voices";
 import { cn } from "@/lib/utils";
 
 interface EncouragementEditorProps {
@@ -27,6 +28,8 @@ interface EncouragementEditorProps {
     notes: string;
     coverImageUrl: string;
     coverImageAlt: string;
+    theme: string;
+    voice: string;
   };
 }
 
@@ -48,7 +51,15 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
   const [notes, setNotes] = useState(initial.notes);
   const [coverImageUrl, setCoverImageUrl] = useState(initial.coverImageUrl);
   const [coverImageAlt, setCoverImageAlt] = useState(initial.coverImageAlt);
+  const [theme, setTheme] = useState(initial.theme);
   const [status, setStatus] = useState(initial.status);
+  const voiceLabel =
+    THEOLOGIAN_VOICES.find((v) => v.id === initial.voice)?.name ??
+    (initial.voice === "custom"
+      ? "Custom"
+      : initial.voice
+      ? initial.voice
+      : "");
   const [savedAt, setSavedAt] = useState<Date | null>(null);
   const [saveState, setSaveState] = useState<"idle" | "saving" | "error">("idle");
   const [aiTarget, setAiTarget] = useState<AiTarget>(null);
@@ -74,6 +85,7 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
           coverImageUrl,
           coverImageAlt,
           publishDate: publishDate || null,
+          theme,
         });
         setSavedAt(new Date());
         setSaveState("idle");
@@ -96,6 +108,7 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
     coverImageUrl,
     coverImageAlt,
     publishDate,
+    theme,
   ]);
 
   async function publishNow() {
@@ -243,6 +256,21 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
           style={{ fontFamily: "var(--font-fraunces)" }}
         />
         <div className="mt-4 flex flex-wrap items-center gap-4">
+          <label className="flex items-center gap-2 text-xs text-stone/65">
+            <span className="section-mark text-stone/55">Theme</span>
+            <input
+              value={theme}
+              onChange={(e) => setTheme(e.target.value)}
+              placeholder="Endurance"
+              className="border border-stone/20 bg-transparent px-2 py-1 text-xs text-bone placeholder:text-stone/35 focus:border-brass focus:outline-none"
+            />
+          </label>
+          {voiceLabel && (
+            <span className="inline-flex items-center gap-1.5 border border-brass/40 bg-brass/10 px-2 py-1 text-[0.625rem] uppercase tracking-wider text-brass">
+              <Icon name="sparkles" size={10} />
+              {voiceLabel}
+            </span>
+          )}
           <label className="flex items-center gap-2 text-xs text-stone/65">
             <span className="section-mark text-stone/55">Publish date</span>
             <input

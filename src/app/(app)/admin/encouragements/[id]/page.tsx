@@ -44,6 +44,8 @@ export default async function EncouragementEditPage({
         notes: row.notes ?? "",
         coverImageUrl: row.coverImageUrl ?? "",
         coverImageAlt: row.coverImageAlt ?? "",
+        theme: (row as { theme?: string | null }).theme ?? "",
+        voice: (row as { voice?: string | null }).voice ?? "",
       }}
     />
   );

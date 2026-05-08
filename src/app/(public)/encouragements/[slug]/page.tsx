@@ -67,13 +67,18 @@ export default async function EncouragementPage({
             <Icon name="arrow-right" size={12} className="rotate-180" />
             All encouragements
           </Link>
-          <div className="mt-8 flex items-center gap-3">
+          <div className="mt-8 flex flex-wrap items-center gap-3">
             <span className="section-mark text-brass">
               No. {row.issueNumber}
             </span>
             {row.publishDate && (
               <span className="section-mark text-stone/55">
                 {format(new Date(row.publishDate), "MMMM d, yyyy")}
+              </span>
+            )}
+            {(row as { theme?: string | null }).theme && (
+              <span className="section-mark text-stone/55">
+                · {(row as { theme?: string | null }).theme}
               </span>
             )}
           </div>

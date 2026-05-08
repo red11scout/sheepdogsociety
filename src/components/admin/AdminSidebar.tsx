@@ -36,40 +36,70 @@ export function AdminSidebar({
     {
       label: "Today",
       items: [
-        { href: "/admin/dashboard", label: "Cockpit", icon: "target" },
+        {
+          href: "/admin/dashboard",
+          label: "Home",
+          icon: "target",
+          hint: "Your starting point. Shows this week's encouragement status, the inbox, and quick actions.",
+        },
         {
           href: "/admin/contacts",
           label: "Inbox",
           icon: "inbox",
           badge: totalInbox > 0 ? totalInbox : undefined,
-          hint: "Contact submissions, testimonies awaiting approval, group-start requests.",
+          hint: "Contact submissions, testimonies awaiting approval, group-start requests. The number is what's still unread or pending.",
         },
       ],
     },
     {
-      label: "Content",
+      label: "Write",
       items: [
         {
           href: "/admin/encouragements",
           label: "Weekly Encouragements",
           icon: "sparkles",
-          hint: "Structured weekly newsletter: intro, updates, scriptures, guidance, notes. With AI helpers per section + image gen.",
+          hint: "Theme, image, voice, AI draft, then publish. The main weekly artifact.",
         },
         {
           href: "/admin/letters",
           label: "The Letter",
           icon: "pen",
-          hint: "Free-form weekly editorial. Tiptap editor with Claude bubble menu.",
+          hint: "Free-form weekly editorial. Tiptap editor with Claude bubble menu. Use when you want full creative control.",
         },
-        { href: "/admin/devotionals", label: "Devotionals", icon: "scroll" },
-        { href: "/admin/scripture", label: "Daily Scripture", icon: "lamp" },
-        { href: "/admin/reading-plans", label: "Reading Plans", icon: "compass" },
-        { href: "/admin/testimonies", label: "Stories", icon: "flame" },
-        { href: "/admin/blog", label: "Blog", icon: "scroll" },
+        {
+          href: "/admin/devotionals",
+          label: "Devotionals",
+          icon: "scroll",
+          hint: "Daily devotionals shown on the public site. Generate with AI or write by hand.",
+        },
+        {
+          href: "/admin/scripture",
+          label: "Daily Scripture",
+          icon: "lamp",
+          hint: "One verse a day. Curated for the homepage and the daily-scripture page.",
+        },
+        {
+          href: "/admin/reading-plans",
+          label: "Reading Plans",
+          icon: "compass",
+          hint: "Multi-day scripture plans. Build from a theme or a book of the Bible.",
+        },
+        {
+          href: "/admin/testimonies",
+          label: "Stories",
+          icon: "flame",
+          hint: "Submitted testimonies. Approve to publish on the public Stories page.",
+        },
+        {
+          href: "/admin/blog",
+          label: "Blog",
+          icon: "scroll",
+          hint: "Long-form essays. Slower cadence than encouragements or letters.",
+        },
       ],
     },
     {
-      label: "Community",
+      label: "People",
       items: [
         {
           href: "/admin/newsletter",
@@ -77,35 +107,71 @@ export function AdminSidebar({
           icon: "mail",
           hint: "Newsletter list. Send Resend Broadcasts.",
         },
-        { href: "/admin/events", label: "Events", icon: "calendar" },
-        { href: "/admin/groups", label: "Groups", icon: "brothers" },
-        { href: "/admin/locations", label: "Locations", icon: "map-pin" },
+        {
+          href: "/admin/events",
+          label: "Events",
+          icon: "calendar",
+          hint: "Breakfasts, prayer nights, retreats. Shown on the public events page.",
+        },
+        {
+          href: "/admin/groups",
+          label: "Groups",
+          icon: "brothers",
+          hint: "Where men gather. Each group has a city, leader, meeting cadence. Powers the locator.",
+        },
+        {
+          href: "/admin/locations",
+          label: "Locations",
+          icon: "map-pin",
+          hint: "Map pins for the locator. A location can host one or more groups.",
+        },
         {
           href: "/admin/members",
           label: "Members",
           icon: "users-group",
-          hint: "Every signup from /join. Read-only this phase; status edits in Phase E.",
+          hint: "Every signup from /join. Read-only this phase; inline status editing lands in Phase E.",
         },
         {
           href: "/admin/location-requests",
           label: "Plant Requests",
           icon: "plus",
           badge: pendingLocationRequests > 0 ? pendingLocationRequests : undefined,
+          hint: "Men asking to start a group in their city. Mark each as you respond.",
         },
       ],
     },
     {
       label: "Assets",
       items: [
-        { href: "/admin/resources", label: "Resources", icon: "download" },
+        {
+          href: "/admin/resources",
+          label: "Resources",
+          icon: "download",
+          hint: "PDFs and guides organized by section. Pick a section, then add a resource.",
+        },
       ],
     },
     {
       label: "Settings",
       items: [
-        { href: "/admin/users", label: "Admins", icon: "shield" },
-        { href: "/admin/audit", label: "Audit log", icon: "clipboard" },
-        { href: "/admin/settings", label: "Settings", icon: "settings" },
+        {
+          href: "/admin/users",
+          label: "Admins",
+          icon: "shield",
+          hint: "Who can sign in to this cockpit. Members of the public never log in.",
+        },
+        {
+          href: "/admin/audit",
+          label: "Audit log",
+          icon: "clipboard",
+          hint: "Every change made by every admin. Read-only.",
+        },
+        {
+          href: "/admin/settings",
+          label: "Settings",
+          icon: "settings",
+          hint: "Integrations, brand voice, environment overview.",
+        },
       ],
     },
   ];

@@ -42,6 +42,21 @@ The keyboard shortcuts:
 
 ---
 
+## Composing the Weekly Encouragement
+
+This is your main weekly artifact. The composer walks you through it in four short steps.
+
+1. **Weekly Encouragements → Compose this week's encouragement.**
+2. **Step 1 — Theme & title.** One word for the theme (Endurance, Integrity). One line for the title that a man will remember on Wednesday. Concrete beats clever.
+3. **Step 2 — Cover image.** Upload one you have, paste a URL, or click *Generate with AI*. The prompt is pre-filled from your theme. Skip if you want to add it later.
+4. **Step 3 — Voice.** Pick whose preaching cadence Claude should write in. Ten options: Piper, Keller, Sproul, MacArthur, Begg, Carson, Ferguson, DeYoung, Baucham, Washer. Or describe your own in the textarea below the cards. The output is **original prose in the spirit of the voice** — never a fabricated quotation.
+5. **Step 4 — Draft.** One button. Claude returns intro, two or three scripture anchors with notes, the guidance, and a brief closing. About 20 seconds. *Try a different draft* re-runs. *Use this draft* saves and opens the editor.
+6. **Edit and publish.** Tweak any section by hand. Each section also has its own *Draft with AI* helper for incremental rewrites. Click *Publish now* when ready and the public page goes live at `/encouragements/<slug>`.
+
+Bible verse **text** is never generated. The composer returns references only (e.g. `Romans 5:3-4`) and the public page renders the actual verse text from the ESV.
+
+---
+
 ## Writing the Letter
 
 1. **Letters → Start a new Letter.**

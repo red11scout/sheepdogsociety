@@ -174,9 +174,7 @@ export default async function AdminMembersPage() {
       )}
 
       <p className="mt-12 text-xs leading-relaxed text-stone/50">
-        Status workflow editor + CSV export + inline note editing land in Phase E.
-        For now, manage via the DB:{" "}
-        <code className="text-brass">UPDATE members SET status = &apos;contacted&apos; WHERE id = ...;</code>
+        Read-only this phase. Inline status editing, CSV export, and note editing land in the next phase. For now, follow up by email or phone, and ask a developer if you need a status change.
       </p>
     </div>
   );

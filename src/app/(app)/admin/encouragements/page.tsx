@@ -38,8 +38,8 @@ export default async function EncouragementsAdminPage() {
               href="/admin/encouragements/new"
               className="lift group inline-flex h-11 items-center gap-2 border border-bone bg-bone px-6 text-sm font-medium text-ink transition-colors hover:bg-stone"
             >
-              <Icon name="plus" size={14} />
-              New encouragement
+              <Icon name="sparkles" size={14} />
+              Compose this week&rsquo;s encouragement
               <Icon
                 name="arrow-right"
                 size={14}
@@ -49,7 +49,7 @@ export default async function EncouragementsAdminPage() {
           </Magnetic>
         </div>
         <p className="mt-6 max-w-2xl font-pullquote text-base italic leading-relaxed text-stone/80">
-          Each encouragement carries five sections: intro, updates, scriptures, guidance, notes. Add a cover image (uploaded or AI-generated). Publish when ready and the page on the public site goes live.
+          Pick a theme, a cover image, and a voice. Claude drafts the rest. Edit, publish, the public page goes live.
         </p>
       </header>
 
@@ -93,11 +93,15 @@ export default async function EncouragementsAdminPage() {
                   <p className="truncate display-xl text-base text-bone group-hover/row:text-brass md:text-lg">
                     {row.title || "Untitled"}
                   </p>
-                  {row.intro && (
+                  {(row as { theme?: string | null }).theme ? (
+                    <p className="mt-1 section-mark text-stone/55">
+                      {(row as { theme?: string | null }).theme}
+                    </p>
+                  ) : row.intro ? (
                     <p className="mt-1 line-clamp-1 text-xs text-stone/55">
                       {row.intro}
                     </p>
-                  )}
+                  ) : null}
                 </div>
                 <StatusPill status={row.status} />
                 <span className="text-xs text-stone/55">

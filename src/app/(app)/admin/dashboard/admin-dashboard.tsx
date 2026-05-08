@@ -40,9 +40,23 @@ type RecentLetter = {
   updatedAt: string;
 };
 
+type ThisWeek = {
+  status: "missing" | "draft" | "scheduled" | "published";
+  latest: {
+    id: string;
+    title: string;
+    slug: string;
+    status: string;
+    issueNumber: number;
+    theme: string;
+    updatedAt: string;
+  } | null;
+};
+
 type DashboardData = {
   stats: DashboardStats | null;
   recentLetters: RecentLetter[];
+  thisWeek: ThisWeek | null;
 };
 
 interface AdminDashboardProps {
@@ -53,6 +67,7 @@ export function AdminDashboard({ greetingName = "brother" }: AdminDashboardProps
   const [data, setData] = useState<DashboardData>({
     stats: null,
     recentLetters: [],
+    thisWeek: null,
   });
   const [loading, setLoading] = useState(true);
 
@@ -60,7 +75,11 @@ export function AdminDashboard({ greetingName = "brother" }: AdminDashboardProps
     fetch("/api/admin/dashboard")
       .then((r) => r.json())
       .then((d) =>
-        setData({ stats: d.stats ?? null, recentLetters: d.recentLetters ?? [] })
+        setData({
+          stats: d.stats ?? null,
+          recentLetters: d.recentLetters ?? [],
+          thisWeek: d.thisWeek ?? null,
+        })
       )
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -106,59 +125,19 @@ export function AdminDashboard({ greetingName = "brother" }: AdminDashboardProps
 
       {/* Bento — top row */}
       <section className="mt-12 grid gap-4 md:grid-cols-12">
-        {/* The Letter — main panel */}
+        {/* This week — main panel */}
         <Spotlight
           size={620}
           color="var(--color-brass)"
           className="border border-stone/15 bg-iron/40 md:col-span-8"
         >
           <div className="p-8 md:p-10">
-            <div className="flex items-start justify-between gap-6">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-3">
-                  <span className="section-mark text-brass">§ The Letter</span>
-                  <HintTooltip hint="Your weekly editorial newsletter. Draft in the Tiptap editor with Claude as a co-writer. Publish to the website and broadcast to subscribers in one click." />
-                </div>
-                <h2 className="display-xl mt-4 text-2xl text-bone md:text-4xl">
-                  Write this week&rsquo;s
-                  <br />
-                  <span className="text-brass">word.</span>
-                </h2>
-                <p className="mt-4 max-w-md font-pullquote text-base italic leading-relaxed text-stone">
-                  Tiptap editor with Claude AI co-writing. Highlight any text
-                  and ask for a rephrase, scripture suggestion, or sharper
-                  hook. Autosaves with full version history.
-                </p>
-                <div className="mt-8 flex flex-wrap items-center gap-3">
-                  <Magnetic>
-                    <Link
-                      href="/admin/letters/new"
-                      className="lift group inline-flex h-11 items-center gap-2 border border-bone bg-bone px-6 text-sm font-medium text-ink transition-colors hover:bg-stone"
-                    >
-                      <Icon name="pen" size={16} />
-                      Start a new Letter
-                      <Icon
-                        name="arrow-right"
-                        size={14}
-                        className="transition-transform group-hover:translate-x-1"
-                      />
-                    </Link>
-                  </Magnetic>
-                  <Link
-                    href="/admin/letters"
-                    className="inline-flex items-center gap-2 section-mark text-stone/70 transition-colors hover:text-brass"
-                  >
-                    Browse all
-                    <Icon name="arrow-right" size={12} />
-                  </Link>
-                </div>
-              </div>
-              <div className="hidden flex-col gap-1 border-l border-stone/15 pl-6 md:flex">
-                <MiniStat label="Drafts" value={stats.draftLetters} />
-                <MiniStat label="Published" value={stats.publishedLetters} />
-                <MiniStat label="Subscribers" value={stats.activeSubscribers} />
-              </div>
-            </div>
+            <ThisWeekHero
+              thisWeek={data.thisWeek}
+              draftLetters={stats.draftLetters}
+              publishedLetters={stats.publishedLetters}
+              activeSubscribers={stats.activeSubscribers}
+            />
           </div>
         </Spotlight>
 
@@ -340,23 +319,24 @@ export function AdminDashboard({ greetingName = "brother" }: AdminDashboardProps
         )}
       </section>
 
-      {/* Hints */}
-      <section className="mt-14 grid gap-4 md:grid-cols-3">
-        <Hint
-          shortcut="⌘ K"
-          label="Command palette"
-          body="Jump to any page, run an action, or ask Claude. From anywhere in the cockpit."
-        />
-        <Hint
-          shortcut="⌘ J"
-          label="Ask Claude"
-          body="Open the AI assistant on the right. Knows what page you are on. Streams responses."
-        />
-        <Hint
-          shortcut="?"
-          label="Hover the dots"
-          body="Tiny help icons explain anything you do not recognize. We will keep adding them."
-        />
+      {/* Keyboard hints — compact strip */}
+      <section className="mt-14 flex flex-wrap items-center gap-x-6 gap-y-3 border border-dashed border-stone/15 bg-iron/20 px-5 py-4 text-xs text-stone/70">
+        <span className="section-mark text-stone/45">Shortcuts</span>
+        <span className="inline-flex items-center gap-2">
+          <kbd className="border border-stone/25 bg-iron/60 px-1.5 py-0.5 text-[0.6875rem] font-semibold text-bone">⌘ K</kbd>
+          jump anywhere
+        </span>
+        <span className="inline-flex items-center gap-2">
+          <kbd className="border border-stone/25 bg-iron/60 px-1.5 py-0.5 text-[0.6875rem] font-semibold text-bone">⌘ J</kbd>
+          ask Claude
+        </span>
+        <span className="inline-flex items-center gap-2">
+          <kbd className="border border-stone/25 bg-iron/60 px-1.5 py-0.5 text-[0.6875rem] font-semibold text-bone">?</kbd>
+          open help
+        </span>
+        <span className="text-stone/45">Hover any{" "}
+          <Icon name="help" size={12} className="-mt-0.5 inline-block text-stone/55" /> for a tip.
+        </span>
       </section>
 
       {/* Footer hint */}
@@ -366,6 +346,120 @@ export function AdminDashboard({ greetingName = "brother" }: AdminDashboardProps
         </p>
         <p className="section-mark">Glory to God</p>
       </footer>
+    </div>
+  );
+}
+
+function ThisWeekHero({
+  thisWeek,
+  draftLetters,
+  publishedLetters,
+  activeSubscribers,
+}: {
+  thisWeek: ThisWeek | null;
+  draftLetters: number;
+  publishedLetters: number;
+  activeSubscribers: number;
+}) {
+  const status = thisWeek?.status ?? "missing";
+  const latest = thisWeek?.latest ?? null;
+
+  const headlines: Record<ThisWeek["status"], { kicker: string; tail: string }> = {
+    missing: {
+      kicker: "No encouragement",
+      tail: "this week.",
+    },
+    draft: {
+      kicker: "A draft is",
+      tail: "in progress.",
+    },
+    scheduled: {
+      kicker: "This week is",
+      tail: "scheduled.",
+    },
+    published: {
+      kicker: "This week is",
+      tail: "out the door.",
+    },
+  };
+
+  const { kicker, tail } = headlines[status];
+  const ctaHref =
+    latest && status !== "published"
+      ? `/admin/encouragements/${latest.id}`
+      : "/admin/encouragements/new";
+  const ctaLabel =
+    status === "published"
+      ? "Compose next week"
+      : latest
+      ? "Open the draft"
+      : "Compose this week's encouragement";
+
+  return (
+    <div className="flex items-start justify-between gap-6">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-3">
+          <span className="section-mark text-brass">§ This week</span>
+          <HintTooltip hint="Your weekly word to the brotherhood. Pick a theme, a cover image, and a voice. Claude drafts intro, scriptures, guidance, and notes. You publish." />
+        </div>
+        <h2 className="display-xl mt-4 text-2xl text-bone md:text-4xl">
+          {kicker}
+          <br />
+          <span className="text-brass">{tail}</span>
+        </h2>
+        {latest && (
+          <p className="mt-4 max-w-md text-sm text-stone/80">
+            <span className="section-mark text-stone/55">No. {latest.issueNumber}</span>{" "}
+            <span className="text-bone">{latest.title || "Untitled"}</span>
+            {latest.theme && (
+              <>
+                {" · "}
+                <span className="text-stone/65">{latest.theme}</span>
+              </>
+            )}
+          </p>
+        )}
+        {!latest && (
+          <p className="mt-4 max-w-md font-pullquote text-base italic leading-relaxed text-stone">
+            Four short steps. Theme, image, voice, draft. Read it, edit it, send it.
+          </p>
+        )}
+        <div className="mt-8 flex flex-wrap items-center gap-3">
+          <Magnetic>
+            <Link
+              href={ctaHref}
+              className="lift group inline-flex h-11 items-center gap-2 border border-bone bg-bone px-6 text-sm font-medium text-ink transition-colors hover:bg-stone"
+            >
+              <Icon name="sparkles" size={16} />
+              {ctaLabel}
+              <Icon
+                name="arrow-right"
+                size={14}
+                className="transition-transform group-hover:translate-x-1"
+              />
+            </Link>
+          </Magnetic>
+          <Link
+            href="/admin/encouragements"
+            className="inline-flex items-center gap-2 section-mark text-stone/70 transition-colors hover:text-brass"
+          >
+            All encouragements
+            <Icon name="arrow-right" size={12} />
+          </Link>
+          <Link
+            href="/admin/letters/new"
+            className="inline-flex items-center gap-2 section-mark text-stone/55 transition-colors hover:text-brass"
+          >
+            <Icon name="pen" size={12} />
+            Or a free-form Letter
+          </Link>
+        </div>
+      </div>
+      <div className="hidden flex-col gap-1 border-l border-stone/15 pl-6 md:flex">
+        <MiniStat label="Drafts" value={draftLetters} />
+        <MiniStat label="Published" value={publishedLetters} />
+        <MiniStat label="Subscribers" value={activeSubscribers} />
+      </div>
     </div>
   );
 }
@@ -504,24 +598,3 @@ function StatusPill({ status }: { status: string }) {
   );
 }
 
-function Hint({
-  shortcut,
-  label,
-  body,
-}: {
-  shortcut: string;
-  label: string;
-  body: string;
-}) {
-  return (
-    <div className="border border-dashed border-stone/15 bg-iron/20 p-5">
-      <div className="flex items-center gap-3">
-        <span className="border border-stone/25 bg-iron/60 px-2 py-1 text-[0.625rem] font-semibold tracking-wider text-bone">
-          {shortcut}
-        </span>
-        <span className="display-xl text-base text-bone">{label}</span>
-      </div>
-      <p className="mt-3 text-sm leading-relaxed text-stone/75">{body}</p>
-    </div>
-  );
-}

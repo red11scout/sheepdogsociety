@@ -18,6 +18,41 @@ type Topic = {
 
 const TOPICS: { section: string; items: Topic[] }[] = [
   {
+    section: "How do I…",
+    items: [
+      {
+        title: "Compose this week's encouragement",
+        body: "1. Click Weekly Encouragements in the sidebar. 2. Click Compose this week's encouragement. 3. Theme + title (one word, then a line a man remembers). 4. Cover image: upload or generate. 5. Pick a voice from the ten. 6. Click Draft this encouragement. 7. Use this draft, then publish.",
+        href: "/admin/encouragements/new",
+      },
+      {
+        title: "Approve a new admin",
+        body: "1. Admins (sidebar Settings group). 2. Pending tab. 3. Click the row. 4. Approve. They get a magic-link email and can sign in.",
+        href: "/admin/users",
+      },
+      {
+        title: "Add a group",
+        body: "1. Groups (sidebar People group). 2. New group. 3. Name, city, state, latitude/longitude (the city field auto-geocodes). 4. Toggle Active. The locator picks it up immediately.",
+        href: "/admin/groups",
+      },
+      {
+        title: "Upload a resource (PDF, guide)",
+        body: "1. Resources (sidebar Assets group). 2. Pick a section (Bible Studies, Leader Guides, Workout Plans, Sermons, Devotional Series). 3. New resource. 4. Title, file, optional cover image. Save.",
+        href: "/admin/resources",
+      },
+      {
+        title: "Schedule an event",
+        body: "1. Events (sidebar People group). 2. New event. 3. Type, title, date, location. 4. Save. The public events page updates immediately.",
+        href: "/admin/events",
+      },
+      {
+        title: "Triage a plant request",
+        body: "1. Plant requests (sidebar People group, badge shows count). 2. Click a pending request. 3. Reach out by email or phone. 4. Mark as Reviewed.",
+        href: "/admin/location-requests",
+      },
+    ],
+  },
+  {
     section: "The Letter",
     items: [
       {

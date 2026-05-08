@@ -6,6 +6,7 @@ import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { AdminGroupManager } from "./admin-group-manager";
+import { AdminPageIntro } from "@/components/admin/AdminPageIntro";
 
 export default async function AdminGroupsPage() {
   const { userId } = await auth();
@@ -20,7 +21,13 @@ export default async function AdminGroupsPage() {
     .where(eq(users.status, "active"));
 
   return (
-    <div className="mx-auto max-w-5xl p-6">
+    <div className="mx-auto max-w-5xl p-6 md:p-10">
+      <AdminPageIntro
+        kicker="Groups"
+        title="Where men gather."
+        description="Each group has a city, a leader, a meeting cadence. The locator pulls from this list. Leader email and phone stay private — never shown publicly."
+        hint="Add a new group below. Required: name, city, state, latitude/longitude. Toggle Active to publish it. Capacity hits the soft cap and status flips to full automatically."
+      />
       <AdminGroupManager availableUsers={activeUsers} />
     </div>
   );

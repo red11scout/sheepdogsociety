@@ -79,7 +79,13 @@ export async function getEncouragement(id: string) {
   return row ?? null;
 }
 
-export async function createEncouragement(input: { title: string }) {
+export async function createEncouragement(input: {
+  title: string;
+  theme?: string;
+  voice?: string;
+  coverImageUrl?: string;
+  coverImageAlt?: string;
+}) {
   const userId = await requireAdmin();
   const title = input.title.trim() || "Untitled";
 
@@ -110,6 +116,10 @@ export async function createEncouragement(input: { title: string }) {
       slug,
       authorId: userId,
       scriptures: [] as ScriptureRef[],
+      theme: input.theme?.trim() ?? "",
+      voice: input.voice?.trim() ?? "",
+      coverImageUrl: input.coverImageUrl ?? "",
+      coverImageAlt: input.coverImageAlt ?? "",
     })
     .returning();
 
@@ -128,6 +138,8 @@ export async function updateEncouragement(input: {
   coverImageUrl?: string;
   coverImageAlt?: string;
   publishDate?: string | null;
+  theme?: string;
+  voice?: string;
 }) {
   await requireAdmin();
   const patch: Record<string, unknown> = { updatedAt: new Date() };
@@ -140,10 +152,36 @@ export async function updateEncouragement(input: {
   if (input.coverImageUrl != null) patch.coverImageUrl = input.coverImageUrl;
   if (input.coverImageAlt != null) patch.coverImageAlt = input.coverImageAlt;
   if (input.publishDate !== undefined) patch.publishDate = input.publishDate;
+  if (input.theme != null) patch.theme = input.theme;
+  if (input.voice != null) patch.voice = input.voice;
 
   await db
     .update(weeklyEncouragements)
     .set(patch)
+    .where(eq(weeklyEncouragements.id, input.id));
+  revalidatePath("/admin/encouragements");
+  revalidatePath(`/admin/encouragements/${input.id}`);
+}
+
+export async function applyDraft(input: {
+  id: string;
+  draft: {
+    intro: string;
+    scriptures: { ref: string; note: string }[];
+    guidance: string;
+    notes: string;
+  };
+}) {
+  await requireAdmin();
+  await db
+    .update(weeklyEncouragements)
+    .set({
+      intro: input.draft.intro,
+      scriptures: input.draft.scriptures as ScriptureRef[],
+      guidance: input.draft.guidance,
+      notes: input.draft.notes,
+      updatedAt: new Date(),
+    })
     .where(eq(weeklyEncouragements.id, input.id));
   revalidatePath("/admin/encouragements");
   revalidatePath(`/admin/encouragements/${input.id}`);

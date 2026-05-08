@@ -36,6 +36,8 @@ export const weeklyEncouragements = pgTable(
     notes: text("notes").default(""),
     coverImageUrl: text("cover_image_url").default(""),
     coverImageAlt: text("cover_image_alt").default(""),
+    theme: text("theme").default(""),
+    voice: text("voice").default(""),
     authorId: text("author_id").references(() => users.id, {
       onDelete: "set null",
     }),

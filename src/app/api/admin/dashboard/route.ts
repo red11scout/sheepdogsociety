@@ -9,6 +9,7 @@ import {
   aiGenerations,
   newsletterSubscribers,
 } from "@/db/schema";
+import { weeklyEncouragements } from "@/db/schema-new";
 import { sql, gte, desc, isNull, and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
@@ -47,6 +48,7 @@ export async function GET() {
     recentLettersList,
     aiThisWeekRow,
     activeSubscribersRow,
+    encouragementSnapshot,
   ] = await Promise.all([
     // 1: All user-status counts in one pass.
     db
@@ -106,7 +108,49 @@ export async function GET() {
       .select({ count: sql<number>`count(*)::int` })
       .from(newsletterSubscribers)
       .where(eq(newsletterSubscribers.isActive, true)),
+
+    // 9: Most recent encouragement (any status). Drives the "This week" hero.
+    // Wrapped in try/catch so a missing migration doesn't break the dashboard.
+    (async () => {
+      try {
+        return await db
+          .select({
+            id: weeklyEncouragements.id,
+            title: weeklyEncouragements.title,
+            slug: weeklyEncouragements.slug,
+            status: weeklyEncouragements.status,
+            publishDate: weeklyEncouragements.publishDate,
+            updatedAt: weeklyEncouragements.updatedAt,
+            issueNumber: weeklyEncouragements.issueNumber,
+            theme: weeklyEncouragements.theme,
+          })
+          .from(weeklyEncouragements)
+          .where(isNull(weeklyEncouragements.deletedAt))
+          .orderBy(desc(weeklyEncouragements.updatedAt))
+          .limit(1);
+      } catch {
+        return [] as never[];
+      }
+    })(),
   ]);
+
+  // "This week" snapshot for the hero — is the most recent encouragement
+  // already published, or still a draft, or missing entirely?
+  const latest = encouragementSnapshot[0] ?? null;
+  const oneWeekMs = 7 * 24 * 60 * 60 * 1000;
+  let thisWeekStatus: "missing" | "draft" | "scheduled" | "published" = "missing";
+  if (latest) {
+    const updated = new Date(latest.updatedAt).getTime();
+    if (latest.status === "published") {
+      thisWeekStatus = "published";
+    } else if (now.getTime() - updated < oneWeekMs) {
+      thisWeekStatus =
+        latest.status === "scheduled" ? "scheduled" : "draft";
+    } else {
+      // Latest row is older than a week and unpublished — treat as missing.
+      thisWeekStatus = "missing";
+    }
+  }
 
   return NextResponse.json({
     stats: {
@@ -119,6 +163,20 @@ export async function GET() {
       publishedLetters: letterStats[0].published,
       activeSubscribers: activeSubscribersRow[0].count,
       aiGenerationsThisWeek: aiThisWeekRow[0].count,
+    },
+    thisWeek: {
+      status: thisWeekStatus,
+      latest: latest
+        ? {
+            id: latest.id,
+            title: latest.title,
+            slug: latest.slug,
+            status: latest.status,
+            issueNumber: latest.issueNumber,
+            theme: latest.theme ?? "",
+            updatedAt: latest.updatedAt,
+          }
+        : null,
     },
     recentLetters: recentLettersList,
   });
