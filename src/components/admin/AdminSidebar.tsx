@@ -56,15 +56,9 @@ export function AdminSidebar({
       items: [
         {
           href: "/admin/encouragements",
-          label: "Weekly Encouragements",
-          icon: "sparkles",
-          hint: "Theme, image, voice, AI draft, then publish. The main weekly artifact.",
-        },
-        {
-          href: "/admin/letters",
           label: "The Letter",
-          icon: "pen",
-          hint: "Free-form weekly editorial. Tiptap editor with Claude bubble menu. Use when you want full creative control.",
+          icon: "sparkles",
+          hint: "Your weekly word to the brotherhood. Theme, image, voice, AI draft, then publish.",
         },
         {
           href: "/admin/devotionals",

@@ -7,9 +7,9 @@ import { format } from "date-fns";
 export const dynamic = "force-dynamic";
 
 export const metadata = {
-  title: "Weekly Encouragements — Sheepdog Society",
+  title: "The Letter — Sheepdog Society",
   description:
-    "Each week: a word from the Watch. Updates, scriptures, guidance, notes.",
+    "One letter a week. Scripture, guidance, and a word from the Watch.",
 };
 
 export default async function EncouragementsListPage() {
@@ -28,17 +28,16 @@ export default async function EncouragementsListPage() {
         <div className="dotted-grid absolute inset-0 opacity-50" aria-hidden />
         <div className="relative mx-auto max-w-7xl px-6 py-24 md:px-12 md:py-32">
           <div className="flex items-center gap-4">
-            <span className="section-mark">§ Weekly Encouragements</span>
+            <span className="section-mark">§ The Letter</span>
             <div className="hairline flex-1" />
           </div>
           <h1 className="display-xl mt-10 max-w-4xl text-[clamp(2.5rem,7vw,6rem)]">
-            A word from
+            One letter
             <br />
-            <span className="text-brass">the Watch.</span>
+            <span className="text-brass">a week.</span>
           </h1>
           <p className="mt-10 max-w-2xl font-pullquote text-xl italic leading-relaxed text-iron/70 md:text-2xl">
-            Each week. Updates. Scriptures. Guidance. Notes. Read on the site,
-            or save the page and carry it with you.
+            Scripture, guidance, a word from the Watch. Read it before the day starts. Save it, carry it, hand it to a brother.
           </p>
         </div>
       </section>

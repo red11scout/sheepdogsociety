@@ -24,14 +24,14 @@ export default async function EncouragementsAdminPage() {
     <div className="mx-auto max-w-[1400px] px-6 py-10 md:px-12 md:py-14">
       <header>
         <div className="flex items-center gap-4">
-          <span className="section-mark text-brass">§ Weekly Encouragements</span>
+          <span className="section-mark text-brass">§ The Letter</span>
           <div className="hairline flex-1" />
         </div>
         <div className="mt-6 flex flex-wrap items-end justify-between gap-6">
           <h1 className="display-xl text-3xl text-bone md:text-5xl">
-            Weekly word.
+            One letter
             <br />
-            <span className="text-brass">Standardized format.</span>
+            <span className="text-brass">a week.</span>
           </h1>
           <Magnetic>
             <Link
@@ -39,7 +39,7 @@ export default async function EncouragementsAdminPage() {
               className="lift group inline-flex h-11 items-center gap-2 border border-bone bg-bone px-6 text-sm font-medium text-iron transition-colors hover:bg-stone"
             >
               <Icon name="sparkles" size={14} />
-              Compose this week&rsquo;s encouragement
+              Compose this week&rsquo;s letter
               <Icon
                 name="arrow-right"
                 size={14}

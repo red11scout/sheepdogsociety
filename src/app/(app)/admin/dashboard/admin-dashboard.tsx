@@ -443,15 +443,8 @@ function ThisWeekHero({
             href="/admin/encouragements"
             className="inline-flex items-center gap-2 section-mark text-stone/70 transition-colors hover:text-brass"
           >
-            All encouragements
+            All letters
             <Icon name="arrow-right" size={12} />
-          </Link>
-          <Link
-            href="/admin/letters/new"
-            className="inline-flex items-center gap-2 section-mark text-stone/55 transition-colors hover:text-brass"
-          >
-            <Icon name="pen" size={12} />
-            Or a free-form Letter
           </Link>
         </div>
       </div>

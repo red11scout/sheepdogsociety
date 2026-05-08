@@ -159,17 +159,36 @@ export function ResourcesAdmin({
   }
 
   if (dbError) {
+    const missingNew =
+      dbError.includes("slug") ||
+      dbError.includes("body_html") ||
+      dbError.includes("topics") ||
+      dbError.includes("section_id");
+    const migration = missingNew
+      ? "drizzle/0006_resources_overhaul.sql"
+      : "drizzle/0002_encouragements_resources.sql";
     return (
       <div className="mx-auto max-w-3xl px-6 py-10">
         <div className="border border-oxblood/40 bg-oxblood/15 p-6 text-sm text-bone">
           <p className="display-xl text-base">Database not ready.</p>
-          <p className="mt-2 text-stone/80">{dbError}</p>
-          <p className="mt-3 text-xs text-stone/60">
-            Run:{" "}
-            <code className="border border-stone/20 bg-iron/60 px-2 py-0.5">
-              NEON_DATABASE_URL=&apos;...&apos; node scripts/apply-neon-migration.mjs drizzle/0002_encouragements_resources.sql
-            </code>
+          <p className="mt-2 text-stone/80">
+            The Resources schema is out of date with the deployed code. Apply migration{" "}
+            <code className="text-brass">{migration.replace("drizzle/", "")}</code> to your prod Neon DB.
           </p>
+          <p className="mt-3 text-xs text-stone/60">
+            From your terminal in the project root:
+          </p>
+          <pre className="mt-2 overflow-x-auto border border-stone/20 bg-iron/60 px-3 py-2 text-[0.6875rem] leading-relaxed text-bone">
+{`cd /Users/drewgodwin/sheepdogsociety
+vercel env pull /tmp/sheepdog-prod-env --environment=production --scope=drew-godwins-projects -y
+NEON_DATABASE_URL="$(grep '^NEON_DATABASE_URL=' /tmp/sheepdog-prod-env | cut -d= -f2- | tr -d '"')" \\
+  node scripts/apply-neon-migration.mjs ${migration}
+rm /tmp/sheepdog-prod-env`}
+          </pre>
+          <details className="mt-3 text-xs text-stone/55">
+            <summary className="cursor-pointer hover:text-bone">Raw error</summary>
+            <p className="mt-1 break-words text-stone/65">{dbError}</p>
+          </details>
         </div>
       </div>
     );
