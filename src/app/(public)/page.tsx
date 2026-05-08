@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { Icon } from "@/components/icons/Icon";
-import { AskTheWatch } from "@/components/AskTheWatch";
 import { Magnetic } from "@/components/motion/Magnetic";
 import { NewsletterForm } from "@/components/public/newsletter-form";
 import { LocationsPreview } from "@/components/LocationsPreview";
@@ -8,11 +7,11 @@ import { LocationsPreview } from "@/components/LocationsPreview";
 export const metadata = {
   title: "Sheepdog Society — Acts 20:28",
   description:
-    "Find your three. A brotherhood of men anchored in Acts 20:28, who tell the truth and grow stronger in Christ together.",
+    "Find your brothers. A brotherhood of men anchored in Acts 20:28, who tell the truth and grow stronger in Christ together.",
   openGraph: {
-    title: "Sheepdog Society — Find your three.",
+    title: "Sheepdog Society — Find your brothers.",
     description:
-      "Three brothers who tell the truth and hear yours. Acts 20:28.",
+      "Brothers who tell the truth and hear yours. Acts 20:28.",
     images: [{ url: "/api/og/verse", width: 1200, height: 630 }],
   },
   twitter: {
@@ -55,22 +54,39 @@ export default function HomePage() {
           <h1 className="display-xl mt-12 max-w-3xl text-[clamp(3rem,9vw,9rem)] text-foreground">
             Find your
             <br />
-            <span className="text-brass">three.</span>
+            <span className="text-brass">brothers.</span>
           </h1>
 
           <p className="mt-10 max-w-2xl font-pullquote text-xl leading-relaxed text-stone md:text-2xl">
-            You have walked alone a long time. There is honor in that, and a limit to it. Find three brothers who will tell you the truth and hear yours — men who know the Word, and who will grow stronger in Christ beside you. That is the work. That is enough.
+            You have walked alone a long time. There is honor in that, and a limit to it. Find brothers who will tell you the truth and hear yours, men who know the Word, who will stand watch beside you and grow stronger in Christ. That is the work. That is enough.
           </p>
 
-          <div className="mt-14">
-            <AskTheWatch />
+          <div className="mt-14 flex flex-wrap items-center gap-4">
+            <Magnetic>
+              <Link
+                href="/locations"
+                className="lift group inline-flex h-12 items-center gap-3 border border-bone bg-bone px-7 text-base font-medium text-iron transition-colors hover:bg-stone"
+              >
+                <Icon name="map-pin" size={18} />
+                Find a group near you
+                <Icon
+                  name="arrow-right"
+                  size={16}
+                  className="transition-transform group-hover:translate-x-1"
+                />
+              </Link>
+            </Magnetic>
+            <Link
+              href="/encouragements"
+              className="inline-flex h-12 items-center gap-2 px-2 text-base text-foreground/80 transition-colors hover:text-brass"
+            >
+              Read this week&rsquo;s Letter
+              <Icon name="arrow-right" size={14} />
+            </Link>
           </div>
 
-          <p className="mt-12 max-w-xl text-xs leading-relaxed text-stone/45">
-            This is a real conversation, drafted in real time by AI grounded in
-            Scripture and our voice. It points to Christ. It does not replace
-            Him, your pastor, or a brother across a table. If something heavy
-            is on your mind, call 988 or reach a man you trust.
+          <p className="mt-12 max-w-xl text-sm leading-relaxed text-stone">
+            We do not meet to perform. We do not meet to debate. We meet to be honest with each other, anchored in Scripture, and to send each other back into the week steadier than we came.
           </p>
         </div>
 

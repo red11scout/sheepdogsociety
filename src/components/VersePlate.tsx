@@ -35,7 +35,7 @@ export function VersePlate({ variant = "hero", className }: VersePlateProps) {
 
         <div className="mt-14 flex items-center gap-4">
           <div className="hairline flex-1" />
-          <span className="section-mark text-brass">Acts 20:28 &middot; ESV</span>
+          <span className="section-mark text-brass">Acts 20:28 &middot; NIV</span>
         </div>
       </div>
     </section>
