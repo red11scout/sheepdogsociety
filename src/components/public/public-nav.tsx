@@ -27,7 +27,7 @@ const navLinks: NavLink[] = [
       { href: "/faq", label: "FAQ" },
     ],
   },
-  { href: "/giving", label: "Give" },
+  // { href: "/giving", label: "Give" }, // hidden — uncomment to restore
 ];
 
 export function PublicNav() {

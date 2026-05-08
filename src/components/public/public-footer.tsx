@@ -76,6 +76,7 @@ export function PublicFooter() {
                   Start a group
                 </Link>
               </li>
+              {/* "Give" link hidden for now — uncomment when the giving flow is ready
               <li>
                 <Link
                   href="/giving"
@@ -84,6 +85,7 @@ export function PublicFooter() {
                   Give
                 </Link>
               </li>
+              */}
             </ul>
           </div>
 
