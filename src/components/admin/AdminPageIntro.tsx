@@ -42,7 +42,7 @@ export function AdminPageIntro({
         {primary && (
           <Link
             href={primary.href}
-            className="lift group inline-flex h-11 items-center gap-2 border border-bone bg-bone px-5 text-sm font-medium text-ink transition-colors hover:bg-stone"
+            className="lift group inline-flex h-11 items-center gap-2 border border-bone bg-bone px-5 text-sm font-medium text-iron transition-colors hover:bg-stone"
           >
             {primary.icon && <Icon name={primary.icon} size={14} />}
             {primary.label}
