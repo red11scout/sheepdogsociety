@@ -8,10 +8,11 @@ import { LocationsPreview } from "@/components/LocationsPreview";
 export const metadata = {
   title: "Sheepdog Society — Acts 20:28",
   description:
-    "Tell us what you are carrying. A brotherhood of men anchored in Acts 20:28.",
+    "Find your three. A brotherhood of men anchored in Acts 20:28, who tell the truth and grow stronger in Christ together.",
   openGraph: {
-    title: "Sheepdog Society — Tell us what you are carrying.",
-    description: "Acts 20:28. A brotherhood of men.",
+    title: "Sheepdog Society — Find your three.",
+    description:
+      "Three brothers who tell the truth and hear yours. Acts 20:28.",
     images: [{ url: "/api/og/verse", width: 1200, height: 630 }],
   },
   twitter: {

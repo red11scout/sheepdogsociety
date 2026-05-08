@@ -1,0 +1,65 @@
+name: Apply Neon migrations
+
+# Runs scripts/apply-neon-migration.mjs against prod Neon whenever a
+# new SQL file is committed under drizzle/ on main. Also runnable on
+# demand from the Actions tab so you can re-apply after a DB swap or
+# password rotation without dropping into a terminal.
+#
+# Required repo secret:
+#   NEON_DATABASE_URL_PRODUCTION  — full pooled connection string from
+#   Neon. Set in Settings → Secrets and variables → Actions.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "drizzle/**.sql"
+      - "scripts/apply-neon-migration.mjs"
+      - ".github/workflows/apply-migrations.yml"
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Which environment's DB to migrate"
+        type: choice
+        required: true
+        default: "production"
+        options: ["production"]
+
+concurrency:
+  group: apply-migrations-${{ github.event.inputs.target || 'production' }}
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    name: Apply drizzle/*.sql to prod Neon
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment:
+      name: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install postgres driver only
+        # The migration script just needs `postgres`; skip the full
+        # `npm ci` to keep this job under a minute.
+        run: npm install --no-save postgres@^3.4.0
+
+      - name: Apply migrations
+        env:
+          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL_PRODUCTION }}
+        run: |
+          if [ -z "$NEON_DATABASE_URL" ]; then
+            echo "::error::NEON_DATABASE_URL_PRODUCTION secret is empty. Set it under Settings → Environments → production → Secrets."
+            exit 1
+          fi
+          node scripts/apply-neon-migration.mjs
+
+      - name: Done
+        run: echo "Migrations applied to production Neon."

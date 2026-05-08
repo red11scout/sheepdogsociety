@@ -159,36 +159,57 @@ export function ResourcesAdmin({
   }
 
   if (dbError) {
-    const missingNew =
-      dbError.includes("slug") ||
-      dbError.includes("body_html") ||
-      dbError.includes("topics") ||
-      dbError.includes("section_id");
-    const migration = missingNew
-      ? "drizzle/0006_resources_overhaul.sql"
-      : "drizzle/0002_encouragements_resources.sql";
+    // Heuristics for what likely went wrong. We surface the raw error
+    // first because it's the only ground truth — these are educated
+    // guesses about what to do about it.
+    const looksMissingColumn = /column .* does not exist|relation .* does not exist/i.test(
+      dbError
+    );
+    const looksAuth = /authentication|password|permission|role/i.test(dbError);
+    const looksConnection = /connect|timeout|ECONN|getaddrinfo|TLS|SSL/i.test(
+      dbError
+    );
+
     return (
       <div className="mx-auto max-w-3xl px-6 py-10">
         <div className="border border-oxblood/40 bg-oxblood/15 p-6 text-sm text-bone">
-          <p className="display-xl text-base">Database not ready.</p>
-          <p className="mt-2 text-stone/80">
-            The Resources schema is out of date with the deployed code. Apply migration{" "}
-            <code className="text-brass">{migration.replace("drizzle/", "")}</code> to your prod Neon DB.
-          </p>
-          <p className="mt-3 text-xs text-stone/60">
-            From your terminal in the project root:
+          <p className="display-xl text-base">The Resources page can&rsquo;t load.</p>
+
+          <p className="mt-3 text-xs uppercase tracking-wider text-stone/55">
+            Raw error from Neon
           </p>
           <pre className="mt-2 overflow-x-auto border border-stone/20 bg-iron/60 px-3 py-2 text-[0.6875rem] leading-relaxed text-bone">
-{`cd /Users/drewgodwin/sheepdogsociety
-vercel env pull /tmp/sheepdog-prod-env --environment=production --scope=drew-godwins-projects -y
-NEON_DATABASE_URL="$(grep '^NEON_DATABASE_URL=' /tmp/sheepdog-prod-env | cut -d= -f2- | tr -d '"')" \\
-  node scripts/apply-neon-migration.mjs ${migration}
-rm /tmp/sheepdog-prod-env`}
+{dbError}
           </pre>
-          <details className="mt-3 text-xs text-stone/55">
-            <summary className="cursor-pointer hover:text-bone">Raw error</summary>
-            <p className="mt-1 break-words text-stone/65">{dbError}</p>
-          </details>
+
+          <p className="mt-4 text-xs uppercase tracking-wider text-stone/55">
+            Likely cause
+          </p>
+          <p className="mt-1 text-stone/80">
+            {looksMissingColumn
+              ? "A migration hasn't been applied to the database your app is connected to. Verify NEON_DATABASE_URL in Vercel points at the database you actually migrated. (Different Neon projects + branches will look identical from the connection string alone.)"
+              : looksAuth
+              ? "Connection to Neon was refused. The credentials in NEON_DATABASE_URL probably don't match the database — check Vercel env vs the user/password in Neon."
+              : looksConnection
+              ? "Couldn't reach the Neon endpoint. Network or endpoint URL issue."
+              : "Could be a missing migration, a stale Vercel env var, or a DB pointing at a different project. Read the raw error above first."}
+          </p>
+
+          {looksMissingColumn && (
+            <>
+              <p className="mt-4 text-xs uppercase tracking-wider text-stone/55">
+                If you need to apply migrations
+              </p>
+              <pre className="mt-2 overflow-x-auto border border-stone/20 bg-iron/60 px-3 py-2 text-[0.6875rem] leading-relaxed text-bone">
+{`cd /Users/drewgodwin/sheepdogsociety
+NEON_DATABASE_URL='paste-the-prod-url-here' \\
+  node scripts/apply-neon-migration.mjs drizzle`}
+              </pre>
+              <p className="mt-2 text-[0.6875rem] text-stone/55">
+                The runner applies <em>every</em> SQL file in <code>drizzle/</code> in order, with <code>IF NOT EXISTS</code> guards, so it&rsquo;s safe to re-run.
+              </p>
+            </>
+          )}
         </div>
       </div>
     );
@@ -653,6 +674,35 @@ function ResourceRow({
     }
   }
 
+  async function handleReextract() {
+    setRecat("busy");
+    setRecatError("");
+    try {
+      const res = await fetch("/api/admin/resources/reextract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: resource.id, recategorize: true }),
+      });
+      if (!res.ok) {
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(j.error ?? `HTTP ${res.status}`);
+      }
+      setRecat("idle");
+      window.location.reload();
+    } catch (e) {
+      setRecat("error");
+      setRecatError(e instanceof Error ? e.message : "Failed");
+    }
+  }
+
+  // Heuristic: show re-extract on file uploads that don't yet have an
+  // AI categorization timestamp (legacy resources from before the bulk
+  // upload pipeline existed).
+  const showReextract =
+    !!resource.fileKey &&
+    !resource.aiCategorizedAt &&
+    /\.docx(\?|$)/i.test(resource.fileKey);
+
   return (
     <li className="group/item border border-stone/15 bg-iron/30 px-4 py-3 transition-colors hover:border-stone/30">
       {editing ? (
@@ -796,6 +846,17 @@ function ResourceRow({
               >
                 <Icon name="arrow-up-right" size={14} />
               </a>
+            )}
+            {showReextract && (
+              <button
+                type="button"
+                onClick={handleReextract}
+                disabled={recat === "busy"}
+                className="rounded-none p-1.5 text-stone/55 transition-colors hover:text-brass disabled:opacity-50"
+                title="Extract HTML from .docx + AI tag (legacy resource)"
+              >
+                <Icon name="scroll" size={14} />
+              </button>
             )}
             <button
               type="button"
