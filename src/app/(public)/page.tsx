@@ -52,14 +52,13 @@ export default function HomePage() {
           </div>
 
           <h1 className="display-xl mt-12 max-w-3xl text-[clamp(3rem,9vw,9rem)] text-foreground">
-            Sit.
+            Find your
             <br />
-            <span className="text-brass">Talk to a brother.</span>
+            <span className="text-brass">three.</span>
           </h1>
 
           <p className="mt-10 max-w-2xl font-pullquote text-xl leading-relaxed text-stone md:text-2xl">
-            We will not preach at you. Tell us what you are carrying, and a
-            brother who knows the Word will sit with you a moment.
+            You have walked alone a long time. There is honor in that, and a limit to it. Find three brothers who will tell you the truth and hear yours — men who know the Word, and who will grow stronger in Christ beside you. That is the work. That is enough.
           </p>
 
           <div className="mt-14">
