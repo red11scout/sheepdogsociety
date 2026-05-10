@@ -101,16 +101,17 @@ export function CommandPalette({ open, onClose, onAskAi }: CommandPaletteProps) 
       },
       {
         id: "page-groups",
-        label: "Groups",
-        icon: "brothers",
+        label: "Groups & Locations",
+        icon: "map-pin",
         href: "/admin/groups",
         group: "Page",
+        keywords: "location address map",
       },
       {
-        id: "page-locations",
-        label: "Locations",
-        icon: "map-pin",
-        href: "/admin/locations",
+        id: "page-members",
+        label: "Members",
+        icon: "users-group",
+        href: "/admin/members",
         group: "Page",
       },
       {

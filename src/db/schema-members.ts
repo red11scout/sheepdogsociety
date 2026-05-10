@@ -50,14 +50,35 @@ export const members = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name").notNull(),
+    /** Structured name fields surfaced in the admin members table. The legacy
+     *  single-field `name` stays populated by the public signup flow; admins
+     *  edit the structured fields. */
+    firstName: text("first_name"),
+    lastName: text("last_name"),
+    nickname: text("nickname"),
     email: text("email").notNull(),
     phone: text("phone"),
+    /** Signal Messenger username (e.g. "@drew.42"). Used by group leaders for
+     *  texting outside the platform. Stored as plain text; no validation. */
+    signalAccount: text("signal_account"),
     intent: memberIntentEnum("intent").notNull(),
+    /** "member" | "leader" | "asst_leader". Role within their assigned group;
+     *  separate from the admin `users.role`. */
+    role: text("role").notNull().default("member"),
     groupId: uuid("group_id").references(() => groups.id, { onDelete: "set null" }),
+    /** Denormalized for the admin table view — points at the location the
+     *  member's group meets. Set by app code on group assignment. */
+    locationId: uuid("location_id"),
     city: text("city"),
     state: text("state"),
     zip: text("zip"),
     timeline: memberTimelineEnum("timeline"),
+    /** Three orthogonal flags surfaced in the admin table:
+     *  - approval_status: pending / approved / rejected (admin gating)
+     *  - is_active: temporary disable without losing the row
+     *  - status: the existing CRM lifecycle (new/contacted/etc) */
+    approvalStatus: text("approval_status").notNull().default("pending"),
+    isActive: boolean("is_active").notNull().default(true),
     status: memberStatusEnum("status").notNull().default("new"),
     /** Public page they came from. Helps the admin understand source. */
     source: text("source"),

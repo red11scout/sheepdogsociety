@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { locations } from "@/db/schema";
-import { sql } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 
 export async function GET() {
   try {
+    // Public locator gates on TWO flags now (set independently by the
+    // admin in /admin/groups):
+    //   - displayed_on_map: explicit "show this on the public locator"
+    //   - is_active: temporary disable without rejecting the row
+    // Approval status no longer auto-controls visibility — admin gets
+    // to decide approval and visibility separately.
     const activeLocations = await db
       .select({
         id: locations.id,
@@ -22,7 +28,12 @@ export async function GET() {
         contactName: locations.contactName,
       })
       .from(locations)
-      .where(sql`${locations.status}::text = 'active'`);
+      .where(
+        and(
+          eq(locations.displayedOnMap, true),
+          eq(locations.isActive, true)
+        )
+      );
 
     return NextResponse.json({ locations: activeLocations });
   } catch (error) {

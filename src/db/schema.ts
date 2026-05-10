@@ -819,6 +819,17 @@ export const locations = pgTable(
     contactName: text("contact_name").default(""),
     contactEmail: text("contact_email").default(""),
     status: locationStatusEnum("status").notNull().default("pending"),
+    /** Admin-toggleable: separate from approval status so an admin can
+     *  temporarily hide a group from the public locator without rejecting it. */
+    isActive: boolean("is_active").notNull().default(true),
+    /** Public locator visibility. Defaults to (status === 'approved') at
+     *  migration time but admin can override either way. */
+    displayedOnMap: boolean("displayed_on_map").notNull().default(true),
+    /** in_person | online | hybrid | other. Free text for forward compat. */
+    locationType: text("location_type").default("in_person"),
+    /** Free-text instructions shown to attendees (e.g. "park out back, second
+     *  door on the right"). */
+    specialInstructions: text("special_instructions").default(""),
     leaderId: text("leader_id").references(() => users.id),
     groupId: uuid("group_id").references(() => groups.id),
     imageUrl: text("image_url").default(""),

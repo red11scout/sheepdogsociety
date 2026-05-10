@@ -85,21 +85,15 @@ export function AdminSidebar({
         },
         {
           href: "/admin/groups",
-          label: "Groups",
-          icon: "brothers",
-          hint: "Where men gather. Each group has a city, leader, meeting cadence. Powers the locator.",
-        },
-        {
-          href: "/admin/locations",
-          label: "Locations",
+          label: "Groups & Locations",
           icon: "map-pin",
-          hint: "Map pins for the locator. A location can host one or more groups.",
+          hint: "One row per group with its location. Approve, toggle on-map visibility, edit address and meeting time, delete. Bulk actions for the busy weeks.",
         },
         {
           href: "/admin/members",
           label: "Members",
           icon: "users-group",
-          hint: "Every signup from /join. Read-only this phase; inline status editing lands in Phase E.",
+          hint: "Every signup from /join. Approve or reject inline, assign to a group, toggle active. Bulk actions for the queue.",
         },
         {
           href: "/admin/location-requests",
