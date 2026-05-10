@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Icon, type IconName } from "@/components/icons/Icon";
 
 interface SectionLite {
@@ -21,6 +22,12 @@ interface ItemLite {
   url: string;
   fileKey: string;
   type: string;
+  /** youtube / amazon / web / file (or null for legacy rows) */
+  provider: "youtube" | "amazon" | "web" | "file" | null;
+  thumbnailUrl: string | null;
+  /** Channel name (YouTube), author (Amazon), site name (web), or null. */
+  author: string | null;
+  durationSeconds: number | null;
   category: string;
   sectionId: string;
   audience: "all" | "newcomer" | "leader";
@@ -326,81 +333,157 @@ function Facet({
   );
 }
 
-function ResourceCard({ item }: { item: ItemLite }) {
-  const detailHref = item.hasBody ? `/resources/${item.slug}` : null;
-  const downloadUrl = item.fileKey || item.url || "#";
-  const isExternal = !!item.url && !item.fileKey;
+function formatDuration(seconds: number | null): string | null {
+  if (!seconds || seconds <= 0) return null;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  if (m >= 60) {
+    const h = Math.floor(m / 60);
+    return `${h}:${String(m % 60).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+  }
+  return `${m}:${String(s).padStart(2, "0")}`;
+}
 
-  // Primary action: read inline if hasBody, otherwise open the file/link directly.
-  const primaryHref = detailHref ?? downloadUrl;
-  const primaryLabel = detailHref
-    ? "Read"
-    : isExternal
-    ? "Open link"
-    : "Download";
+function ResourceCard({ item }: { item: ItemLite }) {
+  // Always navigate to the public detail page so we get the embed/book/link
+  // card layout, then admin/companion section. The legacy "open file
+  // directly" behavior happens on the detail page via the action bar.
+  const href = `/resources/${item.slug}`;
+
+  // Provider label shown over the thumbnail; drives a small badge style.
+  const providerBadge = (() => {
+    if (item.provider === "youtube") return { label: "YouTube", icon: "play" as const };
+    if (item.provider === "amazon") return { label: "Amazon", icon: "scroll" as const };
+    if (item.provider === "web") return { label: "Link", icon: "arrow-up-right" as const };
+    return null;
+  })();
+
+  // Primary action label depends on what's behind the card.
+  const ctaLabel =
+    item.provider === "youtube"
+      ? "Watch"
+      : item.provider === "amazon"
+      ? "View book"
+      : item.provider === "web"
+      ? "Open"
+      : item.hasBody
+      ? "Read"
+      : item.fileKey
+      ? "Download"
+      : "Open";
+
+  const duration = formatDuration(item.durationSeconds);
+  const hasThumbnail = !!item.thumbnailUrl;
+
+  // For Amazon books we use a 2:3 aspect ratio (book covers); everything
+  // else gets 16:9 (videos and link cards).
+  const aspectClass = item.provider === "amazon" ? "aspect-[2/3]" : "aspect-video";
 
   return (
-    <article className="lift group/card flex h-full flex-col border border-iron/10 bg-bone p-6 transition-colors hover:border-brass">
-      <Link
-        href={primaryHref}
-        target={isExternal && !detailHref ? "_blank" : undefined}
-        rel={isExternal && !detailHref ? "noopener noreferrer" : undefined}
-        className="flex flex-1 flex-col"
-      >
-        <div className="flex items-start justify-between gap-3">
-          <Icon
-            name={item.fileKey ? "scroll" : "arrow-up-right"}
-            size={18}
-            className="text-brass"
-          />
-          {item.audience !== "all" && (
-            <span className="section-mark text-iron/40">
-              {item.audience === "leader" ? "Leader" : "Newcomer"}
+    <article className="lift group/card flex h-full flex-col overflow-hidden border border-iron/10 bg-bone transition-colors hover:border-brass">
+      <Link href={href} className="flex flex-1 flex-col">
+        {/* Thumbnail or fallback panel */}
+        <div className={`relative ${aspectClass} w-full overflow-hidden bg-iron/5`}>
+          {hasThumbnail ? (
+            <Image
+              src={item.thumbnailUrl!}
+              alt=""
+              fill
+              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+              className="object-cover transition-transform duration-500 group-hover/card:scale-[1.03]"
+              unoptimized
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center text-iron/25">
+              <Icon
+                name={
+                  item.provider === "amazon"
+                    ? "scroll"
+                    : item.provider === "youtube"
+                    ? "play"
+                    : item.fileKey
+                    ? "scroll"
+                    : "arrow-up-right"
+                }
+                size={48}
+              />
+            </div>
+          )}
+          {/* YouTube play overlay */}
+          {item.provider === "youtube" && hasThumbnail && (
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-iron/0 transition-colors group-hover/card:bg-iron/15">
+              <div className="flex h-14 w-14 items-center justify-center bg-iron/85 text-bone shadow-lg backdrop-blur-sm transition-transform group-hover/card:scale-110">
+                <Icon name="play" size={20} />
+              </div>
+            </div>
+          )}
+          {/* Provider + audience badges */}
+          <div className="pointer-events-none absolute inset-x-3 top-3 flex items-start justify-between gap-2">
+            {providerBadge ? (
+              <span className="inline-flex h-6 items-center gap-1 border border-iron/20 bg-bone/95 px-2 text-[0.5625rem] font-medium uppercase tracking-wider text-iron backdrop-blur-sm">
+                <Icon name={providerBadge.icon} size={10} />
+                {providerBadge.label}
+              </span>
+            ) : (
+              <span />
+            )}
+            {item.audience !== "all" && (
+              <span className="inline-flex h-6 items-center border border-iron/20 bg-bone/95 px-2 text-[0.5625rem] uppercase tracking-wider text-iron/65 backdrop-blur-sm">
+                {item.audience === "leader" ? "Leader" : "Newcomer"}
+              </span>
+            )}
+          </div>
+          {/* Duration / minutes */}
+          {(duration || item.estimatedMinutes != null) && (
+            <span className="pointer-events-none absolute bottom-3 right-3 inline-flex h-6 items-center bg-iron/85 px-2 text-[0.625rem] font-medium text-bone backdrop-blur-sm">
+              {duration ?? `${item.estimatedMinutes} min read`}
             </span>
           )}
         </div>
-        <h3 className="display-xl mt-6 text-lg text-iron md:text-xl">
-          {item.title}
-        </h3>
-        {(item.summary || item.description) && (
-          <p className="mt-3 line-clamp-3 flex-1 text-sm leading-relaxed text-iron/70">
-            {item.summary || item.description}
-          </p>
-        )}
-        {(item.booksOfBible.length > 0 || item.topics.length > 0) && (
-          <div className="mt-4 flex flex-wrap gap-1">
-            {item.booksOfBible.slice(0, 3).map((b) => (
-              <span
-                key={`b-${b}`}
-                className="inline-flex h-5 items-center border border-brass/40 bg-brass/10 px-1.5 text-[0.5625rem] uppercase tracking-wider text-brass"
-              >
-                {b}
-              </span>
-            ))}
-            {item.topics.slice(0, 4).map((t) => (
-              <span
-                key={`t-${t}`}
-                className="inline-flex h-5 items-center border border-iron/15 bg-bone px-1.5 text-[0.5625rem] text-iron/65"
-              >
-                {t}
-              </span>
-            ))}
-          </div>
-        )}
-        <div className="mt-6 flex items-center justify-between">
-          <span className="inline-flex items-center gap-2 section-mark text-brass">
-            {primaryLabel}
-            <Icon
-              name="arrow-right"
-              size={12}
-              className="transition-transform group-hover/card:translate-x-1"
-            />
-          </span>
-          {item.estimatedMinutes != null && (
-            <span className="text-[0.625rem] uppercase tracking-wider text-iron/45">
-              {item.estimatedMinutes} min
-            </span>
+
+        {/* Body */}
+        <div className="flex flex-1 flex-col p-6">
+          {item.author && (
+            <p className="section-mark text-iron/55">{item.author}</p>
           )}
+          <h3 className="display-xl mt-2 text-lg text-iron md:text-xl">
+            {item.title}
+          </h3>
+          {(item.summary || item.description) && (
+            <p className="mt-3 line-clamp-3 flex-1 text-sm leading-relaxed text-iron/70">
+              {item.summary || item.description}
+            </p>
+          )}
+          {(item.booksOfBible.length > 0 || item.topics.length > 0) && (
+            <div className="mt-4 flex flex-wrap gap-1">
+              {item.booksOfBible.slice(0, 3).map((b) => (
+                <span
+                  key={`b-${b}`}
+                  className="inline-flex h-5 items-center border border-brass/40 bg-brass/10 px-1.5 text-[0.5625rem] uppercase tracking-wider text-brass"
+                >
+                  {b}
+                </span>
+              ))}
+              {item.topics.slice(0, 4).map((t) => (
+                <span
+                  key={`t-${t}`}
+                  className="inline-flex h-5 items-center border border-iron/15 bg-bone px-1.5 text-[0.5625rem] text-iron/65"
+                >
+                  {t}
+                </span>
+              ))}
+            </div>
+          )}
+          <div className="mt-6 flex items-center justify-between">
+            <span className="inline-flex items-center gap-2 section-mark text-brass">
+              {ctaLabel}
+              <Icon
+                name="arrow-right"
+                size={12}
+                className="transition-transform group-hover/card:translate-x-1"
+              />
+            </span>
+          </div>
         </div>
       </Link>
     </article>

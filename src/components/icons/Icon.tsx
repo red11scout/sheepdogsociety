@@ -52,6 +52,7 @@ export type IconName =
   | "target"
   | "trash"
   | "send"
+  | "play"
   | "logout"
   | "sun"
   | "moon";
@@ -355,6 +356,9 @@ const PATHS: Record<IconName, React.ReactElement> = {
       fill={FILL}
       d="M2 3L22 12L2 21L4.5 12L2 3ZM5.6 12L4.6 17.5L17.6 12L4.6 6.5L5.6 12Z"
     />
+  ),
+  play: (
+    <path fill={FILL} d="M5 3.5L20 12L5 20.5V3.5Z" />
   ),
   logout: (
     <g {...STROKE_GROUP_PROPS}>
