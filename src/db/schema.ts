@@ -570,6 +570,30 @@ export const resources = pgTable(
     fileKey: text("file_key").default(""), // Vercel Blob URL for the source file
     sourceFilename: text("source_filename"),
     sourceMime: text("source_mime"),
+    /** Source provider — drives the public render branch:
+     *  - "file"    → mammoth-converted Word doc OR PDF download
+     *  - "youtube" → embedded video player
+     *  - "amazon"  → book cover + buy button
+     *  - "web"     → rich link card with OG metadata
+     */
+    provider: text("provider"),
+    /** Server-trusted iframe HTML for embeddable providers (YouTube, Vimeo).
+     *  Not user-generated; built from the provider's oEmbed response. */
+    embedHtml: text("embed_html"),
+    /** Display image: YouTube thumbnail, Amazon book cover, OG og:image. */
+    thumbnailUrl: text("thumbnail_url"),
+    /** YouTube channel / Amazon book author / generic site name. */
+    author: text("author"),
+    /** Video length in seconds (YouTube only for now). */
+    durationSeconds: integer("duration_seconds"),
+    /** Admin-only annotations. Never rendered publicly. */
+    adminNotes: text("admin_notes").default(""),
+    /** Book Study companion — the study guide that accompanies the book.
+     *  The book's purchase URL goes in `url`; the companion lives in these
+     *  three fields (any combo of link + uploaded file + label). */
+    companionUrl: text("companion_url"),
+    companionFileKey: text("companion_file_key"),
+    companionLabel: text("companion_label"),
     uploadedBy: text("uploaded_by")
       .notNull()
       .references(() => users.id),

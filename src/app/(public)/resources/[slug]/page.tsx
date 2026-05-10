@@ -1,10 +1,12 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { getPublicResourceBySlug } from "@/server/resources-admin";
 import { Icon } from "@/components/icons/Icon";
 import { format } from "date-fns";
 import { PrintButton } from "./print-button";
 import { ResourceBody } from "./resource-body";
+import { Embed } from "./embed";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +49,13 @@ export default async function ResourceDetailPage({
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
   const isPdf = row.sourceMime === "application/pdf";
 
+  // Provider-driven render branch.
+  const isYouTube = row.provider === "youtube" && !!row.embedHtml;
+  const isAmazonBook = row.provider === "amazon";
+  const isWebLink = row.provider === "web" && !!row.url;
+  const hasCompanion =
+    !!(row.companionUrl || row.companionFileKey);
+
   const tags = [
     ...(row.booksOfBible ?? []),
     ...(row.topics ?? []),
@@ -66,7 +75,43 @@ export default async function ResourceDetailPage({
             All resources
           </Link>
           <div className="flex flex-wrap items-center gap-2">
-            {downloadUrl && (
+            {/* For sermon/book/web resources, show "Open" pointing at the
+             *  source. For file-backed rows, show "Download" with the
+             *  original filename so the browser saves it cleanly. */}
+            {isYouTube && row.url && (
+              <a
+                href={row.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="lift inline-flex h-9 items-center gap-2 border border-iron/20 bg-bone px-4 text-xs font-medium uppercase tracking-wider text-iron transition-colors hover:border-brass hover:text-brass"
+              >
+                <Icon name="arrow-up-right" size={12} />
+                Watch on YouTube
+              </a>
+            )}
+            {isAmazonBook && row.url && (
+              <a
+                href={row.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="lift inline-flex h-9 items-center gap-2 border border-iron/20 bg-bone px-4 text-xs font-medium uppercase tracking-wider text-iron transition-colors hover:border-brass hover:text-brass"
+              >
+                <Icon name="arrow-up-right" size={12} />
+                Buy on Amazon
+              </a>
+            )}
+            {isWebLink && row.url && (
+              <a
+                href={row.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="lift inline-flex h-9 items-center gap-2 border border-iron/20 bg-bone px-4 text-xs font-medium uppercase tracking-wider text-iron transition-colors hover:border-brass hover:text-brass"
+              >
+                <Icon name="arrow-up-right" size={12} />
+                Open link
+              </a>
+            )}
+            {!isYouTube && !isAmazonBook && !isWebLink && downloadUrl && (
               <a
                 href={downloadUrl}
                 download={row.sourceFilename ?? undefined}
@@ -76,9 +121,7 @@ export default async function ResourceDetailPage({
                 Download {isPdf ? "PDF" : isDocx ? ".docx" : "file"}
               </a>
             )}
-            {row.bodyHtml && (
-              <PrintButton title={row.title} />
-            )}
+            {row.bodyHtml && <PrintButton title={row.title} />}
           </div>
         </div>
       </section>
@@ -162,7 +205,39 @@ export default async function ResourceDetailPage({
         <div className="mx-auto max-w-3xl px-6 pb-24 md:px-12 md:pb-32">
           <div className="hairline mb-10" />
 
-          {row.bodyHtml ? (
+          {/* Render body OR provider-shaped card. Order matters:
+           *   1. YouTube → embedded player (most engaging)
+           *   2. Amazon book → cover + buy button + companion section
+           *   3. Generic web link → big link card with thumbnail
+           *   4. body_html (mammoth-converted) → ResourceBody
+           *   5. downloadUrl → file download CTA
+           *   6. nothing → placeholder
+           */}
+          {isYouTube ? (
+            <div className="space-y-6">
+              <Embed html={row.embedHtml ?? ""} />
+              {row.author && (
+                <p className="text-xs text-iron/60">
+                  From <span className="text-iron">{row.author}</span> on YouTube
+                </p>
+              )}
+            </div>
+          ) : isAmazonBook ? (
+            <BookCard
+              title={row.title}
+              author={row.author}
+              thumbnailUrl={row.thumbnailUrl}
+              buyUrl={row.url ?? ""}
+              summary={null}
+            />
+          ) : isWebLink ? (
+            <LinkCard
+              title={row.title}
+              host={hostFromUrl(row.url ?? "")}
+              thumbnailUrl={row.thumbnailUrl}
+              url={row.url ?? ""}
+            />
+          ) : row.bodyHtml ? (
             <ResourceBody html={row.bodyHtml} />
           ) : downloadUrl ? (
             <div className="border border-dashed border-iron/15 bg-bone p-10 text-center">
@@ -173,7 +248,7 @@ export default async function ResourceDetailPage({
               <a
                 href={downloadUrl}
                 download={row.sourceFilename ?? undefined}
-                className="lift mt-8 inline-flex h-11 items-center gap-2 bg-brass px-6 text-xs font-medium uppercase tracking-wider text-ink transition-colors hover:bg-gold"
+                className="lift mt-8 inline-flex h-11 items-center gap-2 bg-brass px-6 text-xs font-medium uppercase tracking-wider text-iron transition-colors hover:bg-gold"
               >
                 <Icon name="download" size={14} />
                 Download
@@ -183,6 +258,51 @@ export default async function ResourceDetailPage({
             <p className="font-pullquote text-base italic text-iron/55">
               The text of this resource is being prepared. Check back soon.
             </p>
+          )}
+
+          {/* Companion study (Book Studies). Only renders when present. */}
+          {hasCompanion && (
+            <section className="mt-12 border-t border-iron/15 pt-8">
+              <div className="flex items-center gap-3">
+                <span className="section-mark text-brass">
+                  § {row.companionLabel || "Study guide"}
+                </span>
+                <div className="hairline flex-1" />
+              </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                {row.companionUrl && (
+                  <a
+                    href={row.companionUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="lift group/c flex items-center gap-3 border border-iron/15 bg-bone p-4 text-sm transition-colors hover:border-brass"
+                  >
+                    <Icon name="arrow-up-right" size={18} className="text-brass" />
+                    <span className="flex-1 truncate text-iron group-hover/c:text-brass">
+                      Open {row.companionLabel || "the study"}
+                    </span>
+                    <span className="text-[0.625rem] uppercase tracking-wider text-iron/45">
+                      Link
+                    </span>
+                  </a>
+                )}
+                {row.companionFileKey && (
+                  <a
+                    href={row.companionFileKey}
+                    download
+                    className="lift group/c flex items-center gap-3 border border-iron/15 bg-bone p-4 text-sm transition-colors hover:border-brass"
+                  >
+                    <Icon name="download" size={18} className="text-brass" />
+                    <span className="flex-1 truncate text-iron group-hover/c:text-brass">
+                      Download {row.companionLabel || "the study"}
+                    </span>
+                    <span className="text-[0.625rem] uppercase tracking-wider text-iron/45">
+                      File
+                    </span>
+                  </a>
+                )}
+              </div>
+            </section>
           )}
 
           {/* Print footer */}
@@ -200,5 +320,114 @@ export default async function ResourceDetailPage({
         </div>
       </article>
     </>
+  );
+}
+
+function hostFromUrl(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return "";
+  }
+}
+
+function BookCard({
+  title,
+  author,
+  thumbnailUrl,
+  buyUrl,
+  summary,
+}: {
+  title: string;
+  author: string | null;
+  thumbnailUrl: string | null;
+  buyUrl: string;
+  summary: string | null;
+}) {
+  return (
+    <div className="grid gap-6 border border-iron/15 bg-bone p-6 sm:grid-cols-[180px_1fr] md:p-8">
+      <div className="relative aspect-[2/3] w-full overflow-hidden border border-iron/10 bg-iron/5">
+        {thumbnailUrl ? (
+          <Image
+            src={thumbnailUrl}
+            alt={`${title} cover`}
+            fill
+            sizes="180px"
+            className="object-contain"
+            unoptimized
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center text-iron/30">
+            <Icon name="scroll" size={36} />
+          </div>
+        )}
+      </div>
+      <div className="flex flex-col">
+        <span className="section-mark text-iron/50">§ The Book</span>
+        <h2 className="display-xl mt-3 text-2xl text-iron md:text-3xl">{title}</h2>
+        {author && (
+          <p className="mt-2 font-pullquote text-base italic text-iron/65">
+            by {author}
+          </p>
+        )}
+        {summary && (
+          <p className="mt-4 text-sm leading-relaxed text-iron/75">{summary}</p>
+        )}
+        {buyUrl && (
+          <div className="mt-auto pt-6">
+            <a
+              href={buyUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="lift inline-flex h-11 items-center gap-2 border border-bone bg-iron px-5 text-xs font-medium uppercase tracking-wider text-bone transition-colors hover:bg-iron/85"
+            >
+              <Icon name="arrow-up-right" size={14} />
+              Buy on Amazon
+            </a>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function LinkCard({
+  title,
+  host,
+  thumbnailUrl,
+  url,
+}: {
+  title: string;
+  host: string;
+  thumbnailUrl: string | null;
+  url: string;
+}) {
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="lift block border border-iron/15 bg-bone transition-colors hover:border-brass"
+    >
+      {thumbnailUrl && (
+        <div className="relative aspect-[16/9] w-full overflow-hidden bg-iron/5">
+          <Image
+            src={thumbnailUrl}
+            alt=""
+            fill
+            sizes="(max-width: 768px) 100vw, 800px"
+            className="object-cover"
+            unoptimized
+          />
+        </div>
+      )}
+      <div className="flex items-center gap-4 p-6">
+        <div className="flex-1">
+          <p className="section-mark text-iron/50">{host || "External link"}</p>
+          <p className="mt-2 text-base text-iron">{title}</p>
+        </div>
+        <Icon name="arrow-up-right" size={20} className="text-brass" />
+      </div>
+    </a>
   );
 }

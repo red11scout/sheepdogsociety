@@ -16,6 +16,7 @@ import {
 } from "@/server/resources-admin";
 import { format } from "date-fns";
 import { BulkUploadPanel } from "./bulk-upload-panel";
+import { AddLinkPanel } from "./add-link-panel";
 
 interface Section {
   id: string;
@@ -363,7 +364,33 @@ NEON_DATABASE_URL='paste-the-prod-url-here' \\
                 />
               )}
 
-              <div className="mt-6">
+              <div className="mt-6 space-y-4">
+                {/* Section-aware composer panels.
+                 *  - Sermon Studies / Sermons → "Add from link" (sermon mode)
+                 *  - Book Studies            → "Add book + study" (book mode)
+                 *  - Everything else         → bulk file upload only
+                 *  Bulk upload always available since admins may want to
+                 *  upload sermon notes or extra material as files too.
+                 */}
+                {(activeSection.slug === "sermon-studies" ||
+                  activeSection.slug === "sermons") && (
+                  <AddLinkPanel
+                    sectionId={activeSection.id}
+                    sectionSlug={activeSection.slug}
+                    sectionName={activeSection.name}
+                    mode="sermon"
+                    onSaved={refresh}
+                  />
+                )}
+                {activeSection.slug === "book-studies" && (
+                  <AddLinkPanel
+                    sectionId={activeSection.id}
+                    sectionSlug={activeSection.slug}
+                    sectionName={activeSection.name}
+                    mode="book"
+                    onSaved={refresh}
+                  />
+                )}
                 <BulkUploadPanel
                   sectionId={activeSection.id}
                   sectionName={activeSection.name}
