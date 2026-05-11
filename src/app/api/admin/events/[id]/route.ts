@@ -5,6 +5,12 @@ import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod/v4";
 
+const photoSchema = z.object({
+  url: z.string().min(1).max(2000),
+  alt: z.string().max(200).optional(),
+  caption: z.string().max(400).optional(),
+});
+
 const updateSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().max(2000).optional(),
@@ -14,6 +20,10 @@ const updateSchema = z.object({
   eventType: z.string().max(50).optional(),
   maxAttendees: z.number().int().positive().optional().nullable(),
   registrationUrl: z.string().url().optional().or(z.literal("")),
+  // Past-event additions (migration 0011)
+  isPast: z.boolean().optional(),
+  recap: z.string().max(20000).optional(),
+  photos: z.array(photoSchema).max(60).optional(),
 });
 
 export async function PATCH(
@@ -44,6 +54,9 @@ export async function PATCH(
   if (parsed.data.eventType !== undefined) updates.eventType = parsed.data.eventType;
   if (parsed.data.maxAttendees !== undefined) updates.maxAttendees = parsed.data.maxAttendees;
   if (parsed.data.registrationUrl !== undefined) updates.registrationUrl = parsed.data.registrationUrl;
+  if (parsed.data.isPast !== undefined) updates.isPast = parsed.data.isPast;
+  if (parsed.data.recap !== undefined) updates.recap = parsed.data.recap;
+  if (parsed.data.photos !== undefined) updates.photos = parsed.data.photos;
 
   const [event] = await db
     .update(events)

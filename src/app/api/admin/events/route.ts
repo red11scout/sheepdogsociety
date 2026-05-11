@@ -40,6 +40,9 @@ export async function GET() {
       maxAttendees: events.maxAttendees,
       registrationUrl: events.registrationUrl,
       groupId: events.groupId,
+      isPast: events.isPast,
+      recap: events.recap,
+      photos: events.photos,
       createdBy: events.createdBy,
       createdAt: events.createdAt,
       rsvpCount: sql<number>`(

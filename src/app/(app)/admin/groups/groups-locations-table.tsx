@@ -643,6 +643,54 @@ function EditForm({
   const [meetingDay, setMeetingDay] = useState(initial?.meetingDay ?? "");
   const [meetingTime, setMeetingTime] = useState(initial?.meetingTime ?? "");
 
+  // Geocoding state — admin clicks "Find on map" and Mapbox returns lat/lng.
+  const [geocoding, setGeocoding] = useState(false);
+  const [geocodeError, setGeocodeError] = useState("");
+  const [geocodePreview, setGeocodePreview] = useState<string | null>(null);
+
+  async function handleGeocode() {
+    setGeocoding(true);
+    setGeocodeError("");
+    setGeocodePreview(null);
+    try {
+      const res = await fetch("/api/admin/geocode", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ address, city, state, zipCode }),
+      });
+      const data = (await res.json()) as
+        | { found: true; latitude: number; longitude: number; placeName: string; relevance: number }
+        | { found: false; reason?: string }
+        | { error?: string; detail?: string };
+      if (!res.ok) {
+        const err = "error" in data ? data.error ?? "Geocode failed" : "Geocode failed";
+        throw new Error(err);
+      }
+      if ("found" in data && data.found) {
+        setLatitude(data.latitude.toFixed(6));
+        setLongitude(data.longitude.toFixed(6));
+        setGeocodePreview(
+          `${data.placeName} (confidence ${Math.round(data.relevance * 100)}%)`
+        );
+      } else {
+        setGeocodeError(
+          "found" in data && data.reason
+            ? data.reason
+            : "Mapbox returned no match. Try refining the address."
+        );
+      }
+    } catch (e) {
+      setGeocodeError(e instanceof Error ? e.message : "Geocode failed");
+    } finally {
+      setGeocoding(false);
+    }
+  }
+
+  const canGeocode =
+    address.trim().length > 0 ||
+    (city.trim().length > 0 && state.trim().length > 0) ||
+    zipCode.trim().length > 4;
+
   const canSave = groupName.trim().length > 0;
 
   return (
@@ -725,6 +773,24 @@ function EditForm({
             className="h-8 w-full border border-stone/20 bg-transparent px-2 font-mono text-sm text-bone focus:border-brass focus:outline-none"
           />
         </Field>
+        <div className="md:col-span-3">
+          <button
+            type="button"
+            onClick={handleGeocode}
+            disabled={!canGeocode || geocoding}
+            className="inline-flex h-8 items-center gap-2 border border-brass/40 bg-brass/10 px-3 text-[0.6875rem] uppercase tracking-wider text-brass transition-colors hover:bg-brass/20 disabled:cursor-not-allowed disabled:opacity-50"
+            title="Convert the address above into latitude/longitude using Mapbox"
+          >
+            <Icon name="map-pin" size={11} />
+            {geocoding ? "Looking up..." : "Find on map (auto lat/lng)"}
+          </button>
+          {geocodePreview && (
+            <p className="mt-1 text-[0.625rem] text-olive">✓ {geocodePreview}</p>
+          )}
+          {geocodeError && (
+            <p className="mt-1 text-[0.625rem] text-oxblood">{geocodeError}</p>
+          )}
+        </div>
         <Field label="Meeting day">
           <select
             value={meetingDay ?? ""}

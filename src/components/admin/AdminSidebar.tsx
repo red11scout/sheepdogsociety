@@ -81,7 +81,13 @@ export function AdminSidebar({
           href: "/admin/events",
           label: "Events",
           icon: "calendar",
-          hint: "Breakfasts, prayer nights, retreats. Shown on the public events page.",
+          hint: "Breakfasts, prayer nights, retreats. Upcoming on the public events page.",
+        },
+        {
+          href: "/admin/events/past",
+          label: "Past events",
+          icon: "image",
+          hint: "After-event recaps + photo galleries. Renders on the public Past Gatherings section.",
         },
         {
           href: "/admin/groups",

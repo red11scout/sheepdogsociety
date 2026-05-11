@@ -522,6 +522,13 @@ export const events = pgTable(
     maxAttendees: integer("max_attendees"),
     registrationUrl: text("registration_url").default(""),
     groupId: uuid("group_id").references(() => groups.id),
+    /** Admin-controlled "this event is over" flag. Migration 0011
+     *  backfills true for anything whose end_time is in the past. */
+    isPast: boolean("is_past").notNull().default(false),
+    /** Plain-prose recap written after the event. Paragraph-separated. */
+    recap: text("recap").default(""),
+    /** Photo gallery: array of { url, alt?, caption? }. Stored on Vercel Blob. */
+    photos: jsonb("photos").$type<Array<{ url: string; alt?: string; caption?: string }>>().notNull().default([]),
     createdBy: text("created_by")
       .notNull()
       .references(() => users.id),
@@ -530,6 +537,7 @@ export const events = pgTable(
   (table) => [
     index("events_start_time_idx").on(table.startTime),
     index("events_group_idx").on(table.groupId),
+    index("events_is_past_idx").on(table.isPast),
   ]
 );
 

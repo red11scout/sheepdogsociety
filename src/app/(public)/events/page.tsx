@@ -1,8 +1,9 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import { db } from "@/db";
 import { events } from "@/db/schema";
-import { asc, gte } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lt, or, sql } from "drizzle-orm";
 import { Icon } from "@/components/icons/Icon";
 import { format } from "date-fns";
 
@@ -30,7 +31,7 @@ async function getUpcoming() {
         registrationUrl: events.registrationUrl,
       })
       .from(events)
-      .where(gte(events.startTime, now))
+      .where(and(gte(events.startTime, now), eq(events.isPast, false)))
       .orderBy(asc(events.startTime))
       .limit(24);
   } catch {
@@ -38,8 +39,44 @@ async function getUpcoming() {
   }
 }
 
+/**
+ * Past events that have either a recap or photos. Anything older without
+ * either is still in the DB but not surfaced — admins might not have
+ * gotten around to writing it up yet.
+ */
+async function getPast() {
+  try {
+    return await db
+      .select({
+        id: events.id,
+        title: events.title,
+        description: events.description,
+        location: events.location,
+        startTime: events.startTime,
+        endTime: events.endTime,
+        eventType: events.eventType,
+        recap: events.recap,
+        photos: events.photos,
+      })
+      .from(events)
+      .where(
+        and(
+          or(eq(events.isPast, true), lt(events.endTime, new Date())),
+          or(
+            sql`length(coalesce(${events.recap}, '')) > 0`,
+            sql`jsonb_array_length(coalesce(${events.photos}, '[]'::jsonb)) > 0`
+          )
+        )
+      )
+      .orderBy(desc(events.startTime))
+      .limit(24);
+  } catch {
+    return [];
+  }
+}
+
 export default async function EventsPage() {
-  const upcoming = await getUpcoming();
+  const [upcoming, past] = await Promise.all([getUpcoming(), getPast()]);
 
   return (
     <>
@@ -149,6 +186,81 @@ export default async function EventsPage() {
           )}
         </div>
       </section>
+
+      {/* Past Events — only renders sections with at least one recap'd event */}
+      {past.length > 0 && (
+        <section className="bg-bone">
+          <div className="mx-auto max-w-7xl px-6 pb-24 md:px-12 md:pb-32">
+            <div className="flex items-center gap-4">
+              <span className="section-mark text-brass">§ Past gatherings</span>
+              <div className="hairline flex-1 text-iron/40" />
+            </div>
+            <p className="mt-4 max-w-2xl font-pullquote text-lg italic text-iron/60">
+              The brothers who showed up, and what they came home with.
+            </p>
+            <ul className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {past.map((ev) => {
+                const photos = (ev.photos as Array<{ url: string; alt?: string; caption?: string }> | null) ?? [];
+                const cover = photos[0];
+                const start = new Date(ev.startTime);
+                return (
+                  <li key={ev.id}>
+                    <Link
+                      href={`/events/${ev.id}`}
+                      className="lift group/past block border border-iron/10 bg-bone transition-colors hover:border-brass"
+                    >
+                      <div className="relative aspect-[4/3] w-full overflow-hidden bg-iron/5">
+                        {cover ? (
+                          <Image
+                            src={cover.url}
+                            alt={cover.alt ?? ev.title}
+                            fill
+                            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                            className="object-cover transition-transform duration-500 group-hover/past:scale-[1.03]"
+                            unoptimized
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center text-iron/25">
+                            <Icon name="calendar" size={48} />
+                          </div>
+                        )}
+                        {photos.length > 1 && (
+                          <span className="pointer-events-none absolute bottom-3 right-3 inline-flex h-6 items-center gap-1 bg-iron/85 px-2 text-[0.625rem] font-medium text-bone backdrop-blur-sm">
+                            <Icon name="image" size={10} />
+                            {photos.length} photos
+                          </span>
+                        )}
+                      </div>
+                      <div className="p-5">
+                        <p className="section-mark text-iron/55">
+                          {format(start, "MMMM d, yyyy")}
+                          {ev.eventType && <> · {ev.eventType}</>}
+                        </p>
+                        <h3 className="display-xl mt-2 text-lg text-iron group-hover/past:text-brass md:text-xl">
+                          {ev.title}
+                        </h3>
+                        {ev.recap && (
+                          <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-iron/70">
+                            {ev.recap}
+                          </p>
+                        )}
+                        <p className="mt-4 inline-flex items-center gap-2 section-mark text-brass">
+                          See the night
+                          <Icon
+                            name="arrow-right"
+                            size={12}
+                            className="transition-transform group-hover/past:translate-x-1"
+                          />
+                        </p>
+                      </div>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        </section>
+      )}
     </>
   );
 }
