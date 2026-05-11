@@ -722,6 +722,26 @@ function ResourceRow({
     }
   }
 
+  async function handleRefreshMetadata() {
+    setRecat("busy");
+    setRecatError("");
+    try {
+      const res = await fetch(
+        `/api/admin/resources/${resource.id}/refresh-metadata`,
+        { method: "POST" }
+      );
+      if (!res.ok) {
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(j.error ?? `HTTP ${res.status}`);
+      }
+      setRecat("idle");
+      window.location.reload();
+    } catch (e) {
+      setRecat("error");
+      setRecatError(e instanceof Error ? e.message : "Failed");
+    }
+  }
+
   // Heuristic: show re-extract on file uploads that don't yet have an
   // AI categorization timestamp (legacy resources from before the bulk
   // upload pipeline existed).
@@ -883,6 +903,20 @@ function ResourceRow({
                 title="Extract HTML from .docx + AI tag (legacy resource)"
               >
                 <Icon name="scroll" size={14} />
+              </button>
+            )}
+            {/* Re-fetch link metadata (thumbnail, embed, author) for any
+             *  resource whose source is a URL. Useful for legacy rows that
+             *  were created before the Add-from-link composer existed. */}
+            {resource.url && !resource.fileKey && (
+              <button
+                type="button"
+                onClick={handleRefreshMetadata}
+                disabled={recat === "busy"}
+                className="rounded-none p-1.5 text-stone/55 transition-colors hover:text-brass disabled:opacity-50"
+                title="Refresh thumbnail + embed from the URL"
+              >
+                <Icon name="image" size={14} />
               </button>
             )}
             <button

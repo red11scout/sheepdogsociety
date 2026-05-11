@@ -63,6 +63,64 @@ export function detectProvider(url: string): Provider {
   return "web";
 }
 
+/**
+ * Extract a YouTube video ID from any common URL shape:
+ *   - youtube.com/watch?v=ID
+ *   - youtu.be/ID
+ *   - youtube.com/embed/ID
+ *   - youtube.com/shorts/ID
+ *   - youtube-nocookie.com/embed/ID
+ * Returns null if the URL isn't recognizably YouTube.
+ */
+export function extractYouTubeId(url: string): string | null {
+  if (!url) return null;
+  let u: URL;
+  try {
+    u = new URL(url);
+  } catch {
+    return null;
+  }
+  const host = u.hostname.toLowerCase().replace(/^www\./, "");
+  // youtu.be/ID
+  if (host === "youtu.be") {
+    const id = u.pathname.split("/").filter(Boolean)[0];
+    return isValidYouTubeId(id) ? id : null;
+  }
+  if (
+    host === "youtube.com" ||
+    host === "m.youtube.com" ||
+    host === "music.youtube.com" ||
+    host === "youtube-nocookie.com"
+  ) {
+    // /watch?v=ID
+    const v = u.searchParams.get("v");
+    if (v && isValidYouTubeId(v)) return v;
+    // /embed/ID, /shorts/ID, /v/ID
+    const parts = u.pathname.split("/").filter(Boolean);
+    const idx = parts.findIndex((p) => p === "embed" || p === "shorts" || p === "v");
+    if (idx !== -1 && parts[idx + 1] && isValidYouTubeId(parts[idx + 1])) {
+      return parts[idx + 1];
+    }
+  }
+  return null;
+}
+
+function isValidYouTubeId(id: string | undefined): id is string {
+  return !!id && /^[A-Za-z0-9_-]{6,15}$/.test(id);
+}
+
+/**
+ * YouTube serves a few thumbnail sizes off a stable URL pattern. `hqdefault`
+ * is guaranteed to exist for every public video; `maxresdefault` only exists
+ * for higher-quality uploads. We use `hqdefault` for safety — the card
+ * renders at a small size anyway and we don't want a broken image.
+ */
+export function youtubeThumbnailFromUrl(url: string): string | null {
+  const id = extractYouTubeId(url);
+  if (!id) return null;
+  return `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+}
+
 export async function enrichLink(url: string): Promise<EnrichedLink> {
   const cleanUrl = url.trim();
   const provider = detectProvider(cleanUrl);
