@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Icon, type IconName } from "@/components/icons/Icon";
+import { ResourceCover } from "@/components/resources/ResourceCover";
 
 interface SectionLite {
   id: string;
@@ -292,28 +293,30 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
                     <div className="hairline mt-6" />
 
                     {anyClustered ? (
-                      <div className="mt-6 space-y-12">
+                      <div className="mt-6 space-y-3">
                         {clusterOrder.map((clusterLabel) => {
                           const items = clusters.get(clusterLabel) ?? [];
                           if (items.length === 0) return null;
                           return (
-                            <div key={clusterLabel || "_unclustered"}>
-                              <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-iron/15 pb-3">
-                                <h3 className="display-xl text-lg text-iron md:text-xl">
-                                  {clusterLabel || "Other"}
-                                </h3>
-                                <span className="section-mark text-iron/40">
-                                  {items.length}
-                                </span>
-                              </div>
-                              <ul className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                            <ClusterDisclosure
+                              key={`${section.id}:${clusterLabel || "_unclustered"}`}
+                              label={clusterLabel || "Other"}
+                              count={items.length}
+                              // When the user is searching/filtering, force
+                              // every cluster open so matches aren't hidden.
+                              // Otherwise default to closed — the whole point
+                              // of clusters is a navigable mini-TOC, not a
+                              // wall of cards.
+                              forceOpen={!!anyFilter}
+                            >
+                              <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                                 {items.map((item) => (
                                   <li key={item.id}>
                                     <ResourceCard item={item} />
                                   </li>
                                 ))}
                               </ul>
-                            </div>
+                            </ClusterDisclosure>
                           );
                         })}
                       </div>
@@ -334,6 +337,49 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
         </div>
       </section>
     </>
+  );
+}
+
+/**
+ * Collapsible cluster heading with item count + chevron. Closed by
+ * default so the section reads as a navigable mini-TOC instead of
+ * a wall of cards (especially important on mobile, where 56 cards in
+ * one scroll is brutal). When the user searches or filters, the
+ * parent passes forceOpen so matches don't get hidden.
+ */
+function ClusterDisclosure({
+  label,
+  count,
+  forceOpen,
+  children,
+}: {
+  label: string;
+  count: number;
+  forceOpen: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const isOpen = forceOpen || open;
+  return (
+    <div className="border border-iron/10 bg-bone">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-iron/5 md:px-5 md:py-4"
+        aria-expanded={isOpen}
+      >
+        <div className="flex items-baseline gap-3">
+          <h3 className="display-xl text-base text-iron md:text-lg">{label}</h3>
+          <span className="section-mark text-iron/40">{count}</span>
+        </div>
+        <Icon
+          name={isOpen ? "chevron-down" : "chevron-right"}
+          size={14}
+          className="text-iron/45"
+        />
+      </button>
+      {isOpen && <div className="border-t border-iron/10 px-4 pb-5 pt-2 md:px-5">{children}</div>}
+    </div>
   );
 }
 
@@ -403,6 +449,15 @@ function ResourceCard({ item }: { item: ItemLite }) {
   // directly" behavior happens on the detail page via the action bar.
   const href = `/resources/${item.slug}`;
 
+  // For file-backed rows (uploaded studies/guides) we render a
+  // deterministic SVG cover instead of a real thumbnail. AI photos
+  // looked nearly identical across 56 rows; the SVG approach gives
+  // each card real per-id variation while keeping a unified palette.
+  // YouTube + Amazon thumbnails win when present (real cover art).
+  const useGeneratedCover =
+    !item.thumbnailUrl ||
+    (item.provider !== "youtube" && item.provider !== "amazon");
+
   // Provider label shown over the thumbnail; drives a small badge style.
   const providerBadge = (() => {
     if (item.provider === "youtube") return { label: "YouTube", icon: "play" as const };
@@ -435,9 +490,14 @@ function ResourceCard({ item }: { item: ItemLite }) {
   return (
     <article className="lift group/card flex h-full flex-col overflow-hidden border border-iron/10 bg-bone transition-colors hover:border-brass">
       <Link href={href} className="flex flex-1 flex-col">
-        {/* Thumbnail or fallback panel */}
+        {/* Thumbnail. Priority order:
+         *   1. YouTube oEmbed or Amazon book cover (real cover art)
+         *   2. AI-generated SVG cover for everything else (file uploads,
+         *      mammoth-extracted .docx, etc.) — keyed by cluster theme
+         *      with per-id pattern variation.
+         */}
         <div className={`relative ${aspectClass} w-full overflow-hidden bg-iron/5`}>
-          {hasThumbnail ? (
+          {!useGeneratedCover && hasThumbnail ? (
             <Image
               src={item.thumbnailUrl!}
               alt=""
@@ -447,20 +507,12 @@ function ResourceCard({ item }: { item: ItemLite }) {
               unoptimized
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-iron/25">
-              <Icon
-                name={
-                  item.provider === "amazon"
-                    ? "scroll"
-                    : item.provider === "youtube"
-                    ? "play"
-                    : item.fileKey
-                    ? "scroll"
-                    : "arrow-up-right"
-                }
-                size={48}
-              />
-            </div>
+            <ResourceCover
+              id={item.id}
+              title={item.title}
+              cluster={item.cluster}
+              className="absolute inset-0 h-full w-full transition-transform duration-500 group-hover/card:scale-[1.03]"
+            />
           )}
           {/* YouTube play overlay */}
           {item.provider === "youtube" && hasThumbnail && (
