@@ -214,7 +214,7 @@ export function SeriesComposer({ voices }: ComposerProps) {
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Steady men in shaky times"
               className="block w-full border border-stone/15 bg-transparent px-4 py-3 text-2xl text-bone placeholder:text-stone/35 focus:border-brass focus:outline-none"
-              style={{ fontFamily: "var(--font-fraunces)" }}
+              style={{ fontFamily: "var(--font-display)" }}
               autoFocus
             />
           </Field>
