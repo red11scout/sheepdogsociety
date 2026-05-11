@@ -111,7 +111,21 @@ export default async function ResourceDetailPage({
                 Open link
               </a>
             )}
-            {!isYouTube && !isAmazonBook && !isWebLink && downloadUrl && (
+            {/* Body-html resources (mammoth-converted .docx, etc.):
+             *  PRIMARY action is "Save as PDF" — triggers the browser's
+             *  print dialog on the branded letterhead version. The user
+             *  picks "Save as PDF" or sends it to a printer. Either way
+             *  they get the Sheepdog Society letterhead, not a raw,
+             *  un-branded file dump.
+             *  SECONDARY: "Download original" still offered as a small
+             *  link for editors who want the source .docx/.pdf. */}
+            {row.bodyHtml && (
+              <PrintButton title={row.title} label="Save as PDF / Print" />
+            )}
+            {!isYouTube && !isAmazonBook && !isWebLink && downloadUrl && !row.bodyHtml && (
+              // Pure file resources (no extracted body): direct download
+              // is the only thing we can offer. Browser will preview if
+              // it's a PDF, save if it's anything else.
               <a
                 href={downloadUrl}
                 download={row.sourceFilename ?? undefined}
@@ -121,7 +135,19 @@ export default async function ResourceDetailPage({
                 Download {isPdf ? "PDF" : isDocx ? ".docx" : "file"}
               </a>
             )}
-            {row.bodyHtml && <PrintButton title={row.title} />}
+            {!isYouTube && !isAmazonBook && !isWebLink && downloadUrl && row.bodyHtml && (
+              // Body-html row that ALSO has the original file uploaded:
+              // surface the original as a tertiary text link so it
+              // doesn't compete with the primary Save-as-PDF action.
+              <a
+                href={downloadUrl}
+                download={row.sourceFilename ?? undefined}
+                className="text-[0.6875rem] uppercase tracking-wider text-iron/55 hover:text-brass"
+                title={`Download the original ${isPdf ? "PDF" : isDocx ? ".docx" : "file"} as uploaded`}
+              >
+                Original {isPdf ? "PDF" : isDocx ? ".docx" : "file"} ↓
+              </a>
+            )}
           </div>
         </div>
       </section>
@@ -129,15 +155,31 @@ export default async function ResourceDetailPage({
       {/* Letterhead — visible on screen and in print */}
       <article className="resource-doc bg-bone text-ink">
         <header className="mx-auto max-w-4xl px-6 pb-10 pt-6 md:px-12 md:pb-14 md:pt-10">
-          {/* Print-only branded header */}
-          <div className="print-letterhead hidden border-b border-iron/30 pb-4">
-            <div className="flex items-center gap-3">
-              <Icon name="shield" size={28} className="text-brass" />
-              <div>
-                <p className="display-xl text-base text-iron">Sheepdog Society</p>
-                <p className="section-mark text-iron/55">
-                  acts2028sheepdogsociety.com · Acts 20:28
-                </p>
+          {/* Print-only branded letterhead. Hidden on screen, revealed by
+           *  the @media print rule. Uses the actual brand logo + section
+           *  rules so the printed PDF reads like a real Sheepdog Society
+           *  document, not a screenshot of a webpage. */}
+          <div className="print-letterhead hidden">
+            <div className="flex items-end justify-between gap-6 border-b-2 border-iron pb-3">
+              <div className="flex items-center gap-3">
+                <Image
+                  src="/logo.png"
+                  alt="Sheepdog Society"
+                  width={44}
+                  height={44}
+                  unoptimized
+                  className="h-11 w-11 object-contain"
+                />
+                <div className="leading-tight">
+                  <p className="display-xl text-xl text-iron">Sheepdog Society</p>
+                  <p className="section-mark text-iron/65">
+                    Acts 20:28 · Stand guard
+                  </p>
+                </div>
+              </div>
+              <div className="text-right text-[0.625rem] uppercase tracking-[0.18em] text-iron/55">
+                <p>acts2028sheepdogsociety.com</p>
+                {row.section && <p className="mt-1">§ {row.section.name}</p>}
               </div>
             </div>
           </div>
@@ -305,15 +347,26 @@ export default async function ResourceDetailPage({
             </section>
           )}
 
-          {/* Print footer */}
-          <footer className="print-footer mt-16 hidden border-t border-iron/30 pt-4 text-xs text-iron/55">
-            <div className="flex items-center justify-between">
-              <span>Sheepdog Society · acts2028sheepdogsociety.com</span>
+          {/* Print-only footer. Same brand bar logic as the letterhead.
+           *  Hidden on screen, revealed by @media print. */}
+          <footer className="print-footer mt-16 hidden border-t-2 border-iron pt-3">
+            <div className="flex items-center justify-between text-[0.625rem] uppercase tracking-[0.18em] text-iron/65">
+              <span className="flex items-center gap-2">
+                <Image
+                  src="/logo.png"
+                  alt=""
+                  width={16}
+                  height={16}
+                  unoptimized
+                  className="h-4 w-4 object-contain"
+                />
+                Sheepdog Society · acts2028sheepdogsociety.com
+              </span>
               <span>
                 Printed {format(new Date(), "MMMM d, yyyy")}
               </span>
             </div>
-            <p className="mt-2 text-[0.625rem] italic text-iron/45">
+            <p className="mt-2 font-pullquote text-[0.6875rem] italic text-iron/55">
               Anchored in Acts 20:28. Free to read, free to share, please don&rsquo;t resell.
             </p>
           </footer>

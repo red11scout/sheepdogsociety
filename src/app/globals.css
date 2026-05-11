@@ -516,8 +516,17 @@
 
 /* ====================================================================
    Print stylesheet — Sheepdog letterhead.
-   Hide site chrome, header/nav, dark UI. Render the document
-   on a clean white page with a small brand bar at top + footer.
+
+   Why visibility instead of display:none:
+     The resource doc lives inside the public layout (header + main +
+     footer wrappers). `display: none` on an ancestor cascades to
+     prevent rendering of all descendants, even with `display: revert`
+     on the descendant. So hiding `body > *` to isolate `.resource-doc`
+     made the printed page literally blank.
+     `visibility: hidden` cascades but is overridable: setting
+     `visibility: visible` on a descendant DOES make it render. We
+     position `.resource-doc` absolutely at the page origin so the
+     hidden ancestors don't push it off the page.
 ==================================================================== */
 @media print {
   @page {
@@ -532,25 +541,52 @@
     print-color-adjust: exact;
   }
 
-  /* Hide everything globally, then unhide the resource document. */
-  body > * { display: none !important; }
-  .resource-doc,
-  .resource-doc * { display: revert !important; }
-  /* Re-hide pieces inside the doc that should not print. */
-  .resource-doc .no-print,
-  .no-print { display: none !important; }
-  .resource-doc .print-letterhead,
-  .resource-doc .print-footer { display: block !important; }
+  /* Hide every element on the page — visibility cascades but is
+     overridable on descendants (display:none isn't). */
+  body * { visibility: hidden !important; }
 
+  /* Re-show the resource doc and everything inside it. */
+  .resource-doc,
+  .resource-doc * { visibility: visible !important; }
+
+  /* Re-hide bits inside the doc that shouldn't print (action bar,
+     nav links, screen-only tag pills, etc.). */
+  .resource-doc .no-print,
+  .resource-doc .no-print * { visibility: hidden !important; }
+
+  /* Reveal print-only blocks (letterhead, footer). Both legacy and
+     new class names supported. */
+  .resource-doc .print-only,
+  .resource-doc .print-letterhead,
+  .resource-doc .print-footer {
+    visibility: visible !important;
+    display: block !important;
+  }
+  .resource-doc .print-only *,
+  .resource-doc .print-letterhead *,
+  .resource-doc .print-footer * {
+    visibility: visible !important;
+  }
+
+  /* Float the doc to the page origin. The visibility-hidden ancestors
+     still occupy layout, but absolute positioning lifts the doc out
+     of that flow so it lands at the @page top-left. */
   .resource-doc {
+    position: absolute !important;
+    inset: 0 auto auto 0 !important;
+    width: 100% !important;
     background: #ffffff !important;
     color: #111 !important;
-    max-width: 100%;
-    padding: 0;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
   }
+
   .resource-doc header,
   .resource-doc article,
+  .resource-doc section,
   .resource-doc div { background: transparent !important; }
+
   .resource-doc h1 {
     color: #111 !important;
     font-size: 1.9rem !important;
@@ -573,4 +609,7 @@
   .text-brass { color: #8b6f3f !important; }
   .border-brass\/40 { border-color: #b89668 !important; }
   .bg-brass\/10 { background: #f4ecdb !important; }
+
+  /* Page break helper for content authors */
+  .page-break { page-break-after: always; }
 }
