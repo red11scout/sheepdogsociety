@@ -312,7 +312,7 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
           onChange={(e) => setTitle(e.target.value)}
           placeholder="A title men remember on Wednesday"
           className="block w-full bg-transparent text-4xl font-medium leading-tight tracking-[-0.03em] text-bone placeholder:text-stone/30 focus:outline-none md:text-6xl"
-          style={{ fontFamily: "var(--font-fraunces)" }}
+          style={{ fontFamily: "var(--font-display)" }}
         />
         <div className="mt-4 flex flex-wrap items-center gap-4">
           <label className="flex items-center gap-2 text-xs text-stone/65">

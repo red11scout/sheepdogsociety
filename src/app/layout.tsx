@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import {
   Inter,
   Merriweather,
-  Fraunces,
+  Barlow_Condensed,
   Cormorant_Garamond,
   JetBrains_Mono,
 } from "next/font/google";
@@ -21,10 +21,14 @@ const merriweather = Merriweather({
   subsets: ["latin"],
 });
 
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
+// Display font — Barlow Condensed Black/ExtraBold for headlines. Replaces
+// Fraunces (Apr 2026): the variable-axis serif read soft + decorative,
+// which clashed with the "stand guard" voice. Barlow is a low-contrast
+// condensed sans — strong, urgent, poster-like, still humane.
+const barlowCondensed = Barlow_Condensed({
+  variable: "--font-barlow-condensed",
+  weight: ["600", "700", "800", "900"],
   subsets: ["latin"],
-  axes: ["opsz", "SOFT", "WONK"],
 });
 
 const cormorant = Cormorant_Garamond({
@@ -65,7 +69,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${merriweather.variable} ${fraunces.variable} ${cormorant.variable} ${jetbrainsMono.variable} font-sans antialiased`}
+        className={`${inter.variable} ${merriweather.variable} ${barlowCondensed.variable} ${cormorant.variable} ${jetbrainsMono.variable} font-sans antialiased`}
       >
         <ThemeProvider
           attribute="class"

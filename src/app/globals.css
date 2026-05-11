@@ -10,7 +10,7 @@
   --font-sans: var(--font-inter);
   --font-mono: var(--font-geist-mono);
   --font-scripture: var(--font-merriweather);
-  --font-display: var(--font-fraunces);
+  --font-display: var(--font-barlow-condensed);
   --font-pullquote: var(--font-cormorant);
   --font-mark: var(--font-jetbrains-mono);
 
@@ -297,13 +297,15 @@
   }
 }
 
-/* Variable-axis display — push Fraunces into expressive territory at hero scale. */
+/* Hero-scale headline kerning — Barlow Condensed responds well to tight
+   tracking at large sizes. (Replaced the Fraunces opsz/SOFT/WONK
+   variation tricks; Barlow Condensed is a static face.) */
 .display-xl {
-  font-feature-settings: "ss01", "ss02", "kern";
-  font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 1;
+  font-feature-settings: "kern", "liga";
 }
 .display-soft {
-  font-variation-settings: "opsz" 96, "SOFT" 60, "WONK" 0;
+  font-feature-settings: "kern";
+  letter-spacing: -0.005em;
 }
 
 /* Glass card — semi-transparent on iron, hairline brass border, lift on hover. */
@@ -366,12 +368,15 @@
   background: color-mix(in oklab, currentColor 14%, transparent);
 }
 
-/* Display headline — Fraunces with tight tracking for hero scale. */
+/* Display headline — Barlow Condensed Black, poster-tight tracking,
+   compressed line-height so multi-line hero copy reads as one block.
+   Headlines should feel commanding, not pretty. */
 .display-xl {
-  font-family: var(--font-fraunces), Georgia, serif;
-  font-weight: 500;
-  letter-spacing: -0.03em;
-  line-height: 1.02;
+  font-family: var(--font-barlow-condensed), "Helvetica Neue", Arial, sans-serif;
+  font-weight: 900;
+  letter-spacing: -0.015em;
+  line-height: 0.92;
+  text-transform: none;
 }
 
 /* Cursor-tracked spotlight on dark cards. Pure CSS variables, no JS state. */
@@ -438,12 +443,12 @@
 .resource-prose h2,
 .resource-prose h3,
 .resource-prose h4 {
-  font-family: var(--font-fraunces), Georgia, serif;
-  font-weight: 600;
-  letter-spacing: -0.01em;
+  font-family: var(--font-barlow-condensed), "Helvetica Neue", Arial, sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.005em;
   color: var(--color-iron, #1a1a1a);
-  margin: 2em 0 0.6em;
-  line-height: 1.2;
+  margin: 2em 0 0.5em;
+  line-height: 1.05;
 }
 .resource-prose h1 { font-size: 2rem; }
 .resource-prose h2 { font-size: 1.625rem; }
