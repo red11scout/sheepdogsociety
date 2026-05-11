@@ -48,8 +48,8 @@ const CLUSTER_THEMES: Array<{ keywords: string[]; theme: CoverTheme }> = [
       bgEnd: "#3A2A20",
       accent: "#DBAA48",
       ink: "#F2EBDD",
-      icon: "hands",
-      alt: "Hands joined — marriage and family",
+      icon: "heart",
+      alt: "Heart — marriage and family",
     },
   },
   {
@@ -81,8 +81,8 @@ const CLUSTER_THEMES: Array<{ keywords: string[]; theme: CoverTheme }> = [
       bgEnd: "#050810",
       accent: "#C8932A",
       ink: "#F2EBDD",
-      icon: "shield",
-      alt: "Shield — protection and discernment",
+      icon: "watchtower",
+      alt: "Watchtower — protection and spiritual discernment",
     },
   },
   {
@@ -92,8 +92,8 @@ const CLUSTER_THEMES: Array<{ keywords: string[]; theme: CoverTheme }> = [
       bgEnd: "#3F4A2C",
       accent: "#F2EBDD",
       ink: "#F2EBDD",
-      icon: "heart",
-      alt: "Heart — generosity and service",
+      icon: "hands",
+      alt: "Open hands — generosity and service",
     },
   },
   {
@@ -103,8 +103,8 @@ const CLUSTER_THEMES: Array<{ keywords: string[]; theme: CoverTheme }> = [
       bgEnd: "#4A1212",
       accent: "#DBAA48",
       ink: "#F2EBDD",
-      icon: "lamp",
-      alt: "Lamp — doctrine and teaching",
+      icon: "scroll",
+      alt: "Scroll — doctrine and teaching",
     },
   },
   {
