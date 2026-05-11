@@ -1,4 +1,5 @@
 import { listSectionsAndResourcesForPublic } from "@/server/resources-admin";
+import { detectProvider, youtubeThumbnailFromUrl } from "@/lib/resources/enrich";
 import { ResourcesBrowser } from "./browser";
 
 export const dynamic = "force-dynamic";
@@ -33,17 +34,31 @@ export default async function ResourcesPage() {
         description: s.description ?? "",
         icon: s.icon ?? "scroll",
       }))}
-      items={items.map((i) => ({
+      items={items.map((i) => {
+        // Defensive: if a row has a YouTube URL but enrichment never ran
+        // (legacy form, failed oEmbed, etc.), derive both provider and
+        // thumbnail from the URL at render time so the card still looks
+        // right. Real enrichment data wins when it exists.
+        const url = i.url ?? "";
+        const storedProvider = (i.provider as "youtube" | "amazon" | "web" | "file" | null) ?? null;
+        const detected = url ? detectProvider(url) : null;
+        const provider =
+          storedProvider ?? (detected === "youtube" || detected === "amazon" ? detected : null);
+        const thumbnailUrl =
+          i.thumbnailUrl ??
+          (provider === "youtube" ? youtubeThumbnailFromUrl(url) : null);
+
+        return {
         id: i.id,
         title: i.title,
         slug: i.slug,
         summary: i.summary ?? "",
         description: i.description ?? "",
-        url: i.url ?? "",
+        url,
         fileKey: i.fileKey ?? "",
         type: i.type,
-        provider: (i.provider as "youtube" | "amazon" | "web" | "file" | null) ?? null,
-        thumbnailUrl: i.thumbnailUrl ?? null,
+        provider,
+        thumbnailUrl,
         author: i.author ?? null,
         durationSeconds: i.durationSeconds ?? null,
         category: i.category ?? "",
@@ -54,7 +69,8 @@ export default async function ResourcesPage() {
         booksOfBible: (i.booksOfBible ?? []) as string[],
         estimatedMinutes: i.estimatedMinutes ?? null,
         hasBody: i.hasBody,
-      }))}
+        };
+      })}
     />
   );
 }
