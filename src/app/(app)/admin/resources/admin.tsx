@@ -17,6 +17,7 @@ import {
 import { format } from "date-fns";
 import { BulkUploadPanel } from "./bulk-upload-panel";
 import { AddLinkPanel } from "./add-link-panel";
+import { SectionAutomationBar } from "./section-automation-bar";
 
 interface Section {
   id: string;
@@ -365,6 +366,23 @@ NEON_DATABASE_URL='paste-the-prod-url-here' \\
               )}
 
               <div className="mt-6 space-y-4">
+                {/* Section-wide AI actions: re-tag (restores public search),
+                 *  auto-cluster (groups cards under sub-headings on the
+                 *  public page), generate covers (AI thumbnails). Only
+                 *  shown when there's something to operate on. */}
+                {filteredResources.length > 0 && (
+                  <SectionAutomationBar
+                    sectionId={activeSection.id}
+                    sectionName={activeSection.name}
+                    resources={filteredResources.map((r) => ({
+                      id: r.id,
+                      url: r.url,
+                      fileKey: r.fileKey,
+                    }))}
+                    onComplete={refresh}
+                  />
+                )}
+
                 {/* Section-aware composer panels.
                  *  - Sermon Studies / Sermons → "Add from link" (sermon mode)
                  *  - Book Studies            → "Add book + study" (book mode)
@@ -742,6 +760,27 @@ function ResourceRow({
     }
   }
 
+  async function handleGenerateCover() {
+    if (!confirm("Generate a new AI cover image for this resource? Replaces any existing thumbnail. ~$0.011, takes 6-15s.")) return;
+    setRecat("busy");
+    setRecatError("");
+    try {
+      const res = await fetch(
+        `/api/admin/resources/${resource.id}/generate-cover`,
+        { method: "POST" }
+      );
+      if (!res.ok) {
+        const j = (await res.json().catch(() => ({}))) as { error?: string; detail?: string };
+        throw new Error(j.detail ?? j.error ?? `HTTP ${res.status}`);
+      }
+      setRecat("idle");
+      window.location.reload();
+    } catch (e) {
+      setRecat("error");
+      setRecatError(e instanceof Error ? e.message : "Failed");
+    }
+  }
+
   // Heuristic: show re-extract on file uploads that don't yet have an
   // AI categorization timestamp (legacy resources from before the bulk
   // upload pipeline existed).
@@ -915,6 +954,20 @@ function ResourceRow({
                 disabled={recat === "busy"}
                 className="rounded-none p-1.5 text-stone/55 transition-colors hover:text-brass disabled:opacity-50"
                 title="Refresh thumbnail + embed from the URL"
+              >
+                <Icon name="image" size={14} />
+              </button>
+            )}
+            {/* Generate AI cover image (gpt-image-1) for any non-URL row.
+             *  URL rows already get thumbnails from oEmbed/OG; generating
+             *  one would overwrite the source thumbnail unnecessarily. */}
+            {resource.fileKey && (
+              <button
+                type="button"
+                onClick={handleGenerateCover}
+                disabled={recat === "busy"}
+                className="rounded-none p-1.5 text-stone/55 transition-colors hover:text-brass disabled:opacity-50"
+                title="Generate an AI cover image (~$0.011, 6-15s)"
               >
                 <Icon name="image" size={14} />
               </button>

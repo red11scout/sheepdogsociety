@@ -34,6 +34,9 @@ interface ItemLite {
   topics: string[];
   themes: string[];
   booksOfBible: string[];
+  /** AI-assigned sub-group label within the section. Empty string =
+   *  no cluster (renders as a single ungrouped grid). */
+  cluster: string;
   estimatedMinutes: number | null;
   hasBody: boolean;
 }
@@ -242,6 +245,27 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
             ) : (
               sectionsWithItems.map((section) => {
                 const sectionItems = grouped[section.id] ?? [];
+
+                // Sub-group by AI cluster within the section. If no row has
+                // a cluster set, fall back to a single ungrouped grid (the
+                // legacy render). Once any row has a cluster, we render
+                // each cluster as its own labelled mini-section so a
+                // 56-row section reads as a navigable mini-TOC.
+                const clusters = new Map<string, ItemLite[]>();
+                let anyClustered = false;
+                for (const it of sectionItems) {
+                  const key = it.cluster?.trim() || "";
+                  if (key) anyClustered = true;
+                  if (!clusters.has(key)) clusters.set(key, []);
+                  clusters.get(key)!.push(it);
+                }
+                // Stable cluster order: by name; "" (unclustered) goes last.
+                const clusterOrder = Array.from(clusters.keys()).sort((a, b) => {
+                  if (a === "") return 1;
+                  if (b === "") return -1;
+                  return a.localeCompare(b);
+                });
+
                 return (
                   <div key={section.id} className="mb-16 last:mb-0">
                     <div className="flex flex-wrap items-end justify-between gap-3">
@@ -266,13 +290,42 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
                       </p>
                     )}
                     <div className="hairline mt-6" />
-                    <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                      {sectionItems.map((item) => (
-                        <li key={item.id}>
-                          <ResourceCard item={item} />
-                        </li>
-                      ))}
-                    </ul>
+
+                    {anyClustered ? (
+                      <div className="mt-6 space-y-12">
+                        {clusterOrder.map((clusterLabel) => {
+                          const items = clusters.get(clusterLabel) ?? [];
+                          if (items.length === 0) return null;
+                          return (
+                            <div key={clusterLabel || "_unclustered"}>
+                              <div className="flex flex-wrap items-baseline justify-between gap-3 border-b border-iron/15 pb-3">
+                                <h3 className="display-xl text-lg text-iron md:text-xl">
+                                  {clusterLabel || "Other"}
+                                </h3>
+                                <span className="section-mark text-iron/40">
+                                  {items.length}
+                                </span>
+                              </div>
+                              <ul className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                {items.map((item) => (
+                                  <li key={item.id}>
+                                    <ResourceCard item={item} />
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                        {sectionItems.map((item) => (
+                          <li key={item.id}>
+                            <ResourceCard item={item} />
+                          </li>
+                        ))}
+                      </ul>
+                    )}
                   </div>
                 );
               })

@@ -67,6 +67,7 @@ export default async function ResourcesPage() {
         topics: (i.topics ?? []) as string[],
         themes: (i.themes ?? []) as string[],
         booksOfBible: (i.booksOfBible ?? []) as string[],
+        cluster: (i.cluster ?? "") as string,
         estimatedMinutes: i.estimatedMinutes ?? null,
         hasBody: i.hasBody,
         };

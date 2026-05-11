@@ -294,6 +294,7 @@ export async function listSectionsAndResourcesForPublic() {
       level: resources.level,
       audience: resources.audience,
       seriesName: resources.seriesName,
+      cluster: resources.cluster,
       topics: resources.topics,
       themes: resources.themes,
       booksOfBible: resources.booksOfBible,

@@ -613,6 +613,12 @@ export const resources = pgTable(
     level: text("level").default("all"), // legacy: all, entry, mid, advanced
     audience: text("audience").default("all"), // newcomer | leader | all
     seriesName: text("series_name").default(""),
+    /** AI-assigned sub-group label within the parent section. e.g. "Marriage
+     *  & Family", "Trust & Surrender". Set by clusterSection(); empty until
+     *  the admin runs the auto-cluster action. The public browser groups
+     *  rows by this within each section so a 56-row Bible Studies section
+     *  reads as a navigable mini-TOC rather than a wall of cards. */
+    cluster: text("cluster").default(""),
     topics: jsonb("topics").$type<string[]>().notNull().default([]),
     themes: jsonb("themes").$type<string[]>().notNull().default([]),
     booksOfBible: jsonb("books_of_bible").$type<string[]>().notNull().default([]),
