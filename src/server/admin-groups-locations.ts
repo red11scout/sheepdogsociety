@@ -203,10 +203,22 @@ export async function upsertGroupLocation(input: UpsertGroupLocationInput) {
     locPatch.status = approvalToLocationStatus(input.approvalStatus);
   if (input.isActive !== undefined) locPatch.isActive = input.isActive;
 
+  // Approving a group should put its pin on the public map automatically.
+  // Only auto-flip when the caller didn't pass an explicit displayedOnMap
+  // value in the same request — that lets the admin still soft-hide an
+  // approved group later by toggling On Map → Off.
+  if (input.approvalStatus === "approved" && input.displayedOnMap === undefined) {
+    locPatch.displayedOnMap = true;
+  }
+
   if (existingLoc) {
     await db.update(locations).set(locPatch).where(eq(locations.id, existingLoc.id));
   } else {
     // Create a fresh location bound to this group.
+    // displayedOnMap defaults to true for approved rows so a pin appears
+    // on the public locator immediately. Pending/rejected rows stay off.
+    const initialDisplayedOnMap =
+      input.displayedOnMap ?? input.approvalStatus === "approved";
     await db.insert(locations).values({
       name: input.locationName ?? input.groupName,
       latitude: input.latitude ?? "0",
@@ -216,7 +228,7 @@ export async function upsertGroupLocation(input: UpsertGroupLocationInput) {
       groupId,
       status: approvalToLocationStatus(input.approvalStatus ?? "pending"),
       isActive: input.isActive ?? true,
-      displayedOnMap: input.displayedOnMap ?? false,
+      displayedOnMap: initialDisplayedOnMap,
       locationType: input.locationType ?? "in_person",
       address: input.address ?? "",
       zipCode: input.zipCode ?? "",
@@ -255,6 +267,10 @@ export async function bulkUpdateGroupsLocations(
     locPatch.status = approvalToLocationStatus(patch.approvalStatus);
   if (patch.displayedOnMap !== undefined)
     locPatch.displayedOnMap = patch.displayedOnMap;
+  // Bulk approve also auto-puts the rows on the map (admin can hide later).
+  if (patch.approvalStatus === "approved" && patch.displayedOnMap === undefined) {
+    locPatch.displayedOnMap = true;
+  }
   if (Object.keys(locPatch).length > 1) {
     await db
       .update(locations)

@@ -132,7 +132,14 @@ export function GroupsLocationsTable({ initialRows, dbError }: Props) {
           groupName: rows.find((r) => r.groupId === groupId)?.groupName ?? "",
           approvalStatus,
         });
-        await patchRow(groupId, { approvalStatus });
+        // Server-side auto-flips displayed_on_map=true when approving so a
+        // pin appears on the public locator immediately. Mirror in the
+        // optimistic UI so the row's On Map cell flips in the same render.
+        const optimisticPatch: Partial<AdminGroupLocationRow> = { approvalStatus };
+        if (approvalStatus === "approved") {
+          optimisticPatch.displayedOnMap = true;
+        }
+        await patchRow(groupId, optimisticPatch);
       } catch (e) {
         setErrorMsg(e instanceof Error ? e.message : "Update failed");
       }
@@ -197,9 +204,15 @@ export function GroupsLocationsTable({ initialRows, dbError }: Props) {
     startTransition(async () => {
       try {
         await bulkUpdateGroupsLocations(ids, patch);
+        // Mirror the server's auto-flip: approving in bulk also sets
+        // displayedOnMap=true unless the caller passed it explicitly.
+        const optimistic = { ...patch };
+        if (patch.approvalStatus === "approved" && patch.displayedOnMap === undefined) {
+          optimistic.displayedOnMap = true;
+        }
         setRows((prev) =>
           prev.map((r) =>
-            selected.has(r.groupId) ? { ...r, ...patch } : r
+            selected.has(r.groupId) ? { ...r, ...optimistic } : r
           )
         );
       } catch (e) {
@@ -244,8 +257,8 @@ export function GroupsLocationsTable({ initialRows, dbError }: Props) {
       <AdminPageIntro
         kicker="Groups & Locations"
         title="Where men meet."
-        description="One row per group. Toggle approval, active state, and on-map visibility inline. Edit the location details (address, lat/lng, meeting day) by clicking Edit. Bulk actions for the busy weeks."
-        hint="Each group meets at one location. Members assigned to a group inherit its location for routing email/SMS. The 'On Map' toggle controls whether the group appears on the public locator at /locations — separate from approval so you can soft-hide a row without rejecting it."
+        description="One row per group. Approving a group automatically puts it on the public map. Toggle active state and on-map visibility inline; edit address, lat/lng, and meeting day by clicking Edit. Bulk actions for the busy weeks."
+        hint="Each group meets at one location. Members assigned to a group inherit its location for routing email/SMS. Approving auto-flips 'On Map' to On so the pin shows up on /locations right away. You can still toggle On Map off later to soft-hide an approved group without un-approving it."
         primary={{ label: "New group", href: "#", icon: "plus" }}
       />
 
@@ -452,7 +465,7 @@ export function GroupsLocationsTable({ initialRows, dbError }: Props) {
 
       <p className="mt-6 flex items-center gap-2 text-[0.6875rem] text-stone/50">
         <Icon name="info" size={12} className="text-stone/40" />
-        Inline-edit Approval, Active, and On Map directly. Click the pencil to edit address, lat/lng, meeting day/time. Delete is permanent for the group + its location row; assigned members become unassigned.
+        Approving a group auto-puts it on the map. Inline-edit Approval, Active, and On Map directly. Click the pencil to edit address, lat/lng, meeting day/time. Delete is permanent for the group + its location row; assigned members become unassigned.
       </p>
     </div>
   );
