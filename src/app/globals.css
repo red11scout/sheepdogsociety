@@ -379,6 +379,20 @@
   text-transform: none;
 }
 
+/* Brand wordmark — softer than display-xl. Barlow Condensed at 600
+   (semibold, not black) with a touch more tracking so it reads as a
+   wordmark, not a billboard. Used wherever "Sheepdog Society" appears
+   as the brand lockup (nav, footer, admin sidebar, print letterhead).
+   The bolder display-xl was hard to read at small sizes — it
+   collapsed into a dense black blob next to the shield logo. */
+.brand-wordmark {
+  font-family: var(--font-barlow-condensed), "Helvetica Neue", Arial, sans-serif;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.1;
+  text-transform: none;
+}
+
 /* Cursor-tracked spotlight on dark cards. Pure CSS variables, no JS state. */
 .spotlight {
   position: relative;

@@ -155,7 +155,7 @@ export function AdminSidebar({
       >
         <Icon name="shield" size={32} className="text-brass" />
         <div className="flex flex-col leading-tight">
-          <span className="display-xl text-base text-bone">
+          <span className="brand-wordmark text-lg text-bone">
             Sheepdog
           </span>
           <span className="section-mark text-[0.6rem] text-brass">

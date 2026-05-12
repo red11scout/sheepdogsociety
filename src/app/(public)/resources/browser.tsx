@@ -123,31 +123,42 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
 
   return (
     <>
-      {/* Hero */}
+      {/* Hero — tighter padding on mobile so the search bar reaches the
+       *  viewport quickly. The whole point of /resources is "find a thing
+       *  fast"; a 60% viewport-height hero gets in the way. */}
       <section className="relative overflow-hidden bg-bone text-ink">
         <div className="aurora aurora--soft" aria-hidden />
         <div className="dotted-grid absolute inset-0 opacity-50" aria-hidden />
-        <div className="relative mx-auto max-w-7xl px-6 py-20 md:px-12 md:py-28">
+        <div className="relative mx-auto max-w-7xl px-6 py-10 md:px-12 md:py-28">
           <div className="flex items-center gap-4">
             <span className="section-mark">§ Resources</span>
             <div className="hairline flex-1" />
           </div>
-          <h1 className="display-xl mt-10 max-w-4xl text-[clamp(2.5rem,7vw,6rem)]">
+          <h1 className="display-xl mt-5 max-w-4xl text-[clamp(2rem,7vw,6rem)] md:mt-10">
             Take, read,
             <br />
             <span className="text-brass">use it Tuesday.</span>
           </h1>
-          <p className="mt-10 max-w-2xl font-pullquote text-xl italic leading-relaxed text-iron/70 md:text-2xl">
+          <p className="mt-5 max-w-2xl font-pullquote text-base italic leading-relaxed text-iron/70 md:mt-10 md:text-2xl">
             Studies, leader guides, devotionals, sermon notes. Search by topic, theme, or book of the Bible. Free. Bring it to your group.
           </p>
         </div>
       </section>
 
-      {/* Search bar */}
+      {/* Search bar + mobile-only section pill rail.
+       *
+       *  Mobile nav strategy: the desktop sidebar with 4 stacked facets
+       *  (Section + Book + Topic + Audience) used to render ABOVE the
+       *  results on phones, pushing the actual cards 800+px down. On
+       *  mobile we hide that sidebar entirely (see below: `hidden
+       *  md:block`) and instead surface ONE horizontally-scrollable rail
+       *  of section pills here — that's the primary navigation move 99%
+       *  of mobile users make. The remaining facets are tucked behind
+       *  the MobileFilterSheet disclosure below the search. */}
       <section className="sticky top-16 z-20 border-b border-iron/10 bg-bone/95 backdrop-blur">
-        <div className="mx-auto max-w-7xl px-6 py-4 md:px-12">
-          <div className="flex flex-wrap items-center gap-3">
-            <label className="relative flex flex-1 min-w-[220px] items-center">
+        <div className="mx-auto max-w-7xl px-6 py-3 md:px-12 md:py-4">
+          <div className="flex items-center gap-3">
+            <label className="relative flex flex-1 items-center">
               <Icon
                 name="search"
                 size={16}
@@ -156,8 +167,8 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search title, topic, theme, or book of the Bible"
-                className="block h-11 w-full border border-iron/15 bg-white/60 pl-10 pr-3 text-sm text-iron placeholder:text-iron/40 focus:border-brass focus:outline-none"
+                placeholder="Search resources..."
+                className="block h-11 w-full border border-iron/15 bg-white/60 pl-10 pr-9 text-sm text-iron placeholder:text-iron/40 focus:border-brass focus:outline-none"
               />
               {query && (
                 <button
@@ -174,23 +185,60 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
               <button
                 type="button"
                 onClick={clearFilters}
-                className="text-xs text-iron/55 underline-offset-4 hover:text-brass hover:underline"
+                className="hidden text-xs text-iron/55 underline-offset-4 hover:text-brass hover:underline sm:inline-flex"
               >
                 Clear all
               </button>
             )}
-            <span className="text-xs text-iron/55">
+            <span className="hidden text-xs text-iron/55 sm:inline-flex">
               {filtered.length} {filtered.length === 1 ? "item" : "items"}
             </span>
           </div>
+
+          {/* Mobile-only section pills. Horizontal scroll if they overflow.
+           *  Tapping a pill drives the same activeSectionId state as the
+           *  desktop sidebar facet. */}
+          <div className="mt-3 flex gap-2 overflow-x-auto pb-1 md:hidden">
+            <SectionPill
+              label="All"
+              active={!activeSectionId}
+              onClick={() => setActiveSectionId("")}
+            />
+            {sections.map((s) => (
+              <SectionPill
+                key={s.id}
+                label={s.name}
+                active={activeSectionId === s.id}
+                onClick={() => setActiveSectionId(s.id)}
+              />
+            ))}
+          </div>
+
+          {/* Mobile-only "More filters" disclosure for Book/Topic/Audience.
+           *  Closed by default so it doesn't crowd the search row. */}
+          {(allBooks.length > 0 || allTopics.length > 0 || allAudiences.length > 1) && (
+            <MobileFilterSheet
+              allBooks={allBooks}
+              allTopics={allTopics}
+              allAudiences={allAudiences}
+              activeBook={activeBook}
+              activeTopic={activeTopic}
+              activeAudience={activeAudience}
+              onBook={setActiveBook}
+              onTopic={setActiveTopic}
+              onAudience={setActiveAudience}
+              count={filtered.length}
+              onClearAll={anyFilter ? clearFilters : undefined}
+            />
+          )}
         </div>
       </section>
 
       {/* Body: facets + grid */}
       <section className="bg-bone text-ink">
-        <div className="mx-auto grid max-w-7xl gap-10 px-6 py-12 md:grid-cols-[260px_1fr] md:px-12 md:py-20">
-          {/* Facets */}
-          <aside className="space-y-8">
+        <div className="mx-auto grid max-w-7xl gap-10 px-6 py-8 md:grid-cols-[260px_1fr] md:px-12 md:py-20">
+          {/* Facets — desktop only. Mobile uses the pill rail + sheet above. */}
+          <aside className="hidden space-y-8 md:block">
             <Facet
               title="Section"
               options={sections.map((s) => ({ value: s.id, label: s.name }))}
@@ -337,6 +385,171 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
         </div>
       </section>
     </>
+  );
+}
+
+/**
+ * Mobile-only horizontal pill in the section rail. Tappable, with an
+ * active treatment that matches the brass brand accent.
+ */
+function SectionPill({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        "shrink-0 whitespace-nowrap border px-3 py-1.5 text-xs uppercase tracking-wider transition-colors " +
+        (active
+          ? "border-brass bg-brass text-iron"
+          : "border-iron/15 bg-bone text-iron/65 hover:border-brass hover:text-brass")
+      }
+    >
+      {label}
+    </button>
+  );
+}
+
+/**
+ * Mobile-only collapsible filter sheet for Book/Topic/Audience. These
+ * facets used to stack above the results on phones, pushing real
+ * content hundreds of pixels down. Now they sit behind a single
+ * "Filters" button below the search bar; tapping it reveals a compact
+ * panel with chips for each option. Closed by default to keep the
+ * top-of-page focused on the search input + section pills.
+ */
+function MobileFilterSheet({
+  allBooks,
+  allTopics,
+  allAudiences,
+  activeBook,
+  activeTopic,
+  activeAudience,
+  onBook,
+  onTopic,
+  onAudience,
+  count,
+  onClearAll,
+}: {
+  allBooks: string[];
+  allTopics: string[];
+  allAudiences: string[];
+  activeBook: string;
+  activeTopic: string;
+  activeAudience: string;
+  onBook: (v: string) => void;
+  onTopic: (v: string) => void;
+  onAudience: (v: string) => void;
+  count: number;
+  onClearAll?: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const activeCount = [activeBook, activeTopic, activeAudience].filter(Boolean).length;
+  return (
+    <div className="mt-2 md:hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between gap-3 border border-iron/15 bg-white/60 px-3 py-2 text-xs uppercase tracking-wider text-iron/70 transition-colors hover:border-brass hover:text-brass"
+        aria-expanded={open}
+      >
+        <span className="flex items-center gap-2">
+          <Icon name="search" size={12} />
+          More filters
+          {activeCount > 0 && (
+            <span className="inline-flex h-4 min-w-[16px] items-center justify-center bg-brass px-1 text-[0.5625rem] font-semibold text-iron">
+              {activeCount}
+            </span>
+          )}
+        </span>
+        <span className="flex items-center gap-3 text-iron/45">
+          <span className="normal-case tracking-normal">{count} items</span>
+          <Icon name={open ? "chevron-down" : "chevron-right"} size={12} />
+        </span>
+      </button>
+      {open && (
+        <div className="mt-2 space-y-4 border border-iron/10 bg-bone p-3">
+          {allBooks.length > 0 && (
+            <ChipFacet title="Book of the Bible" options={allBooks} value={activeBook} onChange={onBook} />
+          )}
+          {allTopics.length > 0 && (
+            <ChipFacet title="Topic" options={allTopics} value={activeTopic} onChange={onTopic} />
+          )}
+          {allAudiences.length > 1 && (
+            <ChipFacet
+              title="For"
+              options={allAudiences}
+              value={activeAudience}
+              onChange={onAudience}
+              labelFor={(a) =>
+                a === "newcomer" ? "Newcomers" : a === "leader" ? "Leaders" : "Anyone"
+              }
+            />
+          )}
+          {onClearAll && (
+            <button
+              type="button"
+              onClick={onClearAll}
+              className="text-xs text-iron/55 underline-offset-4 hover:text-brass hover:underline"
+            >
+              Clear all filters
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * Chip-style facet for the mobile filter sheet. Wraps if the option
+ * count is large (40+ topics across Bible Studies, for example) and
+ * stays tappable.
+ */
+function ChipFacet({
+  title,
+  options,
+  value,
+  onChange,
+  labelFor,
+}: {
+  title: string;
+  options: string[];
+  value: string;
+  onChange: (v: string) => void;
+  labelFor?: (v: string) => string;
+}) {
+  return (
+    <div>
+      <p className="mb-2 section-mark text-iron/55">{title}</p>
+      <div className="flex flex-wrap gap-1.5">
+        {options.map((opt) => {
+          const active = value === opt;
+          return (
+            <button
+              key={opt}
+              type="button"
+              onClick={() => onChange(active ? "" : opt)}
+              className={
+                "border px-2 py-1 text-[0.6875rem] uppercase tracking-wider transition-colors " +
+                (active
+                  ? "border-brass bg-brass text-iron"
+                  : "border-iron/15 bg-bone text-iron/70 hover:border-brass hover:text-brass")
+              }
+            >
+              {labelFor ? labelFor(opt) : opt}
+            </button>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 

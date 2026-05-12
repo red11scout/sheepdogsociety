@@ -71,7 +71,7 @@ export function PublicNav() {
             className="rounded-none"
           />
           <div className="leading-tight">
-            <div className="display-xl text-base text-iron">
+            <div className="brand-wordmark text-lg text-iron">
               Sheepdog Society
             </div>
             <div className="section-mark text-[0.625rem] text-brass">

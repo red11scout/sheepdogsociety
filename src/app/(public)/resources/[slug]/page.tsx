@@ -171,7 +171,7 @@ export default async function ResourceDetailPage({
                   className="h-11 w-11 object-contain"
                 />
                 <div className="leading-tight">
-                  <p className="display-xl text-xl text-iron">Sheepdog Society</p>
+                  <p className="brand-wordmark text-2xl text-iron">Sheepdog Society</p>
                   <p className="section-mark text-iron/65">
                     Acts 20:28 · Stand guard
                   </p>

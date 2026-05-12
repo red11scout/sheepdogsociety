@@ -24,7 +24,7 @@ export function PublicFooter() {
                 className="rounded-none"
               />
               <div className="leading-tight">
-                <div className="display-xl text-base text-foreground">
+                <div className="brand-wordmark text-lg text-foreground">
                   Sheepdog Society
                 </div>
                 <div className="section-mark text-[0.625rem] text-brass">
