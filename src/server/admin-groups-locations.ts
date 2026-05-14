@@ -60,6 +60,11 @@ export interface AdminGroupLocationRow {
   displayedOnMap: boolean;
   meetingDay: string | null;
   meetingTime: string | null;
+  /** Group leader contact — admin-only, never sent to public APIs.
+   *  See migration 0013 + the public route that selects only contactName. */
+  contactName: string | null;
+  contactEmail: string | null;
+  contactPhone: string | null;
   // Computed
   memberCount: number;
   createdAt: string;
@@ -89,6 +94,9 @@ export async function listAdminGroupsLocations(): Promise<AdminGroupLocationRow[
       locActive: locations.isActive,
       meetingDay: locations.meetingDay,
       meetingTime: locations.meetingTime,
+      contactName: locations.contactName,
+      contactEmail: locations.contactEmail,
+      contactPhone: locations.contactPhone,
     })
     .from(groups)
     .leftJoin(locations, eq(locations.groupId, groups.id))
@@ -124,6 +132,9 @@ export async function listAdminGroupsLocations(): Promise<AdminGroupLocationRow[
     displayedOnMap: r.displayedOnMap ?? false,
     meetingDay: r.meetingDay,
     meetingTime: r.meetingTime,
+    contactName: r.contactName,
+    contactEmail: r.contactEmail,
+    contactPhone: r.contactPhone,
     memberCount: countByGroup.get(r.groupId) ?? 0,
     createdAt:
       r.groupCreatedAt instanceof Date
@@ -150,6 +161,11 @@ export interface UpsertGroupLocationInput {
   displayedOnMap?: boolean;
   meetingDay?: string;
   meetingTime?: string;
+  /** Group leader contact info — admin-only. Email + phone are NEVER
+   *  surfaced via the public /api/public/locations/* endpoints. */
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
 }
 
 export async function upsertGroupLocation(input: UpsertGroupLocationInput) {
@@ -199,6 +215,9 @@ export async function upsertGroupLocation(input: UpsertGroupLocationInput) {
     locPatch.displayedOnMap = input.displayedOnMap;
   if (input.meetingDay !== undefined) locPatch.meetingDay = input.meetingDay;
   if (input.meetingTime !== undefined) locPatch.meetingTime = input.meetingTime;
+  if (input.contactName !== undefined) locPatch.contactName = input.contactName;
+  if (input.contactEmail !== undefined) locPatch.contactEmail = input.contactEmail;
+  if (input.contactPhone !== undefined) locPatch.contactPhone = input.contactPhone;
   if (input.approvalStatus !== undefined)
     locPatch.status = approvalToLocationStatus(input.approvalStatus);
   if (input.isActive !== undefined) locPatch.isActive = input.isActive;
@@ -235,6 +254,9 @@ export async function upsertGroupLocation(input: UpsertGroupLocationInput) {
       meetingDay: input.meetingDay ?? "",
       meetingTime: input.meetingTime ?? "",
       specialInstructions: input.specialInstructions ?? "",
+      contactName: input.contactName ?? "",
+      contactEmail: input.contactEmail ?? "",
+      contactPhone: input.contactPhone ?? "",
     });
   }
 

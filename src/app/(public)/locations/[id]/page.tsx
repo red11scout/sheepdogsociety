@@ -22,7 +22,9 @@ type LocationDetail = {
   groupSize: number | null;
   maxSize: number;
   contactName: string | null;
-  contactEmail: string | null;
+  /** contactEmail / contactPhone are admin-only — see
+   *  /api/public/locations/[id]/route.ts. They were intentionally
+   *  removed from the public payload. Do not re-add. */
   signalGroupUrl: string | null;
   imageUrl: string | null;
 };

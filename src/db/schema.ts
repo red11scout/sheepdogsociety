@@ -856,6 +856,10 @@ export const locations = pgTable(
     signalGroupUrl: text("signal_group_url").default(""),
     contactName: text("contact_name").default(""),
     contactEmail: text("contact_email").default(""),
+    /** Group leader's cell number — admin-only, never exposed to public.
+     *  Captured in the /admin/groups EditForm; the public locations
+     *  API stops at contactName. See migration 0013. */
+    contactPhone: text("contact_phone").default(""),
     status: locationStatusEnum("status").notNull().default("pending"),
     /** Admin-toggleable: separate from approval status so an admin can
      *  temporarily hide a group from the public locator without rejecting it. */

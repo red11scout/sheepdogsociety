@@ -574,7 +574,29 @@ function GroupRow({
           {row.isActive ? "On" : "Off"}
         </button>
       </td>
-      <td className="px-3 py-2 text-bone">{row.groupName}</td>
+      <td className="px-3 py-2 text-bone">
+        <span className="inline-flex items-center gap-2">
+          {row.groupName}
+          {/* Contact-present indicator. Hover reveals the cached
+           *  email/phone so admin can copy without opening the editor.
+           *  Stays admin-only — never reaches the public surface. */}
+          {(row.contactEmail || row.contactPhone) && (
+            <span
+              title={[
+                row.contactName,
+                row.contactEmail,
+                row.contactPhone,
+              ]
+                .filter(Boolean)
+                .join("\n")}
+              className="inline-flex h-4 items-center border border-brass/40 bg-brass/10 px-1 text-[0.5625rem] uppercase tracking-wider text-brass"
+            >
+              <Icon name="mail" size={9} className="mr-1" />
+              contact
+            </span>
+          )}
+        </span>
+      </td>
       <td className="px-3 py-2 text-stone/85">{row.locationName ?? "—"}</td>
       <td className="px-3 py-2 text-stone/65">{row.locationType ?? ""}</td>
       <td className="px-3 py-2 text-stone/85">
@@ -655,6 +677,12 @@ function EditForm({
   const [longitude, setLongitude] = useState(initial?.longitude ?? "");
   const [meetingDay, setMeetingDay] = useState(initial?.meetingDay ?? "");
   const [meetingTime, setMeetingTime] = useState(initial?.meetingTime ?? "");
+
+  // Group leader contact info — admin-only. Public APIs only return
+  // contactName at most; email + phone are reserved for internal use.
+  const [contactName, setContactName] = useState(initial?.contactName ?? "");
+  const [contactEmail, setContactEmail] = useState(initial?.contactEmail ?? "");
+  const [contactPhone, setContactPhone] = useState(initial?.contactPhone ?? "");
 
   // Geocoding state — admin clicks "Find on map" and Mapbox returns lat/lng.
   const [geocoding, setGeocoding] = useState(false);
@@ -836,6 +864,50 @@ function EditForm({
           className="block w-full border border-stone/20 bg-transparent px-2 py-1 text-sm text-bone focus:border-brass focus:outline-none"
         />
       </Field>
+
+      {/* Contact section — admin-only. The public locations API only ever
+       *  returns contactName (and even that is an opt-in display). Email
+       *  + phone never leave the admin surface. Captured here so admin
+       *  has a single place to find a leader's cell when they need to
+       *  reach out, and so an outside man emailing the contact form can
+       *  be handed off to the right group leader. */}
+      <div className="mt-4 border-t border-stone/15 pt-4">
+        <div className="mb-2 flex items-center gap-2">
+          <Icon name="mail" size={11} className="text-brass" />
+          <span className="section-mark text-brass">§ Contact (admin-only)</span>
+          <span className="text-[0.625rem] text-stone/50">
+            Never shown to public visitors
+          </span>
+        </div>
+        <div className="grid gap-3 md:grid-cols-3">
+          <Field label="Contact name">
+            <input
+              value={contactName}
+              onChange={(e) => setContactName(e.target.value)}
+              placeholder="Group leader's name"
+              className="h-8 w-full border border-stone/20 bg-transparent px-2 text-sm text-bone focus:border-brass focus:outline-none"
+            />
+          </Field>
+          <Field label="Contact email">
+            <input
+              type="email"
+              value={contactEmail}
+              onChange={(e) => setContactEmail(e.target.value)}
+              placeholder="leader@example.com"
+              className="h-8 w-full border border-stone/20 bg-transparent px-2 text-sm text-bone focus:border-brass focus:outline-none"
+            />
+          </Field>
+          <Field label="Contact cell">
+            <input
+              type="tel"
+              value={contactPhone}
+              onChange={(e) => setContactPhone(e.target.value)}
+              placeholder="555-555-5555"
+              className="h-8 w-full border border-stone/20 bg-transparent px-2 text-sm text-bone focus:border-brass focus:outline-none"
+            />
+          </Field>
+        </div>
+      </div>
       <div className="mt-4 flex items-center gap-2">
         <button
           type="button"
@@ -854,6 +926,9 @@ function EditForm({
               longitude,
               meetingDay,
               meetingTime,
+              contactName,
+              contactEmail,
+              contactPhone,
             })
           }
           disabled={!canSave}
