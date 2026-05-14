@@ -11,7 +11,7 @@ import { findVoice } from "@/lib/ai/voices";
 import { scrubAiPayload } from "@/lib/ai/scrub";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 const MODEL = "claude-sonnet-4-5";
 const PROMPT_VERSION = "encouragement-draft.v1";
@@ -96,58 +96,74 @@ Return four sections that flow together:
 
 Honor every voice rule. No em-dashes when commas work. Never invent verse text — references only. Never put words in any named theologian's mouth; this is original prose in the spirit of the voice.`;
 
-  let draft: Draft;
-  try {
-    const result = await generateObject({
-      model: anthropic(MODEL),
-      schema: draftSchema,
-      system,
-      prompt: userPrompt,
-      temperature: 0.6,
-      maxRetries: 1,
-    });
-    // Post-response validation. See letter-series.ts comment for the
-    // Anthropic minItems constraint that makes this necessary.
-    if (result.object.scriptures.length < 2 || result.object.scriptures.length > 3) {
-      throw new Error(
-        `Draft came back with ${result.object.scriptures.length} scriptures, need 2 to 3. Try again.`
-      );
-    }
-    if (result.object.intro.length < 40 || result.object.guidance.length < 100 || result.object.notes.length < 30) {
-      throw new Error("Draft came back too short. Try again.");
-    }
-    // Scrub em-dashes and hashtags belt-and-braces — system prompt forbids
-    // them but the model still slips them in.
-    draft = scrubAiPayload(result.object);
-
-    // Best-effort logging. Don't block the user on log failure.
+  // Two-attempt loop. The model sometimes returns 1 scripture or short
+  // sections on the first pass. One silent retry hides those misses
+  // from the admin. If both attempts fail validation, surface the last
+  // error so the admin can adjust theme/voice.
+  let draft: Draft | null = null;
+  let lastError = "";
+  let totalIn = 0;
+  let totalOut = 0;
+  for (let attempt = 1; attempt <= 2; attempt++) {
     try {
-      await db.insert(aiGenerations).values({
-        type: "draft",
-        prompt: userPrompt.slice(0, 4000),
-        promptVersion: PROMPT_VERSION,
-        model: MODEL,
-        output: JSON.stringify(draft).slice(0, 8000),
-        inputTokens: result.usage?.inputTokens ?? null,
-        outputTokens: result.usage?.outputTokens ?? null,
-        entityType: "encouragement",
-        userId,
+      const result = await generateObject({
+        model: anthropic(MODEL),
+        schema: draftSchema,
+        system,
+        prompt: userPrompt,
+        temperature: attempt === 1 ? 0.6 : 0.45, // tighter on retry
+        maxRetries: 1,
       });
-    } catch (logErr) {
-      console.error("ai_generations log failed:", logErr);
+      totalIn += result.usage?.inputTokens ?? 0;
+      totalOut += result.usage?.outputTokens ?? 0;
+
+      // Post-response validation. The schema can't enforce array bounds
+      // (Anthropic structured-output rejects min/maxItems), so we
+      // re-check here.
+      if (result.object.scriptures.length < 2 || result.object.scriptures.length > 3) {
+        lastError = `Draft came back with ${result.object.scriptures.length} scriptures, need 2 to 3. Try again.`;
+        console.warn(`draft attempt ${attempt} failed validation: ${lastError}`);
+        continue;
+      }
+      if (result.object.intro.length < 40 || result.object.guidance.length < 100 || result.object.notes.length < 30) {
+        lastError = "Draft came back too short. Try again.";
+        console.warn(`draft attempt ${attempt} failed validation: ${lastError}`);
+        continue;
+      }
+
+      // Scrub em-dashes and hashtags belt-and-braces — system prompt forbids
+      // them but the model still slips them in.
+      draft = scrubAiPayload(result.object);
+      break;
+    } catch (err) {
+      lastError =
+        err instanceof Error ? err.message : "The model returned something unusable.";
+      console.error(`encouragement draft attempt ${attempt} failed:`, err);
     }
-  } catch (err) {
-    console.error("encouragement draft failed:", err);
+  }
+
+  if (!draft) {
     return NextResponse.json(
-      {
-        error: "Draft failed",
-        detail:
-          err instanceof Error
-            ? err.message.slice(0, 400)
-            : "The model returned something unusable. Try again.",
-      },
+      { error: "Draft failed", detail: lastError.slice(0, 400) || "Try again." },
       { status: 502 }
     );
+  }
+
+  // Best-effort logging. Don't block the user on log failure.
+  try {
+    await db.insert(aiGenerations).values({
+      type: "draft",
+      prompt: userPrompt.slice(0, 4000),
+      promptVersion: PROMPT_VERSION,
+      model: MODEL,
+      output: JSON.stringify(draft).slice(0, 8000),
+      inputTokens: totalIn || null,
+      outputTokens: totalOut || null,
+      entityType: "encouragement",
+      userId,
+    });
+  } catch (logErr) {
+    console.error("ai_generations log failed:", logErr);
   }
 
   return NextResponse.json(
