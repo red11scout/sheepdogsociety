@@ -6,34 +6,30 @@ import { scrubAiText } from "@/lib/ai/scrub";
 const MODEL = "claude-haiku-4-5-20251001";
 export const CATEGORIZE_PROMPT_VERSION = "resource-categorize.v1";
 
+// Anthropic structured output rejects array min/maxItems and may reject
+// string min/maxLength too. Schema carries zero size constraints —
+// counts and lengths are enforced via the SYSTEM prompt + bounded
+// truncation in the result mapping.
 export const categorizeSchema = z.object({
   summary: z
     .string()
-    .min(40)
-    .max(400)
     .describe(
       "One short paragraph (40-80 words) summarizing what this resource teaches and who it's for. Plain English. No marketing voice."
     ),
   topics: z
-    .array(z.string().min(2).max(40))
-    .min(1)
-    .max(8)
+    .array(z.string())
     .describe(
-      'Concrete topical tags a man would search for. e.g. "endurance", "fatherhood", "anxiety", "money", "leadership". Lowercase. No duplicates.'
+      'Concrete topical tags a man would search for. 1 to 8 tags. e.g. "endurance", "fatherhood", "anxiety", "money", "leadership". Lowercase. No duplicates.'
     ),
   themes: z
-    .array(z.string().min(2).max(40))
-    .min(0)
-    .max(6)
+    .array(z.string())
     .describe(
-      'Broader theological themes. e.g. "sanctification", "covenant", "kingdom of God", "the cross". Lowercase.'
+      'Broader theological themes. 0 to 6 tags. e.g. "sanctification", "covenant", "kingdom of God", "the cross". Lowercase.'
     ),
   booksOfBible: z
-    .array(z.string().min(2).max(30))
-    .min(0)
-    .max(20)
+    .array(z.string())
     .describe(
-      'Books of the Bible the resource works through, in standard English form. e.g. "Romans", "1 Peter", "Genesis". Empty if not text-anchored.'
+      'Books of the Bible the resource works through, in standard English form. 0 to 20 entries. e.g. "Romans", "1 Peter", "Genesis". Empty if not text-anchored.'
     ),
   audience: z
     .enum(["newcomer", "all", "leader"])
@@ -83,9 +79,18 @@ Categorize this resource per the schema.`;
     maxRetries: 1,
   });
 
-  // Normalize: lowercase tags, trim, dedupe.
-  const norm = (xs: string[]) =>
-    Array.from(new Set(xs.map((x) => x.trim()).filter(Boolean).map((x) => x.toLowerCase())));
+  // Normalize: lowercase tags, trim, dedupe, cap length. The schema
+  // can no longer enforce these bounds (Anthropic structured-output
+  // rejects array min/maxItems), so we enforce them here.
+  const norm = (xs: string[], maxLen: number, maxCount: number) =>
+    Array.from(
+      new Set(
+        xs
+          .map((x) => x.trim())
+          .filter((x) => x.length > 0 && x.length <= maxLen)
+          .map((x) => x.toLowerCase())
+      )
+    ).slice(0, maxCount);
   const bookTitleCase = (s: string) =>
     s
       .trim()
@@ -93,13 +98,19 @@ Categorize this resource per the schema.`;
       .map((w) => (/^\d+$/.test(w) ? w : w[0]?.toUpperCase() + w.slice(1).toLowerCase()))
       .join(" ");
 
+  const summary = scrubAiText(result.object.summary).slice(0, 400);
+
   return {
-    summary: scrubAiText(result.object.summary),
-    topics: norm(result.object.topics),
-    themes: norm(result.object.themes),
+    summary,
+    topics: norm(result.object.topics ?? [], 40, 8),
+    themes: norm(result.object.themes ?? [], 40, 6),
     booksOfBible: Array.from(
-      new Set(result.object.booksOfBible.map((b) => bookTitleCase(b)).filter(Boolean))
-    ),
+      new Set(
+        (result.object.booksOfBible ?? [])
+          .map((b) => bookTitleCase(b))
+          .filter((b) => b.length > 0 && b.length <= 30)
+      )
+    ).slice(0, 20),
     audience: result.object.audience,
     tokensIn: result.usage?.inputTokens ?? undefined,
     tokensOut: result.usage?.outputTokens ?? undefined,

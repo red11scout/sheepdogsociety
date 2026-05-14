@@ -18,11 +18,12 @@ import { z } from "zod";
 const MODEL = "claude-haiku-4-5-20251001";
 export const CLUSTER_PROMPT_VERSION = "resource-cluster.v1";
 
+// Anthropic structured output rejects array min/maxItems and may reject
+// string min/maxLength. Schema carries zero size constraints; bounds
+// are enforced via the SYSTEM prompt + post-response validation.
 const clusterSchema = z.object({
   labels: z
-    .array(z.string().min(3).max(40))
-    .min(2)
-    .max(8)
+    .array(z.string())
     .describe(
       "4-7 short cluster labels (3-4 words each, Title Case) that meaningfully separate the resources. Examples: 'Marriage & Family', 'Trust & Surrender', 'Identity & Calling', 'Leadership & Legacy'. Avoid jargon."
     ),
@@ -32,8 +33,6 @@ const clusterSchema = z.object({
         id: z.string().describe("The resource id from the input."),
         cluster: z
           .string()
-          .min(3)
-          .max(40)
           .describe(
             "Exact match against one of the labels above. Pick the single best fit."
           ),
@@ -105,20 +104,31 @@ Now produce the cluster schema. Pick 4-7 labels and assign every resource to exa
     maxRetries: 1,
   });
 
-  // Sanity-check: every assignment.cluster matches one of the labels.
-  // If Claude drifted, snap to the nearest label by case-insensitive
-  // match; otherwise drop into a "Other" bucket.
-  const labelSet = new Set(result.object.labels.map((l) => l.toLowerCase()));
-  const labelByLower = new Map(
-    result.object.labels.map((l) => [l.toLowerCase(), l])
-  );
-  const cleaned = result.object.assignments.map((a) => {
-    const exact = labelByLower.get(a.cluster.toLowerCase());
-    return { id: a.id, cluster: exact ?? a.cluster.trim() };
+  // Schema can no longer enforce length/count constraints (Anthropic
+  // structured-output rejects array minItems/maxItems and may reject
+  // string min/maxLength). Enforce in code: cap each label to 40 chars
+  // and total label count to 8; require at least 2 labels.
+  const labels = (result.object.labels ?? [])
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0 && l.length <= 40)
+    .slice(0, 8);
+  if (labels.length < 2) {
+    throw new Error(
+      `Cluster pass returned only ${labels.length} labels — need at least 2. Try again.`
+    );
+  }
+
+  // Snap each assignment.cluster to one of the actual labels (case-insensitive).
+  // If a stray label leaks through, fall back to the first label so we
+  // never write garbage into the DB.
+  const labelByLower = new Map(labels.map((l) => [l.toLowerCase(), l]));
+  const cleaned = (result.object.assignments ?? []).map((a) => {
+    const exact = labelByLower.get((a.cluster ?? "").toLowerCase());
+    return { id: a.id, cluster: exact ?? labels[0] };
   });
 
   return {
-    labels: result.object.labels,
+    labels,
     assignments: cleaned,
     tokensIn: result.usage?.inputTokens ?? undefined,
     tokensOut: result.usage?.outputTokens ?? undefined,

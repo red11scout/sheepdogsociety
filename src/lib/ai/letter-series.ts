@@ -11,48 +11,43 @@ export const SERIES_PLAN_PROMPT_VERSION = "letter-series-plan.v1";
 /**
  * Schema for a multi-letter series plan.
  *
- * Anthropic structured output ONLY supports minItems of 0 or 1 — not 2,
- * not 3, not N. We used to set .min(2) on scriptures and .min(2) on the
- * outer letters array, which caused the API to reject the schema with:
- *   "For 'array' type, 'minItems' values other than 0 or 1 are not
- *    supported (got: [2, 5])"
- * (See PR thread.) The fix is to keep `.max()` (Anthropic accepts any
- * maxItems) and drop `.min()`, then enforce minimum counts in code
- * post-response. The prompt is also more emphatic about exact counts
- * since we lose Zod-level enforcement.
+ * Anthropic structured output rejects:
+ *   - array minItems > 1 ("got: [2, 5]")
+ *   - array maxItems entirely ("property 'maxItems' is not supported")
+ *
+ * To stay bulletproof against further API tightening, this schema
+ * carries ZERO size/length constraints. Counts and lengths are enforced
+ * in the prompt and re-checked in code post-response. If the model
+ * misses, the admin gets a clear "try again" instead of a 502.
  */
 export const seriesPlanSchema = z.object({
-  letters: z
-    .array(
-      z.object({
-        position: z.number().int().min(1),
-        title: z.string().max(160),
-        intro: z
-          .string()
-          .describe(
-            "60-100 word warm pastoral opening. No em-dashes, no hashtags."
-          ),
-        scriptures: z
-          .array(
-            z.object({
-              ref: z.string(),
-              note: z.string(),
-            })
-          )
-          .max(3),
-        guidance: z
-          .string()
-          .describe(
-            "200-280 word pastoral teaching anchored in one of the scriptures. End with one specific concrete pastoral move."
-          ),
-        notes: z
-          .string()
-          .describe(
-            "60-90 word 'Notes from the Watch' closing. Personal, brief, signed warmly."
-          ),
-      })
-    )
-    .max(12),
+  letters: z.array(
+    z.object({
+      position: z.number().int(),
+      title: z.string(),
+      intro: z
+        .string()
+        .describe(
+          "60-100 word warm pastoral opening. No em-dashes, no hashtags."
+        ),
+      scriptures: z.array(
+        z.object({
+          ref: z.string(),
+          note: z.string(),
+        })
+      ),
+      guidance: z
+        .string()
+        .describe(
+          "200-280 word pastoral teaching anchored in one of the scriptures. End with one specific concrete pastoral move."
+        ),
+      notes: z
+        .string()
+        .describe(
+          "60-90 word 'Notes from the Watch' closing. Personal, brief, signed warmly."
+        ),
+    })
+  ),
 });
 
 export type SeriesPlan = z.infer<typeof seriesPlanSchema>;

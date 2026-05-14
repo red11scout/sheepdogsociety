@@ -16,26 +16,25 @@ export const maxDuration = 60;
 const MODEL = "claude-sonnet-4-5";
 const PROMPT_VERSION = "encouragement-draft.v1";
 
-// Anthropic structured output only accepts minItems of 0 or 1. We enforce
-// the 2-3 scriptures rule in the prompt + post-response validation below.
+// Anthropic structured output rejects array min/maxItems entirely. Zero
+// size/length constraints in the schema; everything is enforced in the
+// prompt + post-response validation block further down.
 const draftSchema = z.object({
   intro: z
     .string()
     .describe(
       "60-100 word warm pastoral opening that hooks the reader on the theme. No em-dashes when commas work."
     ),
-  scriptures: z
-    .array(
-      z.object({
-        ref: z
-          .string()
-          .describe('Bible reference in standard form, e.g. "Romans 5:3-4". Real verses only.'),
-        note: z
-          .string()
-          .describe("One sentence on why this verse fits the theme."),
-      })
-    )
-    .max(3),
+  scriptures: z.array(
+    z.object({
+      ref: z
+        .string()
+        .describe('Bible reference in standard form, e.g. "Romans 5:3-4". Real verses only.'),
+      note: z
+        .string()
+        .describe("One sentence on why this verse fits the theme."),
+    })
+  ),
   guidance: z
     .string()
     .describe(
