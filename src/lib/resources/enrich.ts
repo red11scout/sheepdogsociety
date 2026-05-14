@@ -125,7 +125,186 @@ export async function enrichLink(url: string): Promise<EnrichedLink> {
   const cleanUrl = url.trim();
   const provider = detectProvider(cleanUrl);
   if (provider === "youtube") return await enrichYouTube(cleanUrl);
+  if (provider === "amazon") return await enrichAmazon(cleanUrl);
   return await enrichOpenGraph(cleanUrl, provider);
+}
+
+// ============================================================
+// Amazon — ASIN-first, public book APIs, NEVER scrape Amazon HTML
+// ============================================================
+//
+// Amazon actively fights server-side scraping: a bot UA gets a 503
+// page; a browser UA gets a captcha challenge. So instead of scraping
+// the product page we extract the ASIN from the URL, treat it as an
+// ISBN-10 (which is what Amazon uses for most books), and look the
+// title/author/cover up via two free public APIs:
+//
+//   1. Open Library (https://openlibrary.org/dev/docs/api/books)
+//      No key, no quota, fast, returns title + authors + canonical
+//      cover URL. Doesn't usually carry a description.
+//
+//   2. Google Books (https://www.googleapis.com/books/v1/volumes)
+//      Free for low volume, often carries a richer description and
+//      higher-res cover. Used as a description supplement when
+//      Open Library was the title source.
+//
+// Both APIs lookup by ISBN-13 (preferred) or ISBN-10. Amazon ASINs
+// for books are usually ISBN-10. Non-book ASINs (B0xxxxxxxx) skip
+// straight to a friendly "couldn't enrich" stub the admin can fill.
+
+function extractAmazonAsin(url: string): string | null {
+  try {
+    const u = new URL(url);
+    // Common forms: /dp/ASIN, /gp/product/ASIN, /gp/aw/d/ASIN, /exec/obidos/ASIN/
+    const m = u.pathname.match(/\/(?:dp|gp\/product|gp\/aw\/d|exec\/obidos)\/([A-Z0-9]{10})/i);
+    return m ? m[1].toUpperCase() : null;
+  } catch {
+    return null;
+  }
+}
+
+function looksLikeIsbn10(asin: string | null): boolean {
+  // ISBN-10 is 9 digits + check digit (which can be 0-9 or X). Modern
+  // book ASINs follow this pattern. Non-book ASINs start with B0/B07/B08.
+  if (!asin) return false;
+  return /^\d{9}[\dX]$/.test(asin);
+}
+
+interface BookMeta {
+  title?: string;
+  subtitle?: string;
+  authors?: string[];
+  description?: string;
+  thumbnailUrl?: string;
+}
+
+async function fetchOpenLibrary(isbn: string): Promise<BookMeta | null> {
+  try {
+    const r = await fetch(
+      `https://openlibrary.org/api/books?bibkeys=ISBN:${encodeURIComponent(isbn)}&format=json&jscmd=data`,
+      { headers: { Accept: "application/json" } }
+    );
+    if (!r.ok) return null;
+    const data = (await r.json()) as Record<
+      string,
+      {
+        title?: string;
+        subtitle?: string;
+        authors?: { name: string }[];
+      }
+    >;
+    const book = data[`ISBN:${isbn}`];
+    if (!book) return null;
+    return {
+      title: book.title?.trim(),
+      subtitle: book.subtitle?.trim(),
+      authors: (book.authors ?? []).map((a) => a.name.trim()).filter(Boolean),
+      // Open Library covers are stable URLs by ISBN. -L is the largest size.
+      thumbnailUrl: `https://covers.openlibrary.org/b/isbn/${encodeURIComponent(isbn)}-L.jpg`,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function fetchGoogleBooks(isbn: string): Promise<BookMeta | null> {
+  try {
+    const r = await fetch(
+      `https://www.googleapis.com/books/v1/volumes?q=isbn:${encodeURIComponent(isbn)}`,
+      { headers: { Accept: "application/json" } }
+    );
+    if (!r.ok) return null;
+    const data = (await r.json()) as {
+      items?: Array<{
+        volumeInfo?: {
+          title?: string;
+          subtitle?: string;
+          authors?: string[];
+          description?: string;
+          imageLinks?: { thumbnail?: string; smallThumbnail?: string };
+        };
+      }>;
+    };
+    const v = data.items?.[0]?.volumeInfo;
+    if (!v) return null;
+    // Google Books returns http:// thumbnails; rewrite to https for
+    // mixed-content compliance.
+    const thumb = (v.imageLinks?.thumbnail ?? v.imageLinks?.smallThumbnail ?? "")
+      .replace(/^http:/, "https:");
+    return {
+      title: v.title?.trim(),
+      subtitle: v.subtitle?.trim(),
+      authors: (v.authors ?? []).map((a) => a.trim()).filter(Boolean),
+      description: v.description?.trim(),
+      thumbnailUrl: thumb || undefined,
+    };
+  } catch {
+    return null;
+  }
+}
+
+async function enrichAmazon(url: string): Promise<EnrichedLink> {
+  const asin = extractAmazonAsin(url);
+
+  // Books: ISBN-10 lookup against Open Library + Google Books in parallel.
+  // Merge so we get OpenLibrary's reliable title/cover + Google's richer
+  // description when both are available.
+  if (asin && looksLikeIsbn10(asin)) {
+    const [ol, gb] = await Promise.all([
+      fetchOpenLibrary(asin),
+      fetchGoogleBooks(asin),
+    ]);
+    const merged: BookMeta = {
+      title: ol?.title || gb?.title,
+      subtitle: ol?.subtitle || gb?.subtitle,
+      authors:
+        ol?.authors && ol.authors.length > 0 ? ol.authors : gb?.authors ?? [],
+      description: gb?.description || "",
+      // Open Library cover is preferred — stable, ISBN-keyed. Google's
+      // is a fallback (lower res, watermark-prone).
+      thumbnailUrl: ol?.thumbnailUrl || gb?.thumbnailUrl,
+    };
+
+    if (merged.title) {
+      const titleLine = merged.subtitle
+        ? `${merged.title}: ${merged.subtitle}`
+        : merged.title;
+      return {
+        provider: "amazon",
+        url,
+        title: titleLine,
+        description: merged.description ?? "",
+        thumbnailUrl: merged.thumbnailUrl ?? null,
+        author: merged.authors?.length ? merged.authors.join(", ") : null,
+        embedHtml: null,
+        durationSeconds: null,
+        rawOg: {
+          title: titleLine,
+          description: merged.description,
+          image: merged.thumbnailUrl,
+          siteName: "Amazon",
+          type: "book",
+        },
+      };
+    }
+  }
+
+  // Non-book ASINs and unknown books fall through to a clean stub. We
+  // intentionally do NOT scrape the Amazon HTML — every attempt either
+  // returns a 503 page (bot UA) or a captcha challenge (browser UA),
+  // which would write garbage like title="Amazon" / author="Follow"
+  // into the DB. Better to hand the admin an empty form to fill in.
+  return {
+    provider: "amazon",
+    url,
+    title: "",
+    description: "",
+    thumbnailUrl: null,
+    author: null,
+    embedHtml: null,
+    durationSeconds: null,
+    rawOg: { siteName: "Amazon", type: "book" },
+  };
 }
 
 // ============================================================
@@ -209,6 +388,14 @@ async function enrichOpenGraph(
   }
 
   const og = scrapeOgTags(html);
+  // Reject titles that match well-known block / error pages. These show
+  // up when a server-side scrape hits a site that blocks bots (Amazon,
+  // Cloudflare, etc.). Better to return empty than to write
+  // "503 - Service Unavailable" or "Just a moment..." into the DB.
+  const titleRaw = og.title?.trim();
+  const titleIsGarbage = !!titleRaw && BLOCK_TITLE_PATTERNS.some((re) => re.test(titleRaw));
+  const cleanTitle = titleIsGarbage ? "" : titleRaw;
+
   // Amazon often puts the author in <span class="author">. Scrape best-effort.
   const author =
     provider === "amazon"
@@ -218,7 +405,7 @@ async function enrichOpenGraph(
   return {
     provider,
     url,
-    title: og.title?.trim() || hostFromUrl(url) || "Untitled",
+    title: cleanTitle || hostFromUrl(url) || "Untitled",
     description: og.description?.trim() ?? "",
     thumbnailUrl: og.image ?? null,
     author,
@@ -227,6 +414,17 @@ async function enrichOpenGraph(
     rawOg: og,
   };
 }
+
+const BLOCK_TITLE_PATTERNS: RegExp[] = [
+  /^Amazon\.com$/i,
+  /^Amazon$/i,
+  /503\b.*Service Unavailable/i,
+  /Just a moment/i, // Cloudflare challenge
+  /Access Denied/i,
+  /Robot Check/i,
+  /Captcha/i,
+  /Pardon Our Interruption/i,
+];
 
 function scrapeOgTags(html: string): EnrichedLink["rawOg"] {
   if (!html) return {};
