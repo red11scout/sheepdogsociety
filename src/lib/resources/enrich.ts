@@ -195,15 +195,89 @@ async function fetchOpenLibrary(isbn: string): Promise<BookMeta | null> {
     >;
     const book = data[`ISBN:${isbn}`];
     if (!book) return null;
+
+    // Open Library covers are constructed by ISBN, but many books
+    // (especially newer/niche editions) have no cover registered.
+    // The default endpoint silently returns a placeholder image, which
+    // looked broken in the admin preview. ?default=false makes the
+    // endpoint 404 when no cover exists; we HEAD-check it and only
+    // return the URL when a real cover is there. The downstream
+    // ResourceCover SVG fallback handles the no-cover case.
+    const coverProbeUrl = `https://covers.openlibrary.org/b/isbn/${encodeURIComponent(isbn)}-L.jpg?default=false`;
+    let thumbnailUrl: string | undefined;
+    try {
+      const probe = await fetch(coverProbeUrl, { method: "HEAD" });
+      if (probe.ok) {
+        // Strip ?default=false from the public URL — public visitors don't
+        // need the probe param; full-size endpoint without it serves the
+        // confirmed-existing cover.
+        thumbnailUrl = `https://covers.openlibrary.org/b/isbn/${encodeURIComponent(isbn)}-L.jpg`;
+      }
+    } catch {
+      // probe failed; leave thumbnailUrl undefined so the SVG fallback fires
+    }
+
     return {
       title: book.title?.trim(),
       subtitle: book.subtitle?.trim(),
       authors: (book.authors ?? []).map((a) => a.name.trim()).filter(Boolean),
-      // Open Library covers are stable URLs by ISBN. -L is the largest size.
-      thumbnailUrl: `https://covers.openlibrary.org/b/isbn/${encodeURIComponent(isbn)}-L.jpg`,
+      thumbnailUrl,
     };
   } catch {
     return null;
+  }
+}
+
+/**
+ * Last-resort description generator. Open Library is description-poor;
+ * Google Books frequently 429s from shared IPs. When both come up dry
+ * we ask Claude. Strict prompt — if the model doesn't recognize the
+ * exact title+author, it returns an empty string. Better blank than
+ * hallucinated.
+ */
+async function generateBookDescription(
+  title: string,
+  author: string,
+  subtitle?: string
+): Promise<string> {
+  if (!process.env.ANTHROPIC_API_KEY) return "";
+  const fullTitle = subtitle ? `${title}: ${subtitle}` : title;
+  try {
+    const r = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 400,
+        temperature: 0.3,
+        system:
+          "You write short factual book summaries for a Christian men's ministry library. STRICT: if you don't recognize the EXACT book title + author below, return ONLY the literal string UNKNOWN. Do not guess, do not invent plot details, do not pad with generic blurb. If you DO recognize it, return 50-90 words of plain factual summary suitable for a study-resource catalog entry. Plain prose, no marketing voice, no em-dashes.",
+        messages: [
+          {
+            role: "user",
+            content: `Title: ${fullTitle}\nAuthor: ${author}\n\nWrite the summary, or UNKNOWN.`,
+          },
+        ],
+      }),
+    });
+    if (!r.ok) return "";
+    const data = (await r.json()) as {
+      content?: Array<{ type: string; text?: string }>;
+    };
+    const text = (data.content ?? [])
+      .filter((b) => b.type === "text")
+      .map((b) => b.text ?? "")
+      .join("")
+      .trim();
+    if (!text || /^unknown\b/i.test(text)) return "";
+    // Strip em-dashes and hashtags to match brand voice rules.
+    return text.replace(/—/g, ", ").replace(/#\w+/g, "").trim();
+  } catch {
+    return "";
   }
 }
 
@@ -266,6 +340,19 @@ async function enrichAmazon(url: string): Promise<EnrichedLink> {
     };
 
     if (merged.title) {
+      // Description fallback: Open Library frequently has no description,
+      // and Google Books is rate-limited from shared IPs. As a last
+      // resort ask Claude — strictly told to return empty if unfamiliar
+      // with the exact book, so we don't hallucinate plot summaries
+      // for niche titles.
+      if (!merged.description && merged.authors?.length) {
+        merged.description = await generateBookDescription(
+          merged.title,
+          merged.authors[0],
+          merged.subtitle
+        );
+      }
+
       const titleLine = merged.subtitle
         ? `${merged.title}: ${merged.subtitle}`
         : merged.title;
