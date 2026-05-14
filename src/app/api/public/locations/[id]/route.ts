@@ -10,6 +10,12 @@ export async function GET(
   try {
     const { id } = await params;
 
+    // Public payload — note what's intentionally NOT here:
+    //   - contactEmail (admin-only, used to be exposed and was a leak)
+    //   - contactPhone (admin-only, never returned by the public API)
+    // The leader's name is fine to display so visitors know who runs
+    // the group; reaching out goes through the /contact form, which
+    // routes to the admin who knows the real email/phone.
     const [location] = await db
       .select({
         id: locations.id,
@@ -27,7 +33,6 @@ export async function GET(
         groupSize: locations.groupSize,
         maxSize: locations.maxSize,
         contactName: locations.contactName,
-        contactEmail: locations.contactEmail,
         signalGroupUrl: locations.signalGroupUrl,
         imageUrl: locations.imageUrl,
       })
