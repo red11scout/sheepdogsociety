@@ -10,7 +10,7 @@ import {
 } from "@/lib/ai/letter-series";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 const bodySchema = z.object({
   title: z.string().min(1).max(160),

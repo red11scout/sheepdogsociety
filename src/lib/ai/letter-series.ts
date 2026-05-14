@@ -87,43 +87,66 @@ For EACH of the ${input.totalCount} letters, return:
 
 Across the whole series: NO em-dashes, NO hashtags, no emoji. Plain prose. Real verses only. No fabricated quotations from any named theologian. Write like a man who has read his Bible his whole life talks at a kitchen table.`;
 
-  const result = await generateObject({
-    model: anthropic(MODEL),
-    schema: seriesPlanSchema,
-    system,
-    prompt: userPrompt,
-    temperature: 0.7,
-    maxRetries: 1,
-  });
+  // Two-attempt loop. The model occasionally drops a letter or returns
+  // a single scriptures entry on the first pass; one silent retry hides
+  // that from the admin. If both attempts fail validation, surface the
+  // last error verbatim so the admin can see what went wrong and try
+  // a different theme/voice if needed.
+  let lastError = "";
+  let totalIn = 0;
+  let totalOut = 0;
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    const result = await generateObject({
+      model: anthropic(MODEL),
+      schema: seriesPlanSchema,
+      system,
+      prompt: userPrompt,
+      temperature: attempt === 1 ? 0.7 : 0.5, // tighter on retry
+      maxRetries: 1,
+    });
+    totalIn += result.usage?.inputTokens ?? 0;
+    totalOut += result.usage?.outputTokens ?? 0;
 
-  // Post-response validation. Zod's `.min(N)` for N>1 isn't allowed by
-  // Anthropic's structured output, so the schema can't enforce these
-  // counts. We re-check here and throw a clear error if the model
-  // dropped letters or scriptures — the admin sees a useful message
-  // instead of a confusing crash deeper in the commit.
-  const got = result.object.letters.length;
-  if (got !== input.totalCount) {
-    throw new Error(
-      `Model returned ${got} letters but you asked for ${input.totalCount}. Try again — the model occasionally drops or duplicates entries on the first pass.`
-    );
+    const validation = validateSeriesPlan(result.object, input.totalCount);
+    if (validation.ok) {
+      const cleaned = scrubAiPayload(result.object);
+      return {
+        ...cleaned,
+        tokensIn: totalIn || undefined,
+        tokensOut: totalOut || undefined,
+      };
+    }
+    lastError = validation.error;
+    console.warn(`series-plan attempt ${attempt} failed validation: ${lastError}`);
   }
-  for (const letter of result.object.letters) {
+
+  throw new Error(lastError);
+}
+
+function validateSeriesPlan(
+  obj: SeriesPlan,
+  expectedCount: number
+): { ok: true } | { ok: false; error: string } {
+  const got = obj.letters.length;
+  if (got !== expectedCount) {
+    return {
+      ok: false,
+      error: `Model returned ${got} letters but you asked for ${expectedCount}. Try again — pick a smaller count or a tighter theme if it keeps drifting.`,
+    };
+  }
+  for (const letter of obj.letters) {
     if (letter.scriptures.length < 2 || letter.scriptures.length > 3) {
-      throw new Error(
-        `Letter ${letter.position} ("${letter.title}") came back with ${letter.scriptures.length} scriptures. Each letter needs 2 to 3. Try again.`
-      );
+      return {
+        ok: false,
+        error: `Letter ${letter.position} ("${letter.title}") came back with ${letter.scriptures.length} scriptures. Each letter needs 2 to 3. Try again.`,
+      };
     }
     if (letter.intro.length < 40 || letter.guidance.length < 100 || letter.notes.length < 30) {
-      throw new Error(
-        `Letter ${letter.position} ("${letter.title}") came back too short. Try again.`
-      );
+      return {
+        ok: false,
+        error: `Letter ${letter.position} ("${letter.title}") came back too short. Try again.`,
+      };
     }
   }
-
-  const cleaned = scrubAiPayload(result.object);
-  return {
-    ...cleaned,
-    tokensIn: result.usage?.inputTokens ?? undefined,
-    tokensOut: result.usage?.outputTokens ?? undefined,
-  };
+  return { ok: true };
 }
