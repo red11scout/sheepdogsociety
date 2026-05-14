@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { listPublishedEncouragements } from "@/server/encouragements";
 import { Icon } from "@/components/icons/Icon";
+import { LetterCover } from "@/components/letters/LetterCover";
 import { format } from "date-fns";
 
 export const dynamic = "force-dynamic";
@@ -64,8 +65,12 @@ export default async function EncouragementsListPage() {
                     href={`/encouragements/${row.slug}`}
                     className="lift group/card block p-8 transition-colors hover:bg-bone/60 md:p-12"
                   >
-                    {row.coverImageUrl && (
-                      <div className="-mx-8 -mt-8 mb-8 aspect-[16/9] overflow-hidden md:-mx-12 md:-mt-12 md:mb-10">
+                    {/* Always render a cover. Real uploaded image wins;
+                     *  otherwise fall back to a deterministic SVG keyed
+                     *  by the letter's theme so the archive feels like
+                     *  a designed series, not a list of titles. */}
+                    <div className="-mx-8 -mt-8 mb-8 aspect-[16/9] overflow-hidden md:-mx-12 md:-mt-12 md:mb-10">
+                      {row.coverImageUrl ? (
                         <Image
                           src={row.coverImageUrl}
                           alt={row.coverImageAlt ?? ""}
@@ -74,8 +79,16 @@ export default async function EncouragementsListPage() {
                           unoptimized
                           className="h-full w-full object-cover transition-transform duration-500 group-hover/card:scale-105"
                         />
-                      </div>
-                    )}
+                      ) : (
+                        <LetterCover
+                          id={row.id}
+                          title={row.title}
+                          theme={row.theme}
+                          className="h-full w-full transition-transform duration-500 group-hover/card:scale-105"
+                        />
+                      )}
+                    </div>
+
                     <div className="flex items-center gap-3">
                       <span className="section-mark text-brass">
                         No. {row.issueNumber}

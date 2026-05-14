@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getPublishedEncouragementBySlug } from "@/server/encouragements";
 import { Icon } from "@/components/icons/Icon";
+import { LetterCover } from "@/components/letters/LetterCover";
 import { format } from "date-fns";
 
 export const dynamic = "force-dynamic";
@@ -93,11 +94,14 @@ export default async function EncouragementPage({
         </div>
       </section>
 
-      {/* Cover image */}
-      {row.coverImageUrl && (
-        <section className="bg-background">
-          <div className="mx-auto max-w-5xl px-6 md:px-12">
-            <div className="aspect-[16/9] overflow-hidden">
+      {/* Cover. Real uploaded image wins; otherwise the deterministic
+       *  SVG keyed off the letter's theme so every published letter
+       *  carries a visual anchor — no naked title pages in the
+       *  archive. */}
+      <section className="bg-background">
+        <div className="mx-auto max-w-5xl px-6 md:px-12">
+          <div className="aspect-[16/9] overflow-hidden">
+            {row.coverImageUrl ? (
               <Image
                 src={row.coverImageUrl}
                 alt={row.coverImageAlt ?? ""}
@@ -107,10 +111,17 @@ export default async function EncouragementPage({
                 className="h-full w-full object-cover"
                 priority
               />
-            </div>
+            ) : (
+              <LetterCover
+                id={row.id}
+                title={row.title}
+                theme={(row as { theme?: string | null }).theme}
+                className="h-full w-full"
+              />
+            )}
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       {/* Updates */}
       {updatesLines.length > 0 && (
