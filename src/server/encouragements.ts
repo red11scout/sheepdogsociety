@@ -47,6 +47,7 @@ export async function listPublishedEncouragements() {
       slug: weeklyEncouragements.slug,
       publishDate: weeklyEncouragements.publishDate,
       intro: weeklyEncouragements.intro,
+      theme: weeklyEncouragements.theme,
       coverImageUrl: weeklyEncouragements.coverImageUrl,
       coverImageAlt: weeklyEncouragements.coverImageAlt,
     })

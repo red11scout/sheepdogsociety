@@ -16,10 +16,11 @@ export const maxDuration = 60;
 const MODEL = "claude-sonnet-4-5";
 const PROMPT_VERSION = "encouragement-draft.v1";
 
+// Anthropic structured output only accepts minItems of 0 or 1. We enforce
+// the 2-3 scriptures rule in the prompt + post-response validation below.
 const draftSchema = z.object({
   intro: z
     .string()
-    .min(60)
     .describe(
       "60-100 word warm pastoral opening that hooks the reader on the theme. No em-dashes when commas work."
     ),
@@ -28,25 +29,20 @@ const draftSchema = z.object({
       z.object({
         ref: z
           .string()
-          .min(3)
           .describe('Bible reference in standard form, e.g. "Romans 5:3-4". Real verses only.'),
         note: z
           .string()
-          .min(10)
           .describe("One sentence on why this verse fits the theme."),
       })
     )
-    .min(2)
     .max(3),
   guidance: z
     .string()
-    .min(150)
     .describe(
       "200-280 word pastoral teaching anchored in one of the scriptures above. End with one specific concrete pastoral move."
     ),
   notes: z
     .string()
-    .min(40)
     .describe('60-90 word "Notes from the Watch" closing. Personal, brief, signed warmly.'),
 });
 
@@ -95,7 +91,7 @@ Working title: ${body.title}
 
 Return four sections that flow together:
 - intro: a 60-100 word opening that names something a man recognizes in his own week, then pivots to the theme.
-- scriptures: 2 to 3 references that genuinely anchor the theme. Use real verse references only. Add a one-sentence note for each on why it fits.
+- scriptures: EXACTLY 2 or 3 references that genuinely anchor the theme. Use real verse references only. Each gets a one-sentence note (10+ words) on why it fits. Never fewer than 2, never more than 3.
 - guidance: a 200-280 word pastoral teaching that leans on one of the scriptures above. Land with one specific, concrete pastoral move the brother can do this week.
 - notes: a 60-90 word "Notes from the Watch" closing — personal, brief, warm.
 
@@ -111,6 +107,16 @@ Honor every voice rule. No em-dashes when commas work. Never invent verse text �
       temperature: 0.6,
       maxRetries: 1,
     });
+    // Post-response validation. See letter-series.ts comment for the
+    // Anthropic minItems constraint that makes this necessary.
+    if (result.object.scriptures.length < 2 || result.object.scriptures.length > 3) {
+      throw new Error(
+        `Draft came back with ${result.object.scriptures.length} scriptures, need 2 to 3. Try again.`
+      );
+    }
+    if (result.object.intro.length < 40 || result.object.guidance.length < 100 || result.object.notes.length < 30) {
+      throw new Error("Draft came back too short. Try again.");
+    }
     // Scrub em-dashes and hashtags belt-and-braces — system prompt forbids
     // them but the model still slips them in.
     draft = scrubAiPayload(result.object);
