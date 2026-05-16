@@ -17,6 +17,7 @@ const navLinks: NavLink[] = [
   { href: "/locations", label: "Groups" },
   { href: "/encouragements", label: "Letter" },
   { href: "/events", label: "Events" },
+  { href: "/gallery", label: "Gallery" },
   { href: "/resources", label: "Resources" },
   { href: "/stories", label: "Stories" },
   {

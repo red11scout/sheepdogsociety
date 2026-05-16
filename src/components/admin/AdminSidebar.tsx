@@ -90,6 +90,12 @@ export function AdminSidebar({
           hint: "After-event recaps + photo galleries. Renders on the public Past Gatherings section.",
         },
         {
+          href: "/admin/gallery",
+          label: "Gallery",
+          icon: "image",
+          hint: "Unified photo manager across every event. Drag-drop uploads, captions, per-event descriptions. Public site at /gallery.",
+        },
+        {
           href: "/admin/groups",
           label: "Groups & Locations",
           icon: "map-pin",

@@ -26,6 +26,29 @@ const updateSchema = z.object({
   photos: z.array(photoSchema).max(60).optional(),
 });
 
+/**
+ * GET — admin-only fetch of a single event row including photos.
+ * The admin gallery manager calls this when the admin opens an event's
+ * editor (the outer list only carries a photo count, not the full
+ * jsonb, to keep the list payload light).
+ */
+export async function GET(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { userId } = await auth();
+  if (!userId)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const [me] = await db.select().from(users).where(eq(users.id, userId));
+  if (!me || me.role !== "admin")
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+
+  const { id } = await params;
+  const [row] = await db.select().from(events).where(eq(events.id, id));
+  if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  return NextResponse.json({ event: row });
+}
+
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ id: string }> }
