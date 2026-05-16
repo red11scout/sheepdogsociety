@@ -44,13 +44,91 @@ interface ManagerProps {
   initial: EventRow[];
 }
 
+const EVENT_TYPES = ["weekly", "monthly", "quarterly", "annual", "conference", "retreat", "service"];
+
+const MEETING_DAYS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+];
+void MEETING_DAYS;
+
 export function GalleryManager({ initial }: ManagerProps) {
   const [events, setEvents] = useState<EventRow[]>(initial);
   const [openId, setOpenId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
+  const [creating, setCreating] = useState(false);
 
   const totalPhotos = events.reduce((n, e) => n + e.photoCount, 0);
   const eventsWithPhotos = events.filter((e) => e.photoCount > 0).length;
+
+  async function handleCreate(input: {
+    title: string;
+    startTime: string;
+    location: string;
+    eventType: string;
+  }) {
+    const res = await fetch("/api/admin/events", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: input.title,
+        startTime: input.startTime,
+        location: input.location || undefined,
+        eventType: input.eventType || undefined,
+      }),
+    });
+    if (!res.ok) {
+      const j = (await res.json().catch(() => ({}))) as { error?: unknown };
+      throw new Error(
+        typeof j.error === "string" ? j.error : "Couldn't create event"
+      );
+    }
+    const data = (await res.json()) as {
+      event: {
+        id: string;
+        title: string;
+        startTime: string;
+        location: string | null;
+        eventType: string | null;
+        description: string | null;
+      };
+    };
+    const newRow: EventRow = {
+      id: data.event.id,
+      title: data.event.title,
+      startTime: data.event.startTime,
+      location: data.event.location ?? "",
+      eventType: data.event.eventType ?? "",
+      description: data.event.description ?? "",
+      photoCount: 0,
+    };
+    setEvents((es) => [newRow, ...es]);
+    setOpenId(newRow.id);
+    setCreating(false);
+  }
+
+  async function handleDelete(id: string) {
+    const ev = events.find((e) => e.id === id);
+    const photoBit = ev && ev.photoCount > 0 ? ` and ${ev.photoCount} photo${ev.photoCount === 1 ? "" : "s"}` : "";
+    if (
+      !confirm(
+        `Delete "${ev?.title ?? "this event"}"${photoBit}? This also removes the event from the public Events page and any past-event recap. Cannot be undone.`
+      )
+    )
+      return;
+    const res = await fetch(`/api/admin/events/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      alert("Delete failed.");
+      return;
+    }
+    setEvents((es) => es.filter((e) => e.id !== id));
+    if (openId === id) setOpenId(null);
+  }
 
   const filtered = events.filter((e) => {
     if (!query.trim()) return true;
@@ -95,9 +173,9 @@ export function GalleryManager({ initial }: ManagerProps) {
         </div>
       </header>
 
-      {/* Search */}
-      <div className="mb-6 flex items-center gap-3">
-        <label className="relative flex flex-1 items-center">
+      {/* Search + new event */}
+      <div className="mb-6 flex flex-wrap items-center gap-3">
+        <label className="relative flex flex-1 min-w-[220px] items-center">
           <Icon
             name="search"
             size={14}
@@ -113,7 +191,22 @@ export function GalleryManager({ initial }: ManagerProps) {
         <span className="text-xs text-stone/55">
           {filtered.length} of {events.length}
         </span>
+        <button
+          type="button"
+          onClick={() => setCreating((v) => !v)}
+          className="lift inline-flex h-10 items-center gap-2 border border-bone bg-bone px-4 text-xs font-medium uppercase tracking-wider text-iron transition-colors hover:bg-stone"
+        >
+          <Icon name="plus" size={12} />
+          {creating ? "Cancel" : "New event"}
+        </button>
       </div>
+
+      {creating && (
+        <NewEventForm
+          onCancel={() => setCreating(false)}
+          onSubmit={handleCreate}
+        />
+      )}
 
       {filtered.length === 0 ? (
         <div className="border border-dashed border-stone/20 bg-iron/30 p-16 text-center">
@@ -201,6 +294,7 @@ export function GalleryManager({ initial }: ManagerProps) {
                         )
                       )
                     }
+                    onDelete={() => handleDelete(ev.id)}
                   />
                 )}
               </li>
@@ -221,6 +315,180 @@ function Stat({ label, value }: { label: string; value: number }) {
   );
 }
 
+function Field({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <label className="block">
+      <span className="mb-1 block text-[0.625rem] uppercase tracking-wider text-stone/55">
+        {label}
+      </span>
+      {children}
+    </label>
+  );
+}
+
+/**
+ * Inline new-event form shown above the events list when the admin
+ * clicks "+ New event". Title + start time are required (matches the
+ * POST /api/admin/events server validation). On success the parent
+ * unshifts the new event onto the list and auto-expands its editor.
+ */
+function NewEventForm({
+  onCancel,
+  onSubmit,
+}: {
+  onCancel: () => void;
+  onSubmit: (input: {
+    title: string;
+    startTime: string;
+    location: string;
+    eventType: string;
+  }) => Promise<void>;
+}) {
+  const [title, setTitle] = useState("");
+  // Default start time = next Saturday 7am local. Admin can tweak.
+  const [startTime, setStartTime] = useState(() => nextSaturday7am());
+  const [location, setLocation] = useState("");
+  const [eventType, setEventType] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+
+  async function submit() {
+    if (!title.trim() || !startTime) return;
+    setBusy(true);
+    setError("");
+    try {
+      await onSubmit({
+        title: title.trim(),
+        // datetime-local value is local time without zone. Convert to
+        // ISO so the server `new Date()` interprets it correctly.
+        startTime: new Date(startTime).toISOString(),
+        location,
+        eventType,
+      });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Couldn't create event");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mb-4 border border-brass/40 bg-iron/40 p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <Icon name="plus" size={12} className="text-brass" />
+        <span className="section-mark text-brass">§ New event</span>
+      </div>
+      <div className="grid gap-3 md:grid-cols-2">
+        <Field label="Event title *">
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Friday Prayer Night"
+            autoFocus
+            className="h-9 w-full border border-stone/15 bg-iron/40 px-3 text-sm text-bone placeholder:text-stone/35 focus:border-brass focus:outline-none"
+          />
+        </Field>
+        <Field label="When *">
+          <input
+            type="datetime-local"
+            value={startTime}
+            onChange={(e) => setStartTime(e.target.value)}
+            className="h-9 w-full border border-stone/15 bg-iron/40 px-3 text-sm text-bone focus:border-brass focus:outline-none"
+          />
+        </Field>
+        <Field label="Where">
+          <input
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="e.g. The Watchtower, Rockmart GA"
+            className="h-9 w-full border border-stone/15 bg-iron/40 px-3 text-sm text-bone placeholder:text-stone/35 focus:border-brass focus:outline-none"
+          />
+        </Field>
+        <Field label="Type">
+          <select
+            value={eventType}
+            onChange={(e) => setEventType(e.target.value)}
+            className="h-9 w-full border border-stone/15 bg-iron/40 px-3 text-sm text-bone focus:border-brass focus:outline-none"
+          >
+            <option value="" className="bg-iron text-bone">
+              (none)
+            </option>
+            {EVENT_TYPES.map((t) => (
+              <option key={t} value={t} className="bg-iron text-bone">
+                {t}
+              </option>
+            ))}
+          </select>
+        </Field>
+      </div>
+      {error && (
+        <p className="mt-3 border border-oxblood/40 bg-oxblood/15 px-2 py-1 text-[0.6875rem] text-bone">
+          {error}
+        </p>
+      )}
+      <div className="mt-4 flex items-center gap-3">
+        <button
+          type="button"
+          onClick={submit}
+          disabled={busy || !title.trim() || !startTime}
+          className="lift inline-flex h-9 items-center gap-1.5 bg-brass px-4 text-[0.6875rem] font-medium uppercase tracking-wider text-iron transition-colors hover:bg-gold disabled:opacity-60"
+        >
+          {busy ? "Creating..." : "Create event"}
+        </button>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-xs text-stone/65 transition-colors hover:text-bone"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function nextSaturday7am(): string {
+  const d = new Date();
+  const day = d.getDay(); // 0..6
+  const daysUntilSat = (6 - day + 7) % 7 || 7;
+  d.setDate(d.getDate() + daysUntilSat);
+  d.setHours(7, 0, 0, 0);
+  return toDatetimeLocal(d.toISOString());
+}
+
+/**
+ * Convert an ISO string (or any Date-parseable value) into the
+ * "YYYY-MM-DDTHH:MM" format that <input type="datetime-local"> requires.
+ * Uses local time on purpose — the input represents wall-clock time
+ * in the admin's timezone.
+ */
+function toDatetimeLocal(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+/**
+ * Inverse of toDatetimeLocal — take the input value (local wall time)
+ * back to an ISO string. If the user clears the input we keep the
+ * previous value to avoid sending an empty startTime to the PATCH
+ * endpoint, which would Zod-fail.
+ */
+function fromDatetimeLocal(input: string, fallback: string): string {
+  if (!input) return fallback;
+  const d = new Date(input);
+  if (Number.isNaN(d.getTime())) return fallback;
+  return d.toISOString();
+}
+
 /**
  * Per-event editor. Lazily fetches the full photo list when opened
  * (the row only carries a photo count to keep the outer list fast),
@@ -230,10 +498,16 @@ function Stat({ label, value }: { label: string; value: number }) {
 function EventEditor({
   event,
   onChange,
+  onDelete,
 }: {
   event: EventRow;
   onChange: (patch: Partial<EventRow>) => void;
+  onDelete: () => void;
 }) {
+  const [title, setTitle] = useState(event.title);
+  const [startTime, setStartTime] = useState(event.startTime);
+  const [location, setLocation] = useState(event.location);
+  const [eventType, setEventType] = useState(event.eventType);
   const [description, setDescription] = useState(event.description);
   const [photos, setPhotos] = useState<Photo[] | null>(null);
   const [loading, setLoading] = useState(true);
@@ -274,7 +548,7 @@ function EventEditor({
     };
   }, [event.id]);
 
-  // Debounced auto-save when description or photos change. Skip the
+  // Debounced auto-save when any editable field changes. Skip the
   // first run so opening the editor doesn't trigger a phantom write.
   useEffect(() => {
     if (initializing.current) {
@@ -289,11 +563,28 @@ function EventEditor({
         const res = await fetch(`/api/admin/events/${event.id}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ description, photos }),
+          body: JSON.stringify({
+            title: title.trim(),
+            // PATCH accepts startTime as a string; new Date() on the server
+            // turns it into a timestamp. We send the value from the
+            // datetime-local input unchanged.
+            startTime,
+            location,
+            eventType,
+            description,
+            photos,
+          }),
         });
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         setSaveState("saved");
-        onChange({ description, photoCount: photos.length });
+        onChange({
+          title: title.trim(),
+          startTime,
+          location,
+          eventType,
+          description,
+          photoCount: photos.length,
+        });
         setTimeout(() => {
           setSaveState((s) => (s === "saved" ? "idle" : s));
         }, 1500);
@@ -305,7 +596,7 @@ function EventEditor({
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [description, photos]);
+  }, [title, startTime, location, eventType, description, photos]);
 
   async function uploadFiles(files: FileList) {
     if (!photos) return;
@@ -345,6 +636,11 @@ function EventEditor({
     setPhotos(photos.map((ph, i) => (i === idx ? { ...ph, caption } : ph)));
   }
 
+  function updateAlt(idx: number, alt: string) {
+    if (!photos) return;
+    setPhotos(photos.map((ph, i) => (i === idx ? { ...ph, alt } : ph)));
+  }
+
   function movePhoto(idx: number, direction: -1 | 1) {
     if (!photos) return;
     const newIdx = idx + direction;
@@ -376,6 +672,54 @@ function EventEditor({
                 ? "Save failed"
                 : "Auto-saves 700ms after you stop typing"}
         </span>
+      </div>
+
+      {/* Event metadata — inline edit. PATCH already accepts these
+       *  fields, the gallery list and the public /events surface both
+       *  read the same row so changes here propagate everywhere. */}
+      <div className="grid gap-3 md:grid-cols-2">
+        <Field label="Event title *">
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="e.g. Summer Retreat 2026"
+            className="h-9 w-full border border-stone/15 bg-iron/40 px-3 text-sm text-bone placeholder:text-stone/35 focus:border-brass focus:outline-none"
+          />
+        </Field>
+        <Field label="When">
+          <input
+            type="datetime-local"
+            value={toDatetimeLocal(startTime)}
+            onChange={(e) =>
+              setStartTime(fromDatetimeLocal(e.target.value, startTime))
+            }
+            className="h-9 w-full border border-stone/15 bg-iron/40 px-3 text-sm text-bone focus:border-brass focus:outline-none"
+          />
+        </Field>
+        <Field label="Where">
+          <input
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
+            placeholder="e.g. The Watchtower, Rockmart GA"
+            className="h-9 w-full border border-stone/15 bg-iron/40 px-3 text-sm text-bone placeholder:text-stone/35 focus:border-brass focus:outline-none"
+          />
+        </Field>
+        <Field label="Type">
+          <select
+            value={eventType}
+            onChange={(e) => setEventType(e.target.value)}
+            className="h-9 w-full border border-stone/15 bg-iron/40 px-3 text-sm text-bone focus:border-brass focus:outline-none"
+          >
+            <option value="" className="bg-iron text-bone">
+              (none)
+            </option>
+            {EVENT_TYPES.map((t) => (
+              <option key={t} value={t} className="bg-iron text-bone">
+                {t}
+              </option>
+            ))}
+          </select>
+        </Field>
       </div>
 
       {/* Description */}
@@ -521,11 +865,32 @@ function EventEditor({
                   placeholder="Optional caption"
                   className="block w-full border-0 border-t border-stone/15 bg-transparent px-2 py-1.5 text-[0.6875rem] text-bone placeholder:text-stone/35 focus:outline-none"
                 />
+                <input
+                  value={p.alt ?? ""}
+                  onChange={(e) => updateAlt(i, e.target.value)}
+                  placeholder="Alt text (for screen readers)"
+                  className="block w-full border-0 border-t border-stone/10 bg-transparent px-2 py-1 text-[0.625rem] text-stone/70 placeholder:text-stone/30 focus:outline-none"
+                />
               </div>
             ))}
           </div>
         ) : null}
       </div>
+
+      {/* Danger zone — full event delete. Deliberately at the bottom
+       *  and styled oxblood so admin doesn't fat-finger it. */}
+      <div className="flex justify-end border-t border-stone/15 pt-4">
+        <button
+          type="button"
+          onClick={onDelete}
+          className="inline-flex h-8 items-center gap-1.5 border border-oxblood/40 bg-oxblood/10 px-3 text-[0.6875rem] uppercase tracking-wider text-bone transition-colors hover:bg-oxblood/30"
+          title="Delete this event and all its photos. Cannot be undone."
+        >
+          <Icon name="trash" size={11} />
+          Delete event
+        </button>
+      </div>
     </div>
   );
 }
+
