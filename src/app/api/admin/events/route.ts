@@ -42,6 +42,8 @@ export async function GET() {
       groupId: events.groupId,
       isPast: events.isPast,
       recap: events.recap,
+      seriesId: events.seriesId,
+      isCancelled: events.isCancelled,
       photos: events.photos,
       createdBy: events.createdBy,
       createdAt: events.createdAt,

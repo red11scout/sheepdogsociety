@@ -18,7 +18,7 @@
 - Next 16 route params are async: `{ params }: { params: Promise<{ id: string }> }` then `await params`.
 - Admin auth pattern (copy exactly): `const { userId } = await auth()` from `"@/lib/auth-compat"` → 401; then `users.role === "admin"` check → 403.
 - Migrations: hand-numbered SQL in `drizzle/` (next is `0014`), additive, `IF NOT EXISTS` everywhere, re-run safe. Apply with `node scripts/apply-neon-migration.mjs` (env from `.env.local`). **NEVER `drizzle-kit push`.** The GitHub Action re-applies on push to main; every statement must tolerate re-runs.
-- All DB timestamps are UTC instants. Series wall-clock times live in `America/Chicago` unless the series says otherwise; conversion only via `TZDate.tz(...)` from `@date-fns/tz`.
+- All DB timestamps are UTC instants. Series wall-clock times live in `America/Chicago` unless the series says otherwise; conversion only via `TZDate.tz(...)` from `@date-fns/tz`. (Corrected in 16be56d: the ministry is in Rockmart GA, so the default is America/New_York.)
 - Client → server datetime semantics (pre-existing, do not "fix" here): the gallery editor sends ISO strings (round-trip exact); the admin events dialog historically sent local `yyyy-MM-ddTHH:mm` strings that the server parses in its own timezone. Task 7 makes the dialog diff-send so unchanged datetimes are never re-parsed.
 - Public-facing copy in Jeremy voice: short, plain, warm. Banned: delve, leverage, navigate, robust, tapestry, journey (noun), rise, reclaim, "real men", alpha, based, "toxic masculinity". No em-dashes where commas work.
 - Server Components by default; `"use client"` only where interactive.
@@ -57,6 +57,7 @@
 - A **cancelled** instance row stays as a tombstone. The materializer never recreates its slot: exact instants are blocked by the unique index, and **any** existing future instance of a series blocks its whole local calendar day (`excludeOccupiedDays`), so shifted-time regeneration cannot double-book a day.
 - **Pause** keeps cancelled tombstones (`keepCancelled: true`) so resume does not resurrect cancelled dates. **Pattern edits** clear future tombstones (the edit dialog says so). **Retire** removes all future instances without photos and without recaps, regardless of detach/cancel state, then detaches history.
 - Monthly cadence **requires** `nthWeek`: the generator throws instead of guessing, and the PATCH route validates the merged (existing + incoming) record.
+- **Deleting a future series instance is rejected** (400, "cancel the date instead"): a hard delete would vacate the day and the cron would recreate it, silently resurrecting a date the admin meant to remove. Past instances stay deletable. (Added after final review.)
 
 ---
 
