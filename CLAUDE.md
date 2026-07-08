@@ -21,6 +21,7 @@ A weekly editorial newsletter for Christian men, anchored in Acts 20:28. Brief a
 ```bash
 npm run dev          # next dev — local server on :3000
 npm run build        # next build — Turbopack production build
+npm test             # vitest — src/lib unit tests (recurrence math)
 DATABASE_URL='...' node scripts/apply-neon-migration.mjs  # apply Drizzle SQL to prod Postgres
 npx drizzle-kit generate                                       # generate new migration after schema change
 ```
@@ -60,7 +61,7 @@ Pastoral, warm, direct, masculine without macho. Short Anglo-Saxon sentences. Im
 ## Vercel
 - Project: `drew-godwins-projects/sheepdogsociety`
 - Live: `acts2028sheepdogsociety.com` (apex 307→www) + `www.acts2028sheepdogsociety.com`
-- Cron: `vercel.json` declares `/api/cron/generate-daily` (existing daily 5am), `/api/cron/purge` (daily 4am, soft-delete sweeper), `/api/cron/group-followup` (hourly inquiry nudges). AI routes get `maxDuration: 60` (Pro plan).
+- Cron: `vercel.json` declares `/api/cron/generate-daily` (existing daily 5am), `/api/cron/purge` (daily 4am, soft-delete sweeper), `/api/cron/group-followup` (hourly inquiry nudges), `/api/cron/materialize-events` (daily 4:30am, tops up 8-week series horizon). AI routes get `maxDuration: 60` (Pro plan).
 - Migrations: never `drizzle-kit push` to prod; use `scripts/apply-neon-migration.mjs` or a manual GH Action.
 
 ## GitHub
