@@ -55,7 +55,7 @@ Pastoral, warm, direct, masculine without macho. Short Anglo-Saxon sentences. Im
 **Storage:** `BLOB_READ_WRITE_TOKEN`
 **Bible:** `ESV_API_KEY`, `API_BIBLE_KEY`
 **Cron:** `CRON_SECRET`
-**Legacy / dead weight on Vercel (safe to remove):** `CLERK_*`, `NEXT_PUBLIC_CLERK_*`, `CLERK_WEBHOOK_SECRET`, all `SUPABASE_*` keys (the chat broker is decommissioned and prod is on Neon as of 2026-05-08), `NEON_DATABASE_URL` (already removed; the marketplace integration uses `DATABASE_URL` directly).
+**Legacy / dead weight:** Vercel env cleaned 2026-07-08 — all `SUPABASE_*`/`NEXT_PUBLIC_SUPABASE_*` keys, the `POSTGRES_*` integration aliases, and stale branch-scoped `DATABASE_URL*` entries were removed (Clerk vars were already gone). The dormant `src/lib/supabase/*` and `src/hooks/use-realtime-messages.ts` modules remain in the repo; they read the deleted vars lazily inside functions, so builds are unaffected and only the decommissioned chat pages would error at runtime. Note: `ESV_API_KEY` and `API_BIBLE_KEY` exist in Production + Development but NOT Preview.
 
 ## Vercel
 - Project: `drew-godwins-projects/sheepdogsociety`
