@@ -27,6 +27,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { SeriesPanel } from "./series-panel";
+import {
+  NextDatesPreview,
+  seriesPatternFromLocalStart,
+} from "@/components/admin/next-dates-preview";
 
 type EventItem = {
   id: string;
@@ -45,6 +50,8 @@ type EventItem = {
   createdBy: string;
   createdAt: string;
   rsvpCount: number;
+  seriesId: string | null;
+  isCancelled: boolean;
 };
 
 const EVENT_TYPES = ["weekly", "monthly", "quarterly", "annual", "conference"];
@@ -56,6 +63,14 @@ const typeColors: Record<string, string> = {
   annual: "bg-green-600 hover:bg-green-700",
   conference: "bg-red-600 hover:bg-red-700",
 };
+
+// Admin inputs are Central-time wall clock; the series stores the zone.
+const REPEAT_OPTIONS = [
+  { value: "none", label: "Does not repeat" },
+  { value: "weekly", label: "Weekly" },
+  { value: "biweekly", label: "Every other week" },
+  { value: "monthly_nth_weekday", label: "Monthly (same weekday)" },
+];
 
 export default function AdminEventsPage() {
   const [events, setEvents] = useState<EventItem[]>([]);
@@ -75,6 +90,14 @@ export default function AdminEventsPage() {
   const [formMaxAttendees, setFormMaxAttendees] = useState("");
   const [formRegUrl, setFormRegUrl] = useState("");
   const [saving, setSaving] = useState(false);
+  // "none" | "weekly" | "biweekly" | "monthly_nth_weekday"
+  const [formRepeats, setFormRepeats] = useState("none");
+  const [seriesRefresh, setSeriesRefresh] = useState(0);
+  // Snapshot of the form at openEdit time; handleSave diff-sends only
+  // changed fields so unchanged local datetimes never get re-parsed
+  // server-side (and series instances never falsely detach).
+  const [editSnapshot, setEditSnapshot] = useState<Record<string, string> | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<EventItem | null>(null);
 
   // Delete dialog
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -102,6 +125,8 @@ export default function AdminEventsPage() {
     setFormEventType("weekly");
     setFormMaxAttendees("");
     setFormRegUrl("");
+    setFormRepeats("none");
+    setEditSnapshot(null);
     setDialogOpen(true);
   }
 
@@ -119,6 +144,21 @@ export default function AdminEventsPage() {
     setFormEventType(ev.eventType ?? "weekly");
     setFormMaxAttendees(ev.maxAttendees?.toString() ?? "");
     setFormRegUrl(ev.registrationUrl ?? "");
+    setFormRepeats("none");
+    setEditSnapshot({
+      title: ev.title,
+      description: ev.description ?? "",
+      location: ev.location ?? "",
+      startTime: ev.startTime
+        ? format(new Date(ev.startTime), "yyyy-MM-dd'T'HH:mm")
+        : "",
+      endTime: ev.endTime
+        ? format(new Date(ev.endTime), "yyyy-MM-dd'T'HH:mm")
+        : "",
+      eventType: ev.eventType ?? "weekly",
+      maxAttendees: ev.maxAttendees?.toString() ?? "",
+      registrationUrl: ev.registrationUrl ?? "",
+    });
     setDialogOpen(true);
   }
 
@@ -126,29 +166,92 @@ export default function AdminEventsPage() {
     if (!formTitle.trim() || !formStartTime) return;
     setSaving(true);
 
-    const payload = {
-      title: formTitle,
-      description: formDesc,
-      location: formLocation,
-      startTime: formStartTime,
-      endTime: formEndTime || undefined,
-      eventType: formEventType,
-      maxAttendees: formMaxAttendees ? parseInt(formMaxAttendees, 10) : null,
-      registrationUrl: formRegUrl,
-    };
-
-    if (editingId) {
-      await fetch(`/api/admin/events/${editingId}`, {
+    let res: Response;
+    if (!editingId && formRepeats !== "none") {
+      // Recurring: derive the pattern from the first gathering's
+      // datetime-local value (interpreted as Central wall clock).
+      const startLocal = new Date(formStartTime);
+      const durationMinutes =
+        formEndTime && new Date(formEndTime) > startLocal
+          ? Math.round(
+              (new Date(formEndTime).getTime() - startLocal.getTime()) / 60000
+            )
+          : null;
+      res = await fetch("/api/admin/event-series", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: formTitle,
+          description: formDesc,
+          location: formLocation,
+          cadence: formRepeats,
+          dayOfWeek: startLocal.getDay(),
+          nthWeek:
+            formRepeats === "monthly_nth_weekday"
+              ? Math.ceil(startLocal.getDate() / 7)
+              : null,
+          startTimeOfDay: formStartTime.slice(11, 16),
+          durationMinutes,
+          timezone: "America/Chicago",
+          startDate: formStartTime.slice(0, 10),
+          eventType: formEventType,
+          registrationUrl: formRegUrl,
+        }),
+      });
+      setSeriesRefresh((n) => n + 1);
+    } else if (editingId) {
+      // Diff-send: only fields the admin actually changed.
+      const current: Record<string, string> = {
+        title: formTitle,
+        description: formDesc,
+        location: formLocation,
+        startTime: formStartTime,
+        endTime: formEndTime,
+        eventType: formEventType,
+        maxAttendees: formMaxAttendees,
+        registrationUrl: formRegUrl,
+      };
+      const payload: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(current)) {
+        if (!editSnapshot || editSnapshot[key] !== value) {
+          if (key === "endTime") payload.endTime = value || undefined;
+          else if (key === "maxAttendees")
+            payload.maxAttendees = value ? parseInt(value, 10) : null;
+          else payload[key] = value;
+        }
+      }
+      if (Object.keys(payload).length === 0) {
+        setDialogOpen(false);
+        setSaving(false);
+        return;
+      }
+      res = await fetch(`/api/admin/events/${editingId}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
     } else {
-      await fetch("/api/admin/events", {
+      res = await fetch("/api/admin/events", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({
+          title: formTitle,
+          description: formDesc,
+          location: formLocation,
+          startTime: formStartTime,
+          endTime: formEndTime || undefined,
+          eventType: formEventType,
+          maxAttendees: formMaxAttendees ? parseInt(formMaxAttendees, 10) : null,
+          registrationUrl: formRegUrl,
+        }),
       });
+    }
+
+    if (!res.ok) {
+      const j = (await res.json().catch(() => ({}))) as { error?: unknown };
+      alert(typeof j.error === "string" ? j.error : "Couldn't save the event.");
+      setSaving(false);
+      return;
     }
 
     setDialogOpen(false);
@@ -162,6 +265,17 @@ export default function AdminEventsPage() {
     await fetch(`/api/admin/events/${deleteId}`, { method: "DELETE" });
     setDeleteId(null);
     setDeleting(false);
+    fetchEvents();
+  }
+
+  async function handleCancelDate() {
+    if (!cancelTarget) return;
+    await fetch(`/api/admin/events/${cancelTarget.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isCancelled: !cancelTarget.isCancelled }),
+    });
+    setCancelTarget(null);
     fetchEvents();
   }
 
@@ -197,6 +311,8 @@ export default function AdminEventsPage() {
         </Select>
       </AdminPageHeader>
 
+      <SeriesPanel refreshSignal={seriesRefresh} />
+
       {loading ? (
         <p className="text-sm text-muted-foreground">Loading events...</p>
       ) : filtered.length === 0 ? (
@@ -214,6 +330,10 @@ export default function AdminEventsPage() {
                     >
                       {ev.eventType ?? "weekly"}
                     </Badge>
+                    {ev.seriesId && <Badge variant="outline">Series</Badge>}
+                    {ev.isCancelled && (
+                      <Badge variant="destructive">Cancelled</Badge>
+                    )}
                   </div>
                   <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                     <span>
@@ -227,6 +347,15 @@ export default function AdminEventsPage() {
                   </div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                  {ev.seriesId && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCancelTarget(ev)}
+                    >
+                      {ev.isCancelled ? "Restore date" : "Cancel date"}
+                    </Button>
+                  )}
                   <Button
                     variant="ghost"
                     size="icon"
@@ -255,6 +384,33 @@ export default function AdminEventsPage() {
             <DialogTitle>{editingId ? "Edit Event" : "Create New Event"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
+            {!editingId && (
+              <div>
+                <label className="text-sm font-medium">Repeats</label>
+                <Select value={formRepeats} onValueChange={setFormRepeats}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {REPEAT_OPTIONS.map((o) => (
+                      <SelectItem key={o.value} value={o.value}>
+                        {o.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <NextDatesPreview
+                  pattern={seriesPatternFromLocalStart(formRepeats, formStartTime)}
+                  className="mt-1 text-xs text-muted-foreground"
+                />
+                {formRepeats !== "none" && (
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Dates are created 8 weeks ahead, Central time, and topped
+                    up daily.
+                  </p>
+                )}
+              </div>
+            )}
             <div>
               <label className="text-sm font-medium">Title</label>
               <Input
@@ -352,6 +508,21 @@ export default function AdminEventsPage() {
         confirmVariant="destructive"
         onConfirm={handleDelete}
         loading={deleting}
+      />
+
+      <ConfirmDialog
+        open={!!cancelTarget}
+        onOpenChange={(open) => !open && setCancelTarget(null)}
+        title={cancelTarget?.isCancelled ? "Restore This Date" : "Cancel This Date"}
+        description={
+          cancelTarget?.isCancelled
+            ? "This date returns to the public calendar."
+            : "This date comes off the public calendar. The series keeps going."
+        }
+        confirmLabel={cancelTarget?.isCancelled ? "Restore" : "Cancel date"}
+        confirmVariant={cancelTarget?.isCancelled ? "default" : "destructive"}
+        onConfirm={handleCancelDate}
+        loading={false}
       />
     </div>
   );
