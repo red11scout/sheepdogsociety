@@ -17,8 +17,6 @@ const navLinks: NavLink[] = [
   { href: "/locations", label: "Groups" },
   { href: "/encouragements", label: "Letter" },
   { href: "/events", label: "Events" },
-  // Gallery is an admin tool (login-gated in middleware); no public tab.
-  // Photos reach the public through past gatherings on /events.
   { href: "/resources", label: "Resources" },
   { href: "/stories", label: "Stories" },
   {
@@ -36,6 +34,33 @@ export function PublicNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [openMenu, setOpenMenu] = useState<string | null>(null);
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Gallery is an admin tool (login-gated in middleware). The tab renders
+  // only for a signed-in admin, so visitors never land on a sign-in wall.
+  // Client-side session probe keeps every public page statically renderable.
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/api/auth/session")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((s) => {
+        if (alive && s?.user && (s.user as { role?: string }).role === "admin") {
+          setIsAdmin(true);
+        }
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  const links: NavLink[] = isAdmin
+    ? [
+        ...navLinks.slice(0, 3),
+        { href: "/gallery", label: "Gallery" },
+        ...navLinks.slice(3),
+      ]
+    : navLinks;
 
   // Close any open desktop dropdown on route change-y events
   useEffect(() => {
@@ -83,7 +108,7 @@ export function PublicNav() {
         </Link>
 
         <div className="hidden items-center gap-1 lg:flex">
-          {navLinks.map((link) => {
+          {links.map((link) => {
             if (link.children) {
               const isOpen = openMenu === link.href;
               return (
@@ -176,7 +201,7 @@ export function PublicNav() {
 
       {mobileOpen && (
         <div className="border-t border-iron/10 bg-bone px-6 pb-6 pt-2 lg:hidden">
-          {navLinks.map((link) => (
+          {links.map((link) => (
             <div key={link.href}>
               <Link
                 href={link.href}
