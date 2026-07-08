@@ -69,6 +69,11 @@ export default async function EventDetailPage({
           <h1 className="display-xl mt-10 text-[clamp(2.25rem,6vw,5rem)] text-foreground">
             {ev.title}
           </h1>
+          {ev.isCancelled && (
+            <p className="mt-6 inline-flex items-center gap-2 border border-oxblood/50 bg-oxblood/15 px-3 py-1.5 text-sm text-foreground">
+              This date is cancelled. Check the calendar for what is next.
+            </p>
+          )}
 
           <dl className="mt-12 grid gap-6 border-t border-bone/15 pt-8 md:grid-cols-3">
             <div>

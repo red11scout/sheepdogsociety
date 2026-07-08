@@ -2,10 +2,11 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { db } from "@/db";
-import { events } from "@/db/schema";
+import { events, eventSeries } from "@/db/schema";
 import { and, asc, desc, eq, gte, lt, or, sql } from "drizzle-orm";
 import { Icon } from "@/components/icons/Icon";
 import { format } from "date-fns";
+import { cadenceLabel, type SeriesCadence } from "@/lib/events/series";
 
 export const revalidate = 60;
 
@@ -29,11 +30,22 @@ async function getUpcoming() {
         eventType: events.eventType,
         imageUrl: events.imageUrl,
         registrationUrl: events.registrationUrl,
+        seriesId: events.seriesId,
+        seriesCadence: eventSeries.cadence,
+        seriesDayOfWeek: eventSeries.dayOfWeek,
+        seriesNthWeek: eventSeries.nthWeek,
       })
       .from(events)
-      .where(and(gte(events.startTime, now), eq(events.isPast, false)))
+      .leftJoin(eventSeries, eq(events.seriesId, eventSeries.id))
+      .where(
+        and(
+          gte(events.startTime, now),
+          eq(events.isPast, false),
+          eq(events.isCancelled, false)
+        )
+      )
       .orderBy(asc(events.startTime))
-      .limit(24);
+      .limit(60);
   } catch {
     return [];
   }
@@ -61,6 +73,7 @@ async function getPast() {
       .from(events)
       .where(
         and(
+          eq(events.isCancelled, false),
           or(eq(events.isPast, true), lt(events.endTime, new Date())),
           or(
             sql`length(coalesce(${events.recap}, '')) > 0`,
@@ -75,8 +88,55 @@ async function getPast() {
   }
 }
 
+type UpcomingRow = Awaited<ReturnType<typeof getUpcoming>>[number];
+
+type UpcomingItem =
+  | { kind: "single"; row: UpcomingRow }
+  | { kind: "series"; row: UpcomingRow; later: UpcomingRow[]; label: string };
+
+/**
+ * One card per series (its next date leads; the rest fold under it),
+ * one-time gatherings as-is. Rows arrive sorted by startTime so the
+ * first row seen for a series is its next date, and overall order
+ * stays chronological.
+ */
+function groupUpcoming(rows: UpcomingRow[]): UpcomingItem[] {
+  const bySeries = new Map<string, UpcomingRow[]>();
+  const items: UpcomingItem[] = [];
+  for (const row of rows) {
+    if (!row.seriesId) {
+      items.push({ kind: "single", row });
+      continue;
+    }
+    const bucket = bySeries.get(row.seriesId);
+    if (bucket) {
+      bucket.push(row);
+      continue;
+    }
+    bySeries.set(row.seriesId, [row]);
+    items.push({
+      kind: "series",
+      row,
+      later: [],
+      label: row.seriesCadence
+        ? cadenceLabel({
+            cadence: row.seriesCadence as SeriesCadence,
+            dayOfWeek: row.seriesDayOfWeek ?? 0,
+            nthWeek: row.seriesNthWeek,
+          })
+        : "Recurring",
+    });
+  }
+  return items.map((it) =>
+    it.kind === "series"
+      ? { ...it, later: (bySeries.get(it.row.seriesId as string) ?? []).slice(1) }
+      : it
+  );
+}
+
 export default async function EventsPage() {
   const [upcoming, past] = await Promise.all([getUpcoming(), getPast()]);
+  const upcomingItems = groupUpcoming(upcoming);
 
   return (
     <>
@@ -109,9 +169,10 @@ export default async function EventsPage() {
             <div className="hairline flex-1 text-iron/40" />
           </div>
 
-          {upcoming.length > 0 ? (
+          {upcomingItems.length > 0 ? (
             <ul className="mt-12 divide-y divide-iron/10 border-y border-iron/10">
-              {upcoming.map((ev) => {
+              {upcomingItems.map((item) => {
+                const ev = item.row;
                 const start = new Date(ev.startTime);
                 return (
                   <li key={ev.id}>
@@ -128,11 +189,18 @@ export default async function EventsPage() {
                         </span>
                       </div>
                       <div>
-                        {ev.eventType && (
-                          <span className="section-mark text-brass">
-                            {ev.eventType}
-                          </span>
-                        )}
+                        <span className="flex flex-wrap items-center gap-3">
+                          {item.kind === "series" && (
+                            <span className="section-mark text-brass">
+                              {item.label}
+                            </span>
+                          )}
+                          {ev.eventType && (
+                            <span className="section-mark text-iron/50">
+                              {ev.eventType}
+                            </span>
+                          )}
+                        </span>
                         <h3 className="mt-2 font-display text-xl font-semibold text-iron group-hover:text-brass md:text-2xl">
                           {ev.title}
                         </h3>
@@ -158,6 +226,26 @@ export default async function EventsPage() {
                         Details →
                       </span>
                     </Link>
+                    {item.kind === "series" && item.later.length > 0 && (
+                      <details className="-mt-4 pb-6 pl-4 md:pl-[172px]">
+                        <summary className="cursor-pointer list-none section-mark text-brass/80 transition-colors hover:text-brass">
+                          + {item.later.length} more date
+                          {item.later.length === 1 ? "" : "s"}
+                        </summary>
+                        <ul className="mt-3 space-y-2 text-sm text-iron/60">
+                          {item.later.map((r) => (
+                            <li key={r.id}>
+                              <Link
+                                href={`/events/${r.id}`}
+                                className="transition-colors hover:text-brass"
+                              >
+                                {format(new Date(r.startTime), "EEEE, MMMM d · h:mm a")}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
                   </li>
                 );
               })}
