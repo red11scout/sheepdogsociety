@@ -46,7 +46,14 @@ One conversion path: **discover → find a group → show up.**
 
 ## Section 2 — Design system elevation
 
-Keep: iron/bone/brass palette, Barlow Condensed display, Cormorant scripture quotes, Inter body, custom ~60-icon SVG set, editorial voice ("Jeremy" rules in CLAUDE.md).
+**REVISED 2026-07-08 (Drew's direction, supersedes "keep Barlow Condensed"):** the visual language adopts the broadsheet-editorial system from Drew's own prototype (`sheepdogsociety-redesign.vercel.app`, studied and documented in `.superpowers/sdd/phase2-design-study.md`):
+
+- **Masthead, not navbar** (the "logo flare"): three stacked rows — folio topbar (Acts 20:28 strapline + utility links), masthead row with the crest rendered TWICE flanking the Fraunces wordmark (right copy `-scale-x-100` so the sheepdogs face inward, heraldic-supporters style) joined by 1px hairlines to the page edges, then a slim sticky nav with backdrop blur. Folio topbar and masthead scroll away; only the slim nav pins. Mobile collapses to a single crest + wordmark row. The crest bookends the page again in the footer.
+- **Fraunces returns as the display face** (variable axes: `opsz`/`SOFT`/`WONK`), replacing Barlow Condensed: `.display-xl` at high optical size with `WONK 1`, oxblood *italic em* for the emphasized word, drop caps on ledes (`::first-letter` Fraunces oxblood ~3.4em). Inter stays for folio/UI apparatus (11px/500/0.16em uppercase folio style); Cormorant stays for scripture pull-quotes (ember-band verse moments).
+- **Editorial furniture:** kicker rows (folio left + hairline + folio right), ruled ledgers (`divide-y` lists, not cards) for agenda content, `.paper-card` (card bg, 1px stone border, 0 radius, brass border + ink shadow on hover) for photo content, one dark `.ember-band` interlude per long page (near-black with a warm radial ember glow) holding a Cormorant verse.
+- Keep: Pasture & Iron palette (ink/bone/cream/brass/oxblood/stone), custom icon set, Jeremy voice, generous section rhythm.
+
+**Gallery nested in Events (per prototype, refines the earlier decision):** the public gallery experience lives entirely inside the events surface. `/events` = "Upcoming" ruled ledger (no photos) + "Past gatherings" paper-card grid where each card is a 4/3 cover photo with a slow hover zoom and a photo-count badge ("31 PHOTOS", camera icon, bottom-right overlay). Event detail pages embed the full gallery inline below the particulars: "The night, in pictures (N)" heading + 4/3 photo grid with captions. No separate public gallery page, no lightbox in Phase 2.
 
 Rebuild:
 - **Typography:** fluid `clamp()` type scale; Barlow Condensed 900 reserved for display; body measure 65–75ch; scripture pull-quotes get prominence.
@@ -71,7 +78,13 @@ Rebuild:
 
 ## Section 4 — ESV Bible (`/bible`)
 
-**Reader:** book → chapter navigation, prev/next, scripture typography (Cormorant/Merriweather, proper measure), shareable deep links `/bible/[book]/[chapter]#v16` that scroll to and highlight the verse. Resurrects `src/lib/bible/` out of the member area; public and stateless — legacy bookmarks/notes/highlights are **not** carried over. Route added to middleware `PUBLIC_ROUTES` and public nav.
+**REVISED 2026-07-08: the reader anatomy follows BibleProject's** (`bibleproject.com/bible/...`, studied in `.superpowers/sdd/phase2-design-study.md`) — Drew's named benchmark for "how to interact with the Bible." The money moves to replicate:
+- **Reading typography:** scripture in ONE serif reserved for the Word (Merriweather ~18px, line-height ~1.85, light weight), measure ~660px (~72ch); Inter for all apparatus. Chapter heading gets ceremonial air (large top margin). Verse numbers: same serif, 80% size, superscript, ~75% opacity, non-interactive — present for reference, invisible while reading.
+- **Navigation:** prev/next chevrons flanking a reference pill that becomes a type-ahead input on click ("Type a book and a chapter") AND opens a picker panel — 66 books grouped by literary genre (Torah, Historical, Wisdom, Prophets, Gospels, Letters, Apocalypse), then a chapter-number grid. The type-ahead picker IS the reference search; keyword search (ESV API) gets its own input in the same panel.
+- **URL scheme:** `/bible/[book]/[chapter]` (ESV-only, no translation segment), shareable verse anchors `#v16` that scroll + highlight.
+- **Our improvements over BibleProject:** full dark mode (they have none), prev/next repeated at the chapter's end (their one UX gap), ESV attribution per Crossway terms at the end of the scroll.
+
+**Reader:** resurrects `src/lib/bible/` out of the member area; public and stateless — legacy bookmarks/notes/highlights are **not** carried over. Route added to middleware `PUBLIC_ROUTES` and public nav.
 
 **Search:** one input, auto-detected intent — references (`John 3:16`, `rom 8`) route to the passage; keywords hit the ESV search API with debounced instant results and match highlighting. Recent searches stored in localStorage only. Mobile-first placement.
 
