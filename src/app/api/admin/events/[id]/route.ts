@@ -22,6 +22,8 @@ const updateSchema = z.object({
   registrationUrl: z.string().url().optional().or(z.literal("")),
   // Past-event additions (migration 0011)
   isPast: z.boolean().optional(),
+  // Series-instance addition (migration 0014)
+  isCancelled: z.boolean().optional(),
   recap: z.string().max(20000).optional(),
   photos: z.array(photoSchema).max(60).optional(),
 });
@@ -68,7 +70,51 @@ export async function PATCH(
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
+  const [existing] = await db.select().from(events).where(eq(events.id, id));
+  if (!existing) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  // Series instances cannot be moved to another instant. Identical
+  // instants (the gallery editor round-trips ISO strings) pass through.
+  if (existing.seriesId && parsed.data.startTime !== undefined) {
+    const incoming = new Date(parsed.data.startTime).getTime();
+    if (Number.isNaN(incoming) || incoming !== existing.startTime.getTime()) {
+      return NextResponse.json(
+        {
+          error:
+            "This gathering is part of a series. Cancel this date and create a one-time event instead of moving it.",
+        },
+        { status: 400 }
+      );
+    }
+  }
+
   const updates: Record<string, unknown> = {};
+
+  // Content edits detach a series instance so series edits leave it be.
+  // Detach fires only when a sent value actually differs from the row;
+  // photos, recap, isPast, and isCancelled never detach.
+  if (existing.seriesId) {
+    const str = (v: string | null | undefined) => v ?? "";
+    const p = parsed.data;
+    let contentChanged = false;
+    if (p.title !== undefined && p.title !== existing.title) contentChanged = true;
+    if (p.description !== undefined && str(p.description) !== str(existing.description)) contentChanged = true;
+    if (p.location !== undefined && str(p.location) !== str(existing.location)) contentChanged = true;
+    if (p.eventType !== undefined && str(p.eventType) !== str(existing.eventType)) contentChanged = true;
+    if (p.registrationUrl !== undefined && str(p.registrationUrl) !== str(existing.registrationUrl)) contentChanged = true;
+    if (p.maxAttendees !== undefined && (p.maxAttendees ?? null) !== existing.maxAttendees) contentChanged = true;
+    if (p.endTime !== undefined) {
+      const incomingEnd = p.endTime ? new Date(p.endTime).getTime() : null;
+      const existingEnd = existing.endTime ? existing.endTime.getTime() : null;
+      if (incomingEnd !== existingEnd) contentChanged = true;
+    }
+    if (contentChanged) updates.isDetached = true;
+  }
+  if (parsed.data.isCancelled !== undefined) {
+    updates.isCancelled = parsed.data.isCancelled;
+  }
   if (parsed.data.title !== undefined) updates.title = parsed.data.title;
   if (parsed.data.description !== undefined) updates.description = parsed.data.description;
   if (parsed.data.location !== undefined) updates.location = parsed.data.location;
