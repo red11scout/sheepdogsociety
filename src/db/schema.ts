@@ -506,6 +506,47 @@ export const accountabilityCheckins = pgTable(
 // Events
 // ============================================================
 
+/**
+ * A recurring gathering pattern (migration 0014). The materializer in
+ * src/server/event-series.ts turns each active series into real `events`
+ * rows 8 weeks ahead, so photos and recaps attach to specific dates.
+ * Wall-clock fields (startTimeOfDay, startDate) are local to `timezone`.
+ */
+export const eventSeries = pgTable(
+  "event_series",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    description: text("description").default(""),
+    location: text("location").default(""),
+    /** weekly | biweekly | monthly_nth_weekday */
+    cadence: text("cadence").notNull(),
+    /** 0 = Sunday … 6 = Saturday */
+    dayOfWeek: integer("day_of_week").notNull(),
+    /** 1..5, monthly_nth_weekday only */
+    nthWeek: integer("nth_week"),
+    /** "HH:mm" 24-hour, local to `timezone` */
+    startTimeOfDay: text("start_time_of_day").notNull(),
+    durationMinutes: integer("duration_minutes"),
+    timezone: text("timezone").notNull().default("America/Chicago"),
+    /** "yyyy-MM-dd" — no occurrences before this local date */
+    startDate: text("start_date").notNull(),
+    eventType: text("event_type").default("weekly"),
+    imageUrl: text("image_url").default(""),
+    registrationUrl: text("registration_url").default(""),
+    groupId: uuid("group_id").references(() => groups.id),
+    /** Paused series keep their history but stop materializing. */
+    active: boolean("active").notNull().default(true),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => users.id),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    deletedAt: timestamp("deleted_at"),
+  },
+  (table) => [index("event_series_active_idx").on(table.active)]
+);
+
 export const events = pgTable(
   "events",
   {
@@ -515,13 +556,26 @@ export const events = pgTable(
     location: text("location").default(""),
     startTime: timestamp("start_time").notNull(),
     endTime: timestamp("end_time"),
+    /** @deprecated Dead column from the pre-series model; nothing writes
+     *  it. Recurrence lives in event_series (migration 0014). */
     isRecurring: boolean("is_recurring").notNull().default(false),
+    /** @deprecated See isRecurring. */
     recurrenceRule: text("recurrence_rule"),
     eventType: text("event_type").default("weekly"), // weekly, monthly, quarterly, annual, conference
     imageUrl: text("image_url").default(""),
     maxAttendees: integer("max_attendees"),
     registrationUrl: text("registration_url").default(""),
     groupId: uuid("group_id").references(() => groups.id),
+    /** Series this instance was materialized from (migration 0014).
+     *  Null = one-time event. */
+    seriesId: uuid("series_id").references(() => eventSeries.id, {
+      onDelete: "set null",
+    }),
+    /** Admin cancelled just this date; the series keeps going. The row
+     *  stays as a tombstone so the materializer never recreates the slot. */
+    isCancelled: boolean("is_cancelled").notNull().default(false),
+    /** Admin hand-edited this instance; series edits leave it alone. */
+    isDetached: boolean("is_detached").notNull().default(false),
     /** Admin-controlled "this event is over" flag. Migration 0011
      *  backfills true for anything whose end_time is in the past. */
     isPast: boolean("is_past").notNull().default(false),
@@ -538,6 +592,10 @@ export const events = pgTable(
     index("events_start_time_idx").on(table.startTime),
     index("events_group_idx").on(table.groupId),
     index("events_is_past_idx").on(table.isPast),
+    index("events_series_idx").on(table.seriesId),
+    // Idempotent materialization: one instance per series per instant.
+    // NULL series_id rows (one-time events) never conflict in Postgres.
+    uniqueIndex("events_series_start_unique").on(table.seriesId, table.startTime),
   ]
 );
 
