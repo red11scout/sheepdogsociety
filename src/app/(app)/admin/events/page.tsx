@@ -64,7 +64,7 @@ const typeColors: Record<string, string> = {
   conference: "bg-red-600 hover:bg-red-700",
 };
 
-// Admin inputs are Central-time wall clock; the series stores the zone.
+// Admin inputs are Eastern-time wall clock; the series stores the zone.
 const REPEAT_OPTIONS = [
   { value: "none", label: "Does not repeat" },
   { value: "weekly", label: "Weekly" },
@@ -192,7 +192,7 @@ export default function AdminEventsPage() {
               : null,
           startTimeOfDay: formStartTime.slice(11, 16),
           durationMinutes,
-          timezone: "America/Chicago",
+          timezone: "America/New_York",
           startDate: formStartTime.slice(0, 10),
           eventType: formEventType,
           registrationUrl: formRegUrl,
@@ -405,7 +405,7 @@ export default function AdminEventsPage() {
                 />
                 {formRepeats !== "none" && (
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Dates are created 8 weeks ahead, Central time, and topped
+                    Dates are created 8 weeks ahead, Eastern time, and topped
                     up daily.
                   </p>
                 )}

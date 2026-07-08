@@ -528,7 +528,7 @@ export const eventSeries = pgTable(
     /** "HH:mm" 24-hour, local to `timezone` */
     startTimeOfDay: text("start_time_of_day").notNull(),
     durationMinutes: integer("duration_minutes"),
-    timezone: text("timezone").notNull().default("America/Chicago"),
+    timezone: text("timezone").notNull().default("America/New_York"),
     /** "yyyy-MM-dd" — no occurrences before this local date */
     startDate: text("start_date").notNull(),
     eventType: text("event_type").default("weekly"),

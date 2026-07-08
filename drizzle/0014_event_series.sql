@@ -19,7 +19,7 @@ CREATE TABLE IF NOT EXISTS "event_series" (
   "nth_week" integer,
   "start_time_of_day" text NOT NULL,
   "duration_minutes" integer,
-  "timezone" text NOT NULL DEFAULT 'America/Chicago',
+  "timezone" text NOT NULL DEFAULT 'America/New_York',
   "start_date" text NOT NULL,
   "event_type" text DEFAULT 'weekly',
   "image_url" text DEFAULT '',
@@ -41,3 +41,6 @@ ALTER TABLE "events"
 
 CREATE INDEX IF NOT EXISTS "events_series_idx" ON "events" ("series_id");
 CREATE UNIQUE INDEX IF NOT EXISTS "events_series_start_unique" ON "events" ("series_id", "start_time");
+
+-- Timezone default correction: the ministry is in Rockmart GA (Eastern).
+ALTER TABLE "event_series" ALTER COLUMN "timezone" SET DEFAULT 'America/New_York';

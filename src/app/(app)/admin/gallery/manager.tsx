@@ -113,7 +113,7 @@ export function GalleryManager({ initial }: ManagerProps) {
               : null,
           startTimeOfDay: input.startTimeLocal.slice(11, 16),
           durationMinutes: null,
-          timezone: "America/Chicago",
+          timezone: "America/New_York",
           startDate: input.startTimeLocal.slice(0, 10),
           eventType: input.eventType || undefined,
         }),

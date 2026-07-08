@@ -27,7 +27,7 @@ export function seriesPatternFromLocalStart(
       repeats === "monthly_nth_weekday" ? Math.ceil(d.getDate() / 7) : null,
     startTimeOfDay: startLocal.slice(11, 16),
     durationMinutes: null,
-    timezone: "America/Chicago",
+    timezone: "America/New_York",
     startDate: startLocal.slice(0, 10),
   };
 }

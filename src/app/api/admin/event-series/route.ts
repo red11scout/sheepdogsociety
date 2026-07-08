@@ -21,7 +21,7 @@ const createSeriesSchema = z
     nthWeek: z.number().int().min(1).max(5).nullable().optional(),
     startTimeOfDay: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
     durationMinutes: z.number().int().positive().max(1440).nullable().optional(),
-    timezone: z.string().min(1).max(64).default("America/Chicago"),
+    timezone: z.string().min(1).max(64).default("America/New_York"),
     startDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
     eventType: z.string().max(50).optional(),
     imageUrl: z.string().max(2000).optional(),
