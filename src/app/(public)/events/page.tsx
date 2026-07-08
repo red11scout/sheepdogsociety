@@ -3,7 +3,7 @@ import Image from "next/image";
 import type { Metadata } from "next";
 import { db } from "@/db";
 import { events, eventSeries } from "@/db/schema";
-import { and, asc, desc, eq, gte, lt, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, isNull, lt, or, sql } from "drizzle-orm";
 import { Icon } from "@/components/icons/Icon";
 import { format } from "date-fns";
 import { cadenceLabel, type SeriesCadence } from "@/lib/events/series";
@@ -74,7 +74,11 @@ async function getPast() {
       .where(
         and(
           eq(events.isCancelled, false),
-          or(eq(events.isPast, true), lt(events.endTime, new Date())),
+          or(
+            eq(events.isPast, true),
+            lt(events.endTime, new Date()),
+            and(isNull(events.endTime), lt(events.startTime, new Date()))
+          ),
           or(
             sql`length(coalesce(${events.recap}, '')) > 0`,
             sql`jsonb_array_length(coalesce(${events.photos}, '[]'::jsonb)) > 0`

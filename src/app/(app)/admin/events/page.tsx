@@ -169,7 +169,7 @@ export default function AdminEventsPage() {
     let res: Response;
     if (!editingId && formRepeats !== "none") {
       // Recurring: derive the pattern from the first gathering's
-      // datetime-local value (interpreted as Central wall clock).
+      // datetime-local value (interpreted as Eastern wall clock).
       const startLocal = new Date(formStartTime);
       const durationMinutes =
         formEndTime && new Date(formEndTime) > startLocal

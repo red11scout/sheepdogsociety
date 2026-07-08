@@ -141,7 +141,7 @@ export default async function EventDetailPage({
 
         {/* RSVP / back nav (skip RSVP for past events) */}
         <div className="mt-16 flex flex-wrap items-center gap-4 border-t border-iron/15 pt-8">
-          {!isPast && ev.registrationUrl && (
+          {!isPast && !ev.isCancelled && ev.registrationUrl && (
             <a
               href={ev.registrationUrl}
               target="_blank"

@@ -3,7 +3,7 @@
 /**
  * Live "Next: …" preview for series create/edit forms. Pure math; the
  * instants come from previewOccurrences and render in the admin's
- * local clock, which matches the Central wall-time intent.
+ * local clock, which matches the Eastern wall-time intent.
  */
 import { format } from "date-fns";
 import {

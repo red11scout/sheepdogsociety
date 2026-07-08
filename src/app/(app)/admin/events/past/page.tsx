@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
 import { users, events } from "@/db/schema";
-import { eq, desc, or, lt } from "drizzle-orm";
+import { eq, desc, or, lt, and, isNull } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { PastEventsManager } from "./manager";
 
@@ -32,7 +32,8 @@ export default async function AdminPastEventsPage() {
     .where(
       or(
         eq(events.isPast, true),
-        lt(events.endTime, new Date())
+        lt(events.endTime, new Date()),
+        and(isNull(events.endTime), lt(events.startTime, new Date()))
       )
     )
     .orderBy(desc(events.startTime))

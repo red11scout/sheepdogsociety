@@ -154,6 +154,21 @@ export async function DELETE(
 
   const { id } = await params;
 
+  const [existing] = await db.select().from(events).where(eq(events.id, id));
+  if (!existing) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  if (existing.seriesId && existing.startTime.getTime() > Date.now()) {
+    return NextResponse.json(
+      {
+        error:
+          "This gathering is part of a series. Cancel the date instead, deleted dates come back when the calendar refills.",
+      },
+      { status: 400 }
+    );
+  }
+
   const [deleted] = await db
     .delete(events)
     .where(eq(events.id, id))
