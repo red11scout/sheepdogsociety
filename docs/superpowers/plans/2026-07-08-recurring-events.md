@@ -2947,12 +2947,12 @@ npm run build     # expected: production build succeeds
 
 1. `/admin/events` → create "Tuesday Table", next Tuesday 6:00 AM, Repeats Weekly; live preview shows 5 Tuesdays before saving → series panel shows "Every Tuesday", 8 instances with Series badges.
 2. `/events` → one Tuesday Table card, "Every Tuesday" mark, "+ 7 more dates" expands.
-3. `/admin/gallery` → Tuesday Table rows carry the brass SERIES mark; open a date, upload a photo, caption it → autosave shows "saved"; `/gallery` shows it.
+3. `/admin/gallery` → Tuesday Table rows carry the brass SERIES mark; open a date, upload a photo, caption it → autosave shows "saved"; `/gallery` (admin-only photo wall, viewed while signed in) shows it.
 4. Detach check: in `/admin/events`, edit ONLY the description of one future instance → saves without error. Then edit the series title in the panel → all future instances update EXCEPT the description-edited one (detached).
 5. Cancel-date: click "Cancel date" on one future instance → Cancelled badge; `/events` no longer lists that date; its URL shows the cancelled notice. Pause then Resume the series → the cancelled date must NOT return.
 6. Series edit: change start time to 6:30 AM in the panel → future clean instances move to 6:30; the photographed instance keeps its time AND its calendar day is not double-booked.
 7. Cron: `curl "http://localhost:3000/api/cron/materialize-events?key=$CRON_SECRET"` twice → second run returns `{"ok":true,"created":0}` (idempotent).
-8. Retire the series → future dates gone, past date with photos still on `/events` past section and `/gallery`.
+8. Retire the series → future dates gone, past date with photos still on `/events` past section and the admin-only `/gallery` wall.
 
 - [ ] **Step 3: Update CLAUDE.md**
 

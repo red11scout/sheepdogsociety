@@ -25,19 +25,22 @@ The site (acts2028sheepdogsociety.com, Next.js 16 / Drizzle / Neon / Tailwind v4
 | Bible scope | **Public reader + instant search** at `/bible` |
 | Resources automation | **Zero-click on add + AI covers for everything** (SVG as placeholder/failure fallback) |
 | Execution | **Approach A:** one spec, 4 shippable phases, recurrence first |
+| Gallery visibility | **Admin-only** (Drew, 2026-07-08): no public Gallery tab; `/gallery` stays login-gated; public photos surface via past gatherings on `/events` |
 
 ## Section 1 — Information architecture
 
 One conversion path: **discover → find a group → show up.**
 
-**Public nav:** Home · Groups (`/groups`) · Events (`/events`) · Gallery (`/gallery`) · The Letter (`/letter`) · Bible (`/bible`, new) · Resources (`/resources`) · About (dropdown: About, Stories, How we gather, What to expect, FAQ, Contact, Acts 20:28). Single CTA: **Join** → `/join`.
+**Public nav:** Home · Groups (`/groups`) · Events (`/events`) · The Letter (`/letter`) · Bible (`/bible`, new) · Resources (`/resources`) · About (dropdown: About, Stories, How we gather, What to expect, FAQ, Contact, Acts 20:28). Single CTA: **Join** → `/join`.
+
+**Gallery is admin-only (Drew, 2026-07-08):** no public Gallery tab. `/gallery` stays login-gated (it already is in middleware; the stale public nav link was removed the same day). Photos reach the public through past gatherings on `/events` and the homepage photo strip.
 
 **URL consolidation (all old URLs 308-redirect):**
 - `/groups` becomes the canonical public surface, **backed by the `locations` table** (the live locator data: map, meeting day/time, contact). The legacy `groups`-table-backed public pages are retired — that table belongs to the decommissioned member model. `locations` gains a `slug` column (additive) for pretty URLs; `/locations` → `/groups` and `/locations/[id]` → `/groups/[slug]` via id→slug lookup. Map + list + start-a-group CTA all live on `/groups`.
 - `/encouragements`, `/encouragements/[slug]` → `/letter`, `/letter/[slug]`. Note: today `/letter` redirects **to** `/encouragements` (consolidation went the wrong direction for branding — the page is titled "The Letter"). We flip it: the `encouragements` content type keeps powering the pages, but the public URL matches the public name. The dormant legacy `letters` table stays dormant.
 - `/get-started`, `/groups/start`, `/locations/request` → `/join` (one page, two paths: join a group / start a group; start path embeds the existing plant-request form)
 
-**Homepage narrative:** hero (one promise, one CTA) → Acts 20:28 (why) → how it works (3 steps) → next gatherings strip (fed by recurring instances, never empty) → latest Letter → gallery strip → story/testimony → final Join CTA.
+**Homepage narrative:** hero (one promise, one CTA) → Acts 20:28 (why) → how it works (3 steps) → next gatherings strip (fed by recurring instances, never empty) → latest Letter → recent-gatherings photo strip (fed by past events with photos, not a public gallery) → story/testimony → final Join CTA.
 
 **Not changing:** admin routes, internal content-type names (`encouragements` tables/APIs), the sign-in flow.
 
@@ -64,7 +67,7 @@ Rebuild:
 
 **Admin UX:** event creation in `/admin/events` and the gallery manager (`src/app/(app)/admin/gallery/manager.tsx`) asks one-time vs recurring first. Recurring opens a series editor with live preview of the next 5 dates. Gallery photo uploads to a series default to the most recent past occurrence.
 
-**Public `/events`:** upcoming groups by series — one card per series with "Every Tuesday" badge + next date, expandable to all upcoming dates; one-offs list normally. Past view unchanged (recap + photos). `/gallery` continues reading `events.photos` per instance — no gallery changes required beyond the manager's series-aware attach.
+**Public `/events`:** upcoming groups by series — one card per series with "Every Tuesday" badge + next date, expandable to all upcoming dates; one-offs list normally. Past view unchanged (recap + photos). `/gallery` (admin-only) continues reading `events.photos` per instance — no gallery changes required beyond the manager's series-aware attach.
 
 ## Section 4 — ESV Bible (`/bible`)
 
