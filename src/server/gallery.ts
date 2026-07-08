@@ -10,8 +10,8 @@
  * flipped its is_past flag yet.
  */
 import { db } from "@/db";
-import { events } from "@/db/schema";
-import { desc, sql } from "drizzle-orm";
+import { events, eventSeries } from "@/db/schema";
+import { desc, eq, sql } from "drizzle-orm";
 
 export interface GalleryPhoto {
   url: string;
@@ -124,6 +124,8 @@ export async function listAllEventsForAdminGallery(): Promise<
     eventType: string | null;
     description: string | null;
     photoCount: number;
+    seriesId: string | null;
+    seriesTitle: string | null;
   }>
 > {
   try {
@@ -136,8 +138,11 @@ export async function listAllEventsForAdminGallery(): Promise<
         eventType: events.eventType,
         description: events.description,
         photoCount: sql<number>`jsonb_array_length(coalesce(${events.photos}, '[]'::jsonb))::int`,
+        seriesId: events.seriesId,
+        seriesTitle: eventSeries.title,
       })
       .from(events)
+      .leftJoin(eventSeries, eq(events.seriesId, eventSeries.id))
       .orderBy(desc(events.startTime))
       .limit(400);
     return rows;

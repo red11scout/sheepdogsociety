@@ -17,12 +17,16 @@
  * Auto-saves 700ms after the admin stops typing. No "Save" button.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import { format } from "date-fns";
 import { Icon } from "@/components/icons/Icon";
 import { HintTooltip } from "@/components/admin/HintTooltip";
 import { cn } from "@/lib/utils";
+import {
+  NextDatesPreview,
+  seriesPatternFromLocalStart,
+} from "@/components/admin/next-dates-preview";
 
 interface Photo {
   url: string;
@@ -38,6 +42,8 @@ interface EventRow {
   eventType: string;
   description: string;
   photoCount: number;
+  seriesId: string | null;
+  seriesTitle: string | null;
 }
 
 interface ManagerProps {
@@ -66,12 +72,85 @@ export function GalleryManager({ initial }: ManagerProps) {
   const totalPhotos = events.reduce((n, e) => n + e.photoCount, 0);
   const eventsWithPhotos = events.filter((e) => e.photoCount > 0).length;
 
+  // One shortcut per series: its most recent past gathering, so photos
+  // from "last Tuesday" are one click away.
+  const latestBySeries = useMemo(() => {
+    const now = Date.now();
+    const map = new Map<string, EventRow>();
+    for (const e of events) {
+      if (!e.seriesId) continue;
+      const t = new Date(e.startTime).getTime();
+      if (t > now) continue;
+      const cur = map.get(e.seriesId);
+      if (!cur || t > new Date(cur.startTime).getTime()) map.set(e.seriesId, e);
+    }
+    return [...map.values()];
+  }, [events]);
+
   async function handleCreate(input: {
     title: string;
     startTime: string;
+    startTimeLocal: string;
     location: string;
     eventType: string;
+    repeats: string;
   }) {
+    if (input.repeats !== "none") {
+      // Recurring: the series API materializes 8 weeks of instances.
+      const startLocal = new Date(input.startTimeLocal);
+      const res = await fetch("/api/admin/event-series", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: input.title,
+          location: input.location || undefined,
+          cadence: input.repeats,
+          dayOfWeek: startLocal.getDay(),
+          nthWeek:
+            input.repeats === "monthly_nth_weekday"
+              ? Math.ceil(startLocal.getDate() / 7)
+              : null,
+          startTimeOfDay: input.startTimeLocal.slice(11, 16),
+          durationMinutes: null,
+          timezone: "America/Chicago",
+          startDate: input.startTimeLocal.slice(0, 10),
+          eventType: input.eventType || undefined,
+        }),
+      });
+      if (!res.ok) {
+        const j = (await res.json().catch(() => ({}))) as { error?: unknown };
+        throw new Error(
+          typeof j.error === "string" ? j.error : "Couldn't create series"
+        );
+      }
+      const data = (await res.json()) as {
+        series: { id: string; title: string };
+        instances: Array<{
+          id: string;
+          title: string;
+          startTime: string;
+          location: string | null;
+          eventType: string | null;
+          description: string | null;
+        }>;
+      };
+      const rows: EventRow[] = data.instances.map((ev) => ({
+        id: ev.id,
+        title: ev.title,
+        startTime: ev.startTime,
+        location: ev.location ?? "",
+        eventType: ev.eventType ?? "",
+        description: ev.description ?? "",
+        photoCount: 0,
+        seriesId: data.series.id,
+        seriesTitle: data.series.title,
+      }));
+      setEvents((es) => [...rows, ...es]);
+      setOpenId(rows[0]?.id ?? null);
+      setCreating(false);
+      return;
+    }
+
     const res = await fetch("/api/admin/events", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -106,6 +185,8 @@ export function GalleryManager({ initial }: ManagerProps) {
       eventType: data.event.eventType ?? "",
       description: data.event.description ?? "",
       photoCount: 0,
+      seriesId: null,
+      seriesTitle: null,
     };
     setEvents((es) => [newRow, ...es]);
     setOpenId(newRow.id);
@@ -201,6 +282,27 @@ export function GalleryManager({ initial }: ManagerProps) {
         </button>
       </div>
 
+      {latestBySeries.length > 0 && (
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          <span className="text-[0.625rem] uppercase tracking-wider text-stone/55">
+            Add photos from the latest gathering:
+          </span>
+          {latestBySeries.map((e) => (
+            <button
+              key={e.id}
+              type="button"
+              onClick={() => setOpenId(e.id)}
+              className="lift inline-flex h-8 items-center gap-2 border border-brass/40 bg-brass/10 px-3 text-[0.6875rem] text-brass transition-colors hover:bg-brass/20"
+            >
+              {e.seriesTitle ?? e.title}
+              <span className="text-brass/70">
+                {format(new Date(e.startTime), "MMM d")}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
       {creating && (
         <NewEventForm
           onCancel={() => setCreating(false)}
@@ -263,6 +365,14 @@ export function GalleryManager({ initial }: ManagerProps) {
                           <span>·</span>
                           <span className="uppercase tracking-wider">
                             {ev.eventType}
+                          </span>
+                        </>
+                      )}
+                      {ev.seriesTitle && (
+                        <>
+                          <span>·</span>
+                          <span className="uppercase tracking-wider text-brass">
+                            Series
                           </span>
                         </>
                       )}
@@ -346,8 +456,10 @@ function NewEventForm({
   onSubmit: (input: {
     title: string;
     startTime: string;
+    startTimeLocal: string;
     location: string;
     eventType: string;
+    repeats: string;
   }) => Promise<void>;
 }) {
   const [title, setTitle] = useState("");
@@ -355,6 +467,7 @@ function NewEventForm({
   const [startTime, setStartTime] = useState(() => nextSaturday7am());
   const [location, setLocation] = useState("");
   const [eventType, setEventType] = useState("");
+  const [repeats, setRepeats] = useState("none");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -368,8 +481,10 @@ function NewEventForm({
         // datetime-local value is local time without zone. Convert to
         // ISO so the server `new Date()` interprets it correctly.
         startTime: new Date(startTime).toISOString(),
+        startTimeLocal: startTime,
         location,
         eventType,
+        repeats,
       });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Couldn't create event");
@@ -385,6 +500,26 @@ function NewEventForm({
         <span className="section-mark text-brass">§ New event</span>
       </div>
       <div className="grid gap-3 md:grid-cols-2">
+        <Field label="Repeats">
+          <select
+            value={repeats}
+            onChange={(e) => setRepeats(e.target.value)}
+            className="h-9 w-full border border-stone/15 bg-iron/40 px-3 text-sm text-bone focus:border-brass focus:outline-none"
+          >
+            <option value="none" className="bg-iron text-bone">
+              Does not repeat
+            </option>
+            <option value="weekly" className="bg-iron text-bone">
+              Weekly
+            </option>
+            <option value="biweekly" className="bg-iron text-bone">
+              Every other week
+            </option>
+            <option value="monthly_nth_weekday" className="bg-iron text-bone">
+              Monthly (same weekday)
+            </option>
+          </select>
+        </Field>
         <Field label="Event title *">
           <input
             value={title}
@@ -427,6 +562,10 @@ function NewEventForm({
           </select>
         </Field>
       </div>
+      <NextDatesPreview
+        pattern={seriesPatternFromLocalStart(repeats, startTime)}
+        className="mt-3 text-[0.6875rem] text-stone/65"
+      />
       {error && (
         <p className="mt-3 border border-oxblood/40 bg-oxblood/15 px-2 py-1 text-[0.6875rem] text-bone">
           {error}

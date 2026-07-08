@@ -31,6 +31,8 @@ export default async function AdminGalleryPage() {
         eventType: r.eventType ?? "",
         description: r.description ?? "",
         photoCount: r.photoCount,
+        seriesId: r.seriesId,
+        seriesTitle: r.seriesTitle,
       }))}
     />
   );
