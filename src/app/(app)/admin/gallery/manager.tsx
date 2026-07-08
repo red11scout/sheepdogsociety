@@ -68,6 +68,8 @@ export function GalleryManager({ initial }: ManagerProps) {
   const [openId, setOpenId] = useState<string | null>(null);
   const [query, setQuery] = useState("");
   const [creating, setCreating] = useState(false);
+  // Mount-time snapshot; "is this gathering past" doesn't need a live clock.
+  const [nowTs] = useState(() => Date.now());
 
   const totalPhotos = events.reduce((n, e) => n + e.photoCount, 0);
   const eventsWithPhotos = events.filter((e) => e.photoCount > 0).length;
@@ -75,17 +77,16 @@ export function GalleryManager({ initial }: ManagerProps) {
   // One shortcut per series: its most recent past gathering, so photos
   // from "last Tuesday" are one click away.
   const latestBySeries = useMemo(() => {
-    const now = Date.now();
     const map = new Map<string, EventRow>();
     for (const e of events) {
       if (!e.seriesId) continue;
       const t = new Date(e.startTime).getTime();
-      if (t > now) continue;
+      if (t > nowTs) continue;
       const cur = map.get(e.seriesId);
       if (!cur || t > new Date(cur.startTime).getTime()) map.set(e.seriesId, e);
     }
     return [...map.values()];
-  }, [events]);
+  }, [events, nowTs]);
 
   async function handleCreate(input: {
     title: string;

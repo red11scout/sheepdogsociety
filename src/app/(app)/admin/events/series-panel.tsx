@@ -73,16 +73,19 @@ export function SeriesPanel({ refreshSignal }: { refreshSignal: number }) {
   const [busy, setBusy] = useState(false);
 
   const refresh = useCallback(async () => {
-    setLoading(true);
     const res = await fetch("/api/admin/event-series");
     const data = await res.json();
     setSeries(data.series ?? []);
-    setLoading(false);
   }, []);
 
   useEffect(() => {
-    refresh();
-  }, [refresh, refreshSignal]);
+    (async () => {
+      const res = await fetch("/api/admin/event-series");
+      const data = await res.json();
+      setSeries(data.series ?? []);
+      setLoading(false);
+    })();
+  }, [refreshSignal]);
 
   async function toggleActive(s: AdminSeries) {
     setBusy(true);
