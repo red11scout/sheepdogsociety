@@ -262,7 +262,13 @@ export default function AdminEventsPage() {
   async function handleDelete() {
     if (!deleteId) return;
     setDeleting(true);
-    await fetch(`/api/admin/events/${deleteId}`, { method: "DELETE" });
+    const res = await fetch(`/api/admin/events/${deleteId}`, { method: "DELETE" });
+    if (!res.ok) {
+      const j = (await res.json().catch(() => ({}))) as { error?: unknown };
+      alert(typeof j.error === "string" ? j.error : "Couldn't delete the event.");
+      setDeleting(false);
+      return;
+    }
     setDeleteId(null);
     setDeleting(false);
     fetchEvents();

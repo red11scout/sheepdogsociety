@@ -205,7 +205,8 @@ export function GalleryManager({ initial }: ManagerProps) {
       return;
     const res = await fetch(`/api/admin/events/${id}`, { method: "DELETE" });
     if (!res.ok) {
-      alert("Delete failed.");
+      const j = (await res.json().catch(() => ({}))) as { error?: unknown };
+      alert(typeof j.error === "string" ? j.error : "Delete failed.");
       return;
     }
     setEvents((es) => es.filter((e) => e.id !== id));
