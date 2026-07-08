@@ -17,7 +17,8 @@ const navLinks: NavLink[] = [
   { href: "/locations", label: "Groups" },
   { href: "/encouragements", label: "Letter" },
   { href: "/events", label: "Events" },
-  { href: "/gallery", label: "Gallery" },
+  // Gallery is an admin tool (login-gated in middleware); no public tab.
+  // Photos reach the public through past gatherings on /events.
   { href: "/resources", label: "Resources" },
   { href: "/stories", label: "Stories" },
   {
