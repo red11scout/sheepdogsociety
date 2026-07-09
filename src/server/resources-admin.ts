@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
 import { resourceSections } from "@/db/schema-new";
 import { resources, users } from "@/db/schema";
-import { eq, isNull, asc, desc } from "drizzle-orm";
+import { and, eq, isNull, asc, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { categorizeResource } from "@/lib/resources/categorize";
 import { uniqueResourceSlug } from "@/lib/resources/slug";
@@ -345,7 +345,9 @@ export async function getPublicResourceBySlug(slug: string) {
       createdAt: resources.createdAt,
     })
     .from(resources)
-    .where(eq(resources.slug, slug));
+    // Public detail gate: hidden/draft and soft-deleted resources must not
+    // render to anyone who knows the slug (matches the list + sitemap gates).
+    .where(and(eq(resources.slug, slug), eq(resources.isPublic, true)));
 
   if (!row || !row.id) return null;
 
