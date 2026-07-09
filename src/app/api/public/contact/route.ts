@@ -29,15 +29,17 @@ export async function POST(request: Request) {
       message: parsed.data.message,
     });
 
-    // Send notification email to shepherd (non-blocking).
+    // Send notification email to shepherd (non-blocking). Resend only
+    // throws on network/key errors; API rejections come back as `error`.
     try {
-      await resend().emails.send({
+      const { error } = await resend().emails.send({
         from: FROM_TRANSACTIONAL,
         to: "shepherd@acts2028sheepdogsociety.com",
         replyTo: parsed.data.email,
         subject: `New contact: ${topic} from ${parsed.data.name}`,
         text: `Name: ${parsed.data.name}\nEmail: ${parsed.data.email}\nTopic: ${topic}\n\n${parsed.data.message}`,
       });
+      if (error) console.error("contact notification email rejected", error);
     } catch (err) {
       console.error("contact notification email failed", err);
     }

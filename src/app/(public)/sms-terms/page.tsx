@@ -120,7 +120,7 @@ export default function SmsTermsPage() {
 
         <div className="mt-20 border-t border-foreground/15 pt-8">
           <p className="folio">
-            Last revised · April 2026
+            Last revised · July 2026
           </p>
           <p className="mt-3 text-sm text-muted-foreground">
             Reply <span className="font-mono text-foreground">STOP</span> to opt out

@@ -98,7 +98,7 @@ export default async function SignInPage({
             href="mailto:shepherd@acts2028sheepdogsociety.com?subject=Sheepdog%20Society%20sign-in%20help"
             className="text-brass underline underline-offset-4 transition-colors hover:text-gold"
           >
-            Email Drew
+            Email the Watch
           </Link>{" "}
           if you need help.
         </p>

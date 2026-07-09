@@ -43,7 +43,7 @@ export default function CheckEmailPage() {
             href="mailto:shepherd@acts2028sheepdogsociety.com?subject=Sheepdog%20Society%20sign-in%20help"
             className="text-brass underline underline-offset-4 hover:text-foreground"
           >
-            Email Drew
+            Email the Watch
           </Link>
         </p>
       </div>

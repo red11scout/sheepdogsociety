@@ -178,7 +178,7 @@ export async function POST(req: Request) {
       const result = await sendSms({
         to: body.phone,
         message:
-          "Reply YES to confirm event reminders from Acts 2:28 Sheepdog Society. Msg & data rates may apply. Reply STOP to opt out, HELP for help.",
+          "Reply YES to confirm event reminders from Acts 20:28 Sheepdog Society. Msg & data rates may apply. Reply STOP to opt out, HELP for help.",
         category: "double_opt_in",
         memberId,
       });
