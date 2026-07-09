@@ -65,11 +65,11 @@ export default async function ResourceDetailPage({
   return (
     <>
       {/* Action bar — hidden in print */}
-      <section className="bg-bone text-ink no-print">
+      <section className="bg-background text-foreground no-print">
         <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-4 px-6 pb-2 pt-8 md:px-12">
           <Link
             href="/resources"
-            className="inline-flex items-center gap-2 section-mark text-iron/55 hover:text-brass"
+            className="inline-flex items-center gap-2 section-mark text-muted-foreground hover:text-brass"
           >
             <Icon name="arrow-right" size={12} className="rotate-180" />
             All resources
@@ -83,7 +83,7 @@ export default async function ResourceDetailPage({
                 href={row.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="lift inline-flex h-9 items-center gap-2 border border-iron/20 bg-bone px-4 text-xs font-medium uppercase tracking-wider text-iron transition-colors hover:border-brass hover:text-brass"
+                className="lift inline-flex h-9 items-center gap-2 border border-foreground/15 bg-card px-4 text-xs font-medium uppercase tracking-wider text-foreground transition-colors hover:border-brass hover:text-brass"
               >
                 <Icon name="arrow-up-right" size={12} />
                 Watch on YouTube
@@ -94,7 +94,7 @@ export default async function ResourceDetailPage({
                 href={row.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="lift inline-flex h-9 items-center gap-2 border border-iron/20 bg-bone px-4 text-xs font-medium uppercase tracking-wider text-iron transition-colors hover:border-brass hover:text-brass"
+                className="lift inline-flex h-9 items-center gap-2 border border-foreground/15 bg-card px-4 text-xs font-medium uppercase tracking-wider text-foreground transition-colors hover:border-brass hover:text-brass"
               >
                 <Icon name="arrow-up-right" size={12} />
                 Buy on Amazon
@@ -105,7 +105,7 @@ export default async function ResourceDetailPage({
                 href={row.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="lift inline-flex h-9 items-center gap-2 border border-iron/20 bg-bone px-4 text-xs font-medium uppercase tracking-wider text-iron transition-colors hover:border-brass hover:text-brass"
+                className="lift inline-flex h-9 items-center gap-2 border border-foreground/15 bg-card px-4 text-xs font-medium uppercase tracking-wider text-foreground transition-colors hover:border-brass hover:text-brass"
               >
                 <Icon name="arrow-up-right" size={12} />
                 Open link
@@ -129,7 +129,7 @@ export default async function ResourceDetailPage({
               <a
                 href={downloadUrl}
                 download={row.sourceFilename ?? undefined}
-                className="lift inline-flex h-9 items-center gap-2 border border-iron/20 bg-bone px-4 text-xs font-medium uppercase tracking-wider text-iron transition-colors hover:border-brass hover:text-brass"
+                className="lift inline-flex h-9 items-center gap-2 border border-foreground/15 bg-card px-4 text-xs font-medium uppercase tracking-wider text-foreground transition-colors hover:border-brass hover:text-brass"
               >
                 <Icon name="download" size={12} />
                 Download {isPdf ? "PDF" : isDocx ? ".docx" : "file"}
@@ -142,7 +142,7 @@ export default async function ResourceDetailPage({
               <a
                 href={downloadUrl}
                 download={row.sourceFilename ?? undefined}
-                className="text-[0.6875rem] uppercase tracking-wider text-iron/55 hover:text-brass"
+                className="text-[0.6875rem] uppercase tracking-wider text-muted-foreground hover:text-brass"
                 title={`Download the original ${isPdf ? "PDF" : isDocx ? ".docx" : "file"} as uploaded`}
               >
                 Original {isPdf ? "PDF" : isDocx ? ".docx" : "file"} ↓
@@ -153,14 +153,14 @@ export default async function ResourceDetailPage({
       </section>
 
       {/* Letterhead — visible on screen and in print */}
-      <article className="resource-doc bg-bone text-ink">
+      <article className="resource-doc bg-background text-foreground">
         <header className="mx-auto max-w-4xl px-6 pb-10 pt-6 md:px-12 md:pb-14 md:pt-10">
           {/* Print-only branded letterhead. Hidden on screen, revealed by
            *  the @media print rule. Uses the actual brand logo + section
            *  rules so the printed PDF reads like a real Sheepdog Society
            *  document, not a screenshot of a webpage. */}
           <div className="print-letterhead hidden">
-            <div className="flex items-end justify-between gap-6 border-b-2 border-iron pb-3">
+            <div className="flex items-end justify-between gap-6 border-b-2 border-foreground pb-3">
               <div className="flex items-center gap-3">
                 <Image
                   src="/logo.png"
@@ -171,13 +171,13 @@ export default async function ResourceDetailPage({
                   className="h-11 w-11 object-contain"
                 />
                 <div className="leading-tight">
-                  <p className="brand-wordmark text-2xl text-iron">Sheepdog Society</p>
-                  <p className="section-mark text-iron/65">
+                  <p className="brand-wordmark text-2xl text-foreground">Sheepdog Society</p>
+                  <p className="section-mark text-muted-foreground">
                     Acts 20:28 · Stand guard
                   </p>
                 </div>
               </div>
-              <div className="text-right text-[0.625rem] uppercase tracking-[0.18em] text-iron/55">
+              <div className="text-right text-[0.625rem] uppercase tracking-[0.18em] text-muted-foreground">
                 <p>acts2028sheepdogsociety.com</p>
                 {row.section && <p className="mt-1">§ {row.section.name}</p>}
               </div>
@@ -192,23 +192,23 @@ export default async function ResourceDetailPage({
               </span>
             )}
             {row.estimatedMinutes != null && (
-              <span className="section-mark text-iron/45">
+              <span className="section-mark text-muted-foreground">
                 {row.estimatedMinutes} min read
               </span>
             )}
             {row.audience && row.audience !== "all" && (
-              <span className="section-mark text-iron/45">
+              <span className="section-mark text-muted-foreground">
                 · For {row.audience === "leader" ? "leaders" : "newcomers"}
               </span>
             )}
           </div>
 
-          <h1 className="display-xl mt-6 text-[clamp(2rem,5vw,4rem)] text-iron">
+          <h1 className="display-xl mt-6 text-[clamp(2rem,5vw,4rem)] text-foreground">
             {row.title}
           </h1>
 
           {row.summary && (
-            <p className="mt-6 max-w-3xl font-pullquote text-lg italic leading-relaxed text-iron/70 md:text-xl">
+            <p className="mt-6 max-w-3xl font-pullquote text-lg italic leading-relaxed text-muted-foreground md:text-xl">
               {row.summary}
             </p>
           )}
@@ -226,7 +226,7 @@ export default async function ResourceDetailPage({
               {(row.topics ?? []).map((t) => (
                 <span
                   key={`t-${t}`}
-                  className="inline-flex h-6 items-center border border-iron/15 bg-bone px-2 text-[0.625rem] text-iron/70"
+                  className="inline-flex h-6 items-center border border-foreground/15 bg-card px-2 text-[0.625rem] text-muted-foreground"
                 >
                   {t}
                 </span>
@@ -234,7 +234,7 @@ export default async function ResourceDetailPage({
               {(row.themes ?? []).map((th) => (
                 <span
                   key={`th-${th}`}
-                  className="inline-flex h-6 items-center border border-iron/15 bg-bone px-2 text-[0.625rem] italic text-iron/55"
+                  className="inline-flex h-6 items-center border border-foreground/15 bg-card px-2 text-[0.625rem] italic text-muted-foreground"
                 >
                   {th}
                 </span>
@@ -259,8 +259,8 @@ export default async function ResourceDetailPage({
             <div className="space-y-6">
               <Embed html={row.embedHtml ?? ""} />
               {row.author && (
-                <p className="text-xs text-iron/60">
-                  From <span className="text-iron">{row.author}</span> on YouTube
+                <p className="text-xs text-muted-foreground">
+                  From <span className="text-foreground">{row.author}</span> on YouTube
                 </p>
               )}
             </div>
@@ -282,9 +282,9 @@ export default async function ResourceDetailPage({
           ) : row.bodyHtml ? (
             <ResourceBody html={row.bodyHtml} />
           ) : downloadUrl ? (
-            <div className="border border-dashed border-iron/15 bg-bone p-10 text-center">
+            <div className="border border-dashed border-foreground/15 bg-card p-10 text-center">
               <Icon name="download" size={36} className="mx-auto text-brass" />
-              <p className="mx-auto mt-6 max-w-md font-pullquote text-base italic text-iron/70">
+              <p className="mx-auto mt-6 max-w-md font-pullquote text-base italic text-muted-foreground">
                 This resource is provided as a {isPdf ? "PDF" : "file"}. Tap below to download or open.
               </p>
               <a
@@ -297,14 +297,14 @@ export default async function ResourceDetailPage({
               </a>
             </div>
           ) : (
-            <p className="font-pullquote text-base italic text-iron/55">
+            <p className="font-pullquote text-base italic text-muted-foreground">
               The text of this resource is being prepared. Check back soon.
             </p>
           )}
 
           {/* Companion study (Book Studies). Only renders when present. */}
           {hasCompanion && (
-            <section className="mt-12 border-t border-iron/15 pt-8">
+            <section className="mt-12 border-t border-foreground/15 pt-8">
               <div className="flex items-center gap-3">
                 <span className="section-mark text-brass">
                   § {row.companionLabel || "Study guide"}
@@ -317,13 +317,13 @@ export default async function ResourceDetailPage({
                     href={row.companionUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="lift group/c flex items-center gap-3 border border-iron/15 bg-bone p-4 text-sm transition-colors hover:border-brass"
+                    className="lift group/c flex items-center gap-3 border border-foreground/15 bg-card p-4 text-sm transition-colors hover:border-brass"
                   >
                     <Icon name="arrow-up-right" size={18} className="text-brass" />
-                    <span className="flex-1 truncate text-iron group-hover/c:text-brass">
+                    <span className="flex-1 truncate text-foreground group-hover/c:text-brass">
                       Open {row.companionLabel || "the study"}
                     </span>
-                    <span className="text-[0.625rem] uppercase tracking-wider text-iron/45">
+                    <span className="text-[0.625rem] uppercase tracking-wider text-muted-foreground">
                       Link
                     </span>
                   </a>
@@ -332,13 +332,13 @@ export default async function ResourceDetailPage({
                   <a
                     href={row.companionFileKey}
                     download
-                    className="lift group/c flex items-center gap-3 border border-iron/15 bg-bone p-4 text-sm transition-colors hover:border-brass"
+                    className="lift group/c flex items-center gap-3 border border-foreground/15 bg-card p-4 text-sm transition-colors hover:border-brass"
                   >
                     <Icon name="download" size={18} className="text-brass" />
-                    <span className="flex-1 truncate text-iron group-hover/c:text-brass">
+                    <span className="flex-1 truncate text-foreground group-hover/c:text-brass">
                       Download {row.companionLabel || "the study"}
                     </span>
-                    <span className="text-[0.625rem] uppercase tracking-wider text-iron/45">
+                    <span className="text-[0.625rem] uppercase tracking-wider text-muted-foreground">
                       File
                     </span>
                   </a>
@@ -349,8 +349,8 @@ export default async function ResourceDetailPage({
 
           {/* Print-only footer. Same brand bar logic as the letterhead.
            *  Hidden on screen, revealed by @media print. */}
-          <footer className="print-footer mt-16 hidden border-t-2 border-iron pt-3">
-            <div className="flex items-center justify-between text-[0.625rem] uppercase tracking-[0.18em] text-iron/65">
+          <footer className="print-footer mt-16 hidden border-t-2 border-foreground pt-3">
+            <div className="flex items-center justify-between text-[0.625rem] uppercase tracking-[0.18em] text-muted-foreground">
               <span className="flex items-center gap-2">
                 <Image
                   src="/logo.png"
@@ -366,7 +366,7 @@ export default async function ResourceDetailPage({
                 Printed {format(new Date(), "MMMM d, yyyy")}
               </span>
             </div>
-            <p className="mt-2 font-pullquote text-[0.6875rem] italic text-iron/55">
+            <p className="mt-2 font-pullquote text-[0.6875rem] italic text-muted-foreground">
               Anchored in Acts 20:28. Free to read, free to share, please don&rsquo;t resell.
             </p>
           </footer>
@@ -398,8 +398,8 @@ function BookCard({
   summary: string | null;
 }) {
   return (
-    <div className="grid gap-6 border border-iron/15 bg-bone p-6 sm:grid-cols-[180px_1fr] md:p-8">
-      <div className="relative aspect-[2/3] w-full overflow-hidden border border-iron/10 bg-iron/5">
+    <div className="grid gap-6 border border-foreground/15 bg-card p-6 sm:grid-cols-[180px_1fr] md:p-8">
+      <div className="relative aspect-[2/3] w-full overflow-hidden border border-foreground/10 bg-foreground/5">
         {thumbnailUrl ? (
           <Image
             src={thumbnailUrl}
@@ -410,21 +410,21 @@ function BookCard({
             unoptimized
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-iron/30">
+          <div className="flex h-full items-center justify-center text-muted-foreground">
             <Icon name="scroll" size={36} />
           </div>
         )}
       </div>
       <div className="flex flex-col">
-        <span className="section-mark text-iron/50">§ The Book</span>
-        <h2 className="display-xl mt-3 text-2xl text-iron md:text-3xl">{title}</h2>
+        <span className="section-mark text-muted-foreground">§ The Book</span>
+        <h2 className="display-xl mt-3 text-2xl text-foreground md:text-3xl">{title}</h2>
         {author && (
-          <p className="mt-2 font-pullquote text-base italic text-iron/65">
+          <p className="mt-2 font-pullquote text-base italic text-muted-foreground">
             by {author}
           </p>
         )}
         {summary && (
-          <p className="mt-4 text-sm leading-relaxed text-iron/75">{summary}</p>
+          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">{summary}</p>
         )}
         {buyUrl && (
           <div className="mt-auto pt-6">
@@ -432,7 +432,7 @@ function BookCard({
               href={buyUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="lift inline-flex h-11 items-center gap-2 border border-bone bg-iron px-5 text-xs font-medium uppercase tracking-wider text-bone transition-colors hover:bg-iron/85"
+              className="lift inline-flex h-11 items-center gap-2 bg-foreground px-5 text-xs font-medium uppercase tracking-wider text-background transition-colors hover:bg-foreground/85"
             >
               <Icon name="arrow-up-right" size={14} />
               Buy on Amazon
@@ -460,10 +460,10 @@ function LinkCard({
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      className="lift block border border-iron/15 bg-bone transition-colors hover:border-brass"
+      className="lift block border border-foreground/15 bg-card transition-colors hover:border-brass"
     >
       {thumbnailUrl && (
-        <div className="relative aspect-[16/9] w-full overflow-hidden bg-iron/5">
+        <div className="relative aspect-[16/9] w-full overflow-hidden bg-foreground/5">
           <Image
             src={thumbnailUrl}
             alt=""
@@ -476,8 +476,8 @@ function LinkCard({
       )}
       <div className="flex items-center gap-4 p-6">
         <div className="flex-1">
-          <p className="section-mark text-iron/50">{host || "External link"}</p>
-          <p className="mt-2 text-base text-iron">{title}</p>
+          <p className="section-mark text-muted-foreground">{host || "External link"}</p>
+          <p className="mt-2 text-base text-foreground">{title}</p>
         </div>
         <Icon name="arrow-up-right" size={20} className="text-brass" />
       </div>

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Icon, type IconName } from "@/components/icons/Icon";
+import { Kicker } from "@/components/public/kicker";
 
 export const metadata = {
   title: "Partnerships — Sheepdog Society",
@@ -49,18 +50,13 @@ export default function PartnershipsPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-bone text-ink">
-        <div className="aurora aurora--soft" aria-hidden />
-        <div className="dotted-grid absolute inset-0 opacity-50" aria-hidden />
-        <div className="relative mx-auto max-w-7xl px-6 py-24 md:px-12 md:py-32">
-          <div className="flex items-center gap-4">
-            <span className="section-mark">§ Partnerships</span>
-            <div className="hairline flex-1" />
-          </div>
-          <h1 className="display-xl mt-10 max-w-4xl text-[clamp(2.5rem,7vw,6rem)]">
+      <section className="bg-background text-foreground">
+        <div className="mx-auto max-w-7xl px-6 py-24 md:px-12 md:py-32">
+          <Kicker left="Partnerships" />
+          <h1 className="display-xl mt-10 max-w-4xl text-display-xl">
             Five ways to plant.
             <br />
-            <span className="text-brass">One brotherhood.</span>
+            <em>One brotherhood.</em>
           </h1>
         </div>
       </section>
@@ -68,7 +64,7 @@ export default function PartnershipsPage() {
       {/* Partnership types */}
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
-          <ol className="divide-y divide-stone/15 border-y border-stone/15">
+          <ol className="divide-y divide-foreground/10 border-y border-foreground/15">
             {partnerships.map((p) => (
               <li
                 key={p.title}
@@ -84,10 +80,10 @@ export default function PartnershipsPage() {
                   className="text-brass md:mt-1"
                 />
                 <div className="md:max-w-2xl">
-                  <h2 className="display-xl text-2xl text-foreground md:text-4xl">
+                  <h2 className="display-soft text-display-md">
                     {p.title}
                   </h2>
-                  <p className="mt-4 text-base leading-relaxed text-stone md:text-lg">
+                  <p className="mt-4 text-base leading-relaxed text-muted-foreground md:text-lg">
                     {p.copy}
                   </p>
                 </div>
@@ -105,7 +101,7 @@ export default function PartnershipsPage() {
       </section>
 
       {/* CTA */}
-      <section className="bg-bone text-ink">
+      <section className="bg-background text-foreground">
         <div className="mx-auto max-w-5xl px-6 py-28 text-center md:px-12 md:py-40">
           <Icon
             name="hands"
@@ -113,15 +109,15 @@ export default function PartnershipsPage() {
             strokeWidth={2}
             className="mx-auto text-brass"
           />
-          <h2 className="display-xl mt-10 text-3xl md:text-5xl">
+          <h2 className="display-xl mt-10 text-display-lg">
             Bring the brotherhood
             <br />
-            <span className="text-brass">to your community.</span>
+            <em>to your community.</em>
           </h2>
           <div className="mt-12">
             <Link
               href="/contact"
-              className="lift inline-flex h-12 items-center gap-2 border border-iron bg-background px-8 text-base font-medium text-foreground transition-colors hover:bg-background/90"
+              className="lift inline-flex h-12 items-center gap-2 bg-foreground px-7 text-base font-medium text-background"
             >
               Start the conversation
               <Icon name="arrow-right" size={18} />

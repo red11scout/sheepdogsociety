@@ -1,4 +1,6 @@
 import { Icon } from "@/components/icons/Icon";
+import { Kicker } from "@/components/public/kicker";
+import { StaggerReveal } from "@/components/motion/StaggerReveal";
 
 export const metadata = {
   title: "About — Sheepdog Society",
@@ -10,19 +12,15 @@ export default function AboutPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-bone text-ink">
-        <div className="dotted-grid absolute inset-0 opacity-50" aria-hidden />
-        <div className="relative mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
-          <div className="flex items-center gap-4">
-            <span className="section-mark">§ About &middot; The Watch</span>
-            <div className="hairline flex-1" />
-          </div>
-          <h1 className="display-xl mt-10 max-w-4xl text-[clamp(2.5rem,7vw,6.5rem)]">
+      <section className="bg-background text-foreground">
+        <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
+          <Kicker left="About · The Watch" />
+          <h1 className="display-xl mt-10 max-w-4xl text-display-xl">
             A brotherhood,
             <br />
-            <span className="text-brass">rooted and ready.</span>
+            <em>rooted and ready.</em>
           </h1>
-          <p className="mt-10 max-w-2xl font-pullquote text-xl italic leading-relaxed text-iron/70 md:text-2xl">
+          <p className="mt-10 max-w-2xl font-pullquote text-lede italic leading-relaxed text-muted-foreground">
             Men of faith, honorable values, prepared in every aspect of life. We
             protect our families. We sharpen each other. We follow Christ.
           </p>
@@ -33,13 +31,12 @@ export default function AboutPage() {
       <section className="bg-background text-foreground">
         <div className="mx-auto grid max-w-7xl gap-12 px-6 py-28 md:grid-cols-[2fr_3fr] md:gap-20 md:px-12 md:py-40">
           <div>
-            <span className="section-mark">§ I &middot; Mission</span>
-            <div className="hairline mt-3" />
-            <h2 className="display-xl mt-8 text-4xl text-foreground md:text-5xl">
+            <Kicker left="I · Mission" />
+            <h2 className="display-xl mt-8 text-display-lg">
               Our mission.
             </h2>
           </div>
-          <p className="font-pullquote text-xl leading-relaxed text-stone md:text-2xl">
+          <p className="font-pullquote text-xl leading-relaxed text-muted-foreground md:text-2xl">
             We are a brotherhood of like-minded men, rooted in honorable
             Christian values, driven to be prepared in every aspect of life. We
             protect our faith, our families, ourselves, and anyone in need. We
@@ -49,26 +46,24 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Foundation */}
-      <section className="bg-bone text-ink">
+      {/* Foundation: the page's one dark interlude */}
+      <section className="ember-band">
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
-          <div className="flex items-center gap-4">
-            <span className="section-mark">§ II &middot; Foundation</span>
-            <div className="hairline flex-1" />
-          </div>
+          <Kicker left="II · Foundation" />
           <div className="mt-10 grid gap-12 md:grid-cols-[2fr_3fr] md:gap-20">
-            <h2 className="display-xl text-4xl md:text-6xl">
+            <h2 className="display-xl text-display-lg">
               Acts 20:28.
               <br />
-              <span className="text-brass">The verse we live by.</span>
+              <em>The verse we live by.</em>
             </h2>
             <div className="space-y-6">
-              <blockquote className="border-l-2 border-brass pl-6 font-pullquote text-2xl italic leading-relaxed text-iron md:text-3xl">
+              <p className="section-mark">§ Acts 20:28</p>
+              <blockquote className="font-pullquote text-2xl italic leading-relaxed md:text-4xl">
                 Keep watch over yourselves and all the flock. Be shepherds of
                 the church of God, which he bought with his own blood.
               </blockquote>
               <p className="section-mark text-brass">Acts 20:28 &middot; ESV</p>
-              <p className="text-base leading-relaxed text-iron/70 md:text-lg">
+              <p className="text-base leading-relaxed md:text-lg">
                 A call for every man to keep watch, shepherd, train, and be
                 ready. We are called by Christ to be the shepherds over our
                 flock, our church, our families, our wives, our kids. This is
@@ -83,17 +78,14 @@ export default function AboutPage() {
       {/* Leadership Model */}
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
-          <div className="flex items-center gap-4">
-            <span className="section-mark">§ III &middot; Leadership</span>
-            <div className="hairline flex-1" />
-          </div>
+          <Kicker left="III · Leadership" />
           <div className="mt-10 grid gap-12 md:grid-cols-[2fr_3fr] md:gap-20">
-            <h2 className="display-xl text-4xl text-foreground md:text-6xl">
+            <h2 className="display-xl text-display-lg">
               A starfish,
               <br />
-              <span className="text-brass">not a spider.</span>
+              <em>not a spider.</em>
             </h2>
-            <div className="space-y-6 text-base leading-relaxed text-stone md:text-lg">
+            <div className="space-y-6 text-base leading-relaxed text-muted-foreground md:text-lg">
               <p>
                 Our leadership revolves around no single man. It revolves around
                 Jesus Christ. We follow a decentralized model where every man is
@@ -110,16 +102,13 @@ export default function AboutPage() {
       </section>
 
       {/* What We Believe */}
-      <section className="bg-bone text-ink">
+      <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
-          <div className="flex items-center gap-4">
-            <span className="section-mark">§ IV &middot; What We Believe</span>
-            <div className="hairline flex-1" />
-          </div>
-          <h2 className="display-xl mt-10 max-w-3xl text-4xl md:text-6xl">
+          <Kicker left="IV · What We Believe" />
+          <h2 className="display-xl mt-10 max-w-3xl text-display-lg">
             Three convictions.
           </h2>
-          <div className="mt-16 grid gap-px bg-background/10 md:grid-cols-3">
+          <StaggerReveal className="mt-16 grid gap-px bg-background/10 md:grid-cols-3">
             {[
               {
                 icon: "scroll" as const,
@@ -142,7 +131,7 @@ export default function AboutPage() {
             ].map((item) => (
               <article
                 key={item.title}
-                className="spotlight lift bg-bone p-10 md:p-12"
+                className="spotlight lift bg-card border border-foreground/15 p-10 md:p-12"
               >
                 <div className="flex items-center justify-between">
                   <Icon
@@ -153,29 +142,26 @@ export default function AboutPage() {
                   />
                   <span className="section-mark">§ {item.roman}</span>
                 </div>
-                <h3 className="display-xl mt-12 text-2xl md:text-3xl">
+                <h3 className="display-soft mt-12 text-display-md">
                   {item.title}
                 </h3>
-                <p className="mt-4 max-w-xs text-base leading-relaxed text-iron/70">
+                <p className="mt-4 max-w-xs text-base leading-relaxed text-muted-foreground">
                   {item.copy}
                 </p>
               </article>
             ))}
-          </div>
+          </StaggerReveal>
         </div>
       </section>
 
       {/* Culture */}
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
-          <div className="flex items-center gap-4">
-            <span className="section-mark">§ V &middot; Our Culture</span>
-            <div className="hairline flex-1" />
-          </div>
-          <h2 className="display-xl mt-10 max-w-3xl text-4xl text-foreground md:text-6xl">
+          <Kicker left="V · Our Culture" />
+          <h2 className="display-xl mt-10 max-w-3xl text-display-lg">
             How we hold the line.
           </h2>
-          <ol className="mt-16 divide-y divide-stone/15 border-y border-stone/15">
+          <ol className="mt-16 divide-y divide-foreground/10 border-y border-foreground/15">
             {[
               {
                 roman: "I",
@@ -205,10 +191,10 @@ export default function AboutPage() {
                 <span className="section-mark text-brass md:pt-2">
                   § {item.roman}
                 </span>
-                <h3 className="display-xl col-span-1 text-2xl text-foreground md:text-3xl">
+                <h3 className="display-soft col-span-1 text-display-md">
                   {item.heading}
                 </h3>
-                <p className="col-span-2 text-base leading-relaxed text-stone md:col-span-1 md:text-lg">
+                <p className="col-span-2 text-base leading-relaxed text-muted-foreground md:col-span-1 md:text-lg">
                   {item.copy}
                 </p>
               </li>

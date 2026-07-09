@@ -139,7 +139,7 @@ export function AskTheWatch() {
               <button
                 type="submit"
                 disabled={!prompt.trim() || status === "streaming"}
-                className="lift inline-flex h-10 items-center gap-2 bg-brass px-5 text-xs font-medium uppercase tracking-[0.18em] text-ink transition-colors hover:bg-gold disabled:cursor-not-allowed disabled:opacity-40"
+                className="lift inline-flex h-10 items-center gap-2 bg-brass px-5 text-xs font-medium uppercase tracking-[0.18em] text-iron transition-colors hover:bg-gold disabled:cursor-not-allowed disabled:opacity-40"
               >
                 {status === "streaming" ? "Listening" : "Ask"}
                 {status !== "streaming" && (
@@ -206,7 +206,7 @@ export function AskTheWatch() {
               <Magnetic>
                 <Link
                   href="/groups"
-                  className="lift group inline-flex h-11 items-center gap-2 border border-bone bg-bone px-6 text-sm font-medium text-ink transition-colors hover:bg-stone"
+                  className="lift group inline-flex h-11 items-center gap-2 bg-foreground px-6 text-sm font-medium text-background transition-colors hover:bg-foreground/90"
                 >
                   Find a brother near you
                   <Icon
