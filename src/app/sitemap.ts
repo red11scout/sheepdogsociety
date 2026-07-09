@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { events, locations, resources } from "@/db/schema";
 import { and, desc, eq } from "drizzle-orm";
 import { listPublishedEncouragements } from "@/server/encouragements";
+import { BOOKS } from "@/lib/bible/books";
 
 const SITE =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.acts2028sheepdogsociety.com";
@@ -23,6 +24,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/events",
     "/letter",
     "/letter/archive",
+    "/bible",
     "/join",
     "/resources",
     "/about",
@@ -107,11 +109,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     /* degrade */
   }
 
+  // Bible: the landing plus each book's first chapter (67 URLs). NOT all
+  // 1,189 chapters: each chapter is an on-demand ESV fetch (5,000/day key
+  // budget) and a full-corpus sitemap is thin-content bait. Chapters stay
+  // crawlable via prev/next links. Pure data — no try/catch needed.
+  const bibleRoutes: MetadataRoute.Sitemap = BOOKS.map((b) => ({
+    url: `${SITE}/bible/${b.slug}/1`,
+    lastModified: now,
+  }));
+
   return [
     ...staticRoutes,
     ...groupRoutes,
     ...letterRoutes,
     ...eventRoutes,
     ...resourceRoutes,
+    ...bibleRoutes,
   ];
 }

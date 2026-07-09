@@ -36,16 +36,17 @@ NEVER `drizzle-kit push` to prod. Migrations apply via `scripts/apply-neon-migra
 - Soft delete: `deletedAt` column + partial unique indexes (`.where(deleted_at IS NULL)`); 30-day cron purge
 - Letter versions: every autosave writes a row to `letter_versions` for restore/diff
 - Resend Broadcasts: created in `publishLetter` server action; failures don't block the website publish
+- Bible reader: public + stateless at `/bible` (no bookmarks/notes/highlights). Pure data/parsers in `src/lib/bible/books.ts` (Vitest), fetch in `chapter.ts`: ESV 24h cache → WEB public-domain fallback with a visible notice. Scripture renders verbatim from the API — never edited, never AI-generated. Crossway attribution at the end of every reader page.
 
 ## Brand Voice (Jeremy)
 Pastoral, warm, direct, masculine without macho. Short Anglo-Saxon sentences. Imperative + invitation, never command. Tender and tough. NEVER: delve, leverage, navigate, robust, tapestry, journey (n.), rise, reclaim, real men, alpha, based, toxic masculinity. NEVER em-dashes when commas work. NEVER political/culture-war framing.
 
 ## Active Routes
-**Public (`(public)`):** `/`, `/groups`, `/groups/[slug]`, `/events`, `/events/[id]`, `/letter`, `/letter/[slug]`, `/letter/archive`, `/join` (single entry, ?path=start), `/stories`, `/resources`, `/resources/[slug]`, `/about`, `/faq`, `/what-to-expect`, `/how-we-gather`, `/contact`, `/giving`, `/partnerships`, `/acts-20-28`, `/privacy`, `/sms-terms`. 308s: `/locations*`→`/groups*`, `/encouragements*`→`/letter*`, `/get-started`+`/groups/start`+`/locations/request`→`/join`. `/gallery` is login-gated (admin tool; masthead tab renders for signed-in admins only). Contact: form notifies shepherd@acts2028sheepdogsociety.com (forwards to the on-duty admin).
+**Public (`(public)`):** `/`, `/groups`, `/groups/[slug]`, `/events`, `/events/[id]`, `/letter`, `/letter/[slug]`, `/letter/archive`, `/bible`, `/bible/[book]/[chapter]`, `/join` (single entry, ?path=start), `/stories`, `/resources`, `/resources/[slug]`, `/about`, `/faq`, `/what-to-expect`, `/how-we-gather`, `/contact`, `/giving`, `/partnerships`, `/acts-20-28`, `/privacy`, `/sms-terms`. 308s: `/locations*`→`/groups*`, `/encouragements*`→`/letter*`, `/get-started`+`/groups/start`+`/locations/request`→`/join`. `/gallery` is login-gated (admin tool; masthead tab renders for signed-in admins only). Contact: form notifies shepherd@acts2028sheepdogsociety.com (forwards to the on-duty admin).
 **Auth (`(auth)`):** `/admin/sign-in`, `/admin/check-email`
 **Admin (`(app)/admin`):** `/admin/dashboard`, `/admin/letters`, `/admin/letters/[id]`, `/admin/blog`, `/admin/contacts`, `/admin/devotionals`, `/admin/events`, `/admin/groups`, `/admin/locations`, `/admin/location-requests`, `/admin/newsletter`, `/admin/prayer`, `/admin/reading-plans`, `/admin/resources`, `/admin/scripture`, `/admin/testimonies`, `/admin/users`
 **SEO:** `/sitemap.xml`, `/robots.txt`
-**API:** `/api/auth/[...nextauth]`, `/api/ai/draft`, `/api/ai/improve`, `/api/ai/blog-draft`, `/api/ai/devotional`, `/api/ai/scripture-of-day`, `/api/ai/reading-plan`, `/api/webhooks/resend`, plus existing CRUD under `/api/admin/*` and public reads under `/api/public/*`
+**API:** `/api/auth/[...nextauth]`, `/api/ai/draft`, `/api/ai/improve`, `/api/ai/blog-draft`, `/api/ai/devotional`, `/api/ai/scripture-of-day`, `/api/ai/reading-plan`, `/api/webhooks/resend`, plus existing CRUD under `/api/admin/*` and public reads under `/api/public/*`, `/api/public/bible/search` (ESV keyword search; 503 without `ESV_API_KEY`). Legacy member `(app)/bible` pages + `/api/bible/*` routes removed 2026-07-09 (`src/lib/bible/index.ts`/`api-bible.ts` remain dormant, consumer-less).
 
 ## Required Env Vars
 **Auth:** `AUTH_SECRET`, `AUTH_RESEND_KEY`, `ADMIN_EMAILS`, `NEXT_PUBLIC_SITE_URL`
@@ -54,7 +55,7 @@ Pastoral, warm, direct, masculine without macho. Short Anglo-Saxon sentences. Im
 **AI:** `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` (for `gpt-image-1`, optional)
 **Maps:** `NEXT_PUBLIC_MAPBOX_TOKEN`
 **Storage:** `BLOB_READ_WRITE_TOKEN`
-**Bible:** `ESV_API_KEY`, `API_BIBLE_KEY`
+**Bible:** `ESV_API_KEY` (Prod+Dev only, NOT Preview — Preview deploys serve the WEB fallback and the search-down state by design), `API_BIBLE_KEY` (legacy, dormant)
 **Cron:** `CRON_SECRET`
 **Legacy / dead weight:** Vercel env cleaned 2026-07-08 — all `SUPABASE_*`/`NEXT_PUBLIC_SUPABASE_*` keys, the `POSTGRES_*` integration aliases, and stale branch-scoped `DATABASE_URL*` entries were removed (Clerk vars were already gone). The dormant `src/lib/supabase/*` and `src/hooks/use-realtime-messages.ts` modules remain in the repo; they read the deleted vars lazily inside functions, so builds are unaffected and only the decommissioned chat pages would error at runtime. Note: `ESV_API_KEY` and `API_BIBLE_KEY` exist in Production + Development but NOT Preview.
 
