@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Icon, type IconName } from "@/components/icons/Icon";
 import { ResourceCover } from "@/components/resources/ResourceCover";
+import { BOOKS, parseReference } from "@/lib/bible/books";
 
 interface SectionLite {
   id: string;
@@ -51,6 +52,61 @@ function uniq(xs: string[]): string[] {
   return Array.from(new Set(xs.filter(Boolean))).sort((a, b) => a.localeCompare(b));
 }
 
+// Canonical Bible ordering for the "Book of the Bible" facet. BOOKS is in
+// canon order; the first 39 are the Old Testament, the rest the New.
+const OT_COUNT = 39;
+const SLUG_INDEX = new Map(BOOKS.map((b, i) => [b.slug, i]));
+
+/**
+ * Rank a book tag by its canonical position. Resolves real-world tag
+ * variants — "Psalm 112", "Deuteronomy 32", "1 Corinthians 16", "Song Of
+ * Solomon" — to their base book via the tested reference parser, so
+ * chapter-suffixed and singular/plural forms all sort beside their book.
+ * Unrecognized tags fall to the end.
+ */
+function bookRank(tag: string): { idx: number; testament: "ot" | "nt" | "other" } {
+  const parsed = parseReference(tag);
+  const idx = parsed ? SLUG_INDEX.get(parsed.book.slug) : undefined;
+  if (idx === undefined) return { idx: Number.MAX_SAFE_INTEGER, testament: "other" };
+  return { idx, testament: idx < OT_COUNT ? "ot" : "nt" };
+}
+
+/** Dedupe + sort book tags into canonical (not alphabetical) order. */
+function orderBooks(xs: string[]): string[] {
+  const rankOf = (t: string) => bookRank(t);
+  return Array.from(new Set(xs.filter(Boolean))).sort((a, b) => {
+    const ra = rankOf(a);
+    const rb = rankOf(b);
+    const testOrder = { ot: 0, nt: 1, other: 2 } as const;
+    if (testOrder[ra.testament] !== testOrder[rb.testament]) {
+      return testOrder[ra.testament] - testOrder[rb.testament];
+    }
+    if (ra.idx !== rb.idx) return ra.idx - rb.idx;
+    return a.localeCompare(b); // ties (base book vs chapter-suffixed)
+  });
+}
+
+/**
+ * Group ordered book tags into Testament sections with non-clickable
+ * heading rows, for the desktop facet list.
+ */
+function bookFacetOptions(
+  ordered: string[]
+): { value: string; label: string; heading?: boolean }[] {
+  const out: { value: string; label: string; heading?: boolean }[] = [];
+  let lastTestament: "ot" | "nt" | "other" | null = null;
+  for (const tag of ordered) {
+    const t = bookRank(tag).testament;
+    if (t !== lastTestament) {
+      if (t === "ot") out.push({ value: "__ot", label: "Old Testament", heading: true });
+      else if (t === "nt") out.push({ value: "__nt", label: "New Testament", heading: true });
+      lastTestament = t;
+    }
+    out.push({ value: tag, label: tag });
+  }
+  return out;
+}
+
 export function ResourcesBrowser({ sections, items }: BrowserProps) {
   const [query, setQuery] = useState("");
   const [activeSectionId, setActiveSectionId] = useState<string>("");
@@ -59,7 +115,8 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
   const [activeAudience, setActiveAudience] = useState<string>("");
 
   const allTopics = useMemo(() => uniq(items.flatMap((i) => i.topics)), [items]);
-  const allBooks = useMemo(() => uniq(items.flatMap((i) => i.booksOfBible)), [items]);
+  const allBooks = useMemo(() => orderBooks(items.flatMap((i) => i.booksOfBible)), [items]);
+  const bookOptions = useMemo(() => bookFacetOptions(allBooks), [allBooks]);
   const allAudiences = useMemo(() => uniq(items.map((i) => i.audience)), [items]);
 
   const filtered = useMemo(() => {
@@ -248,7 +305,7 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
             {allBooks.length > 0 && (
               <Facet
                 title="Book of the Bible"
-                options={allBooks.map((b) => ({ value: b, label: b }))}
+                options={bookOptions}
                 value={activeBook}
                 onChange={setActiveBook}
               />
@@ -603,7 +660,7 @@ function Facet({
   onChange,
 }: {
   title: string;
-  options: { value: string; label: string }[];
+  options: { value: string; label: string; heading?: boolean }[];
   value: string;
   onChange: (v: string) => void;
 }) {
@@ -623,6 +680,16 @@ function Facet({
       </div>
       <ul className="mt-3 space-y-1">
         {options.map((opt) => {
+          if (opt.heading) {
+            return (
+              <li
+                key={opt.value}
+                className="px-2 pb-1 pt-3 text-[0.625rem] uppercase tracking-wider text-brass first:pt-0"
+              >
+                {opt.label}
+              </li>
+            );
+          }
           const active = value === opt.value;
           return (
             <li key={opt.value}>
