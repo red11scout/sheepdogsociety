@@ -193,14 +193,14 @@ export default function WhatToExpectPage() {
           </h2>
           <div className="mt-12 flex flex-col gap-4 sm:flex-row">
             <Link
-              href="/locations"
+              href="/groups"
               className="lift inline-flex h-12 items-center gap-3 bg-brass px-6 text-sm font-medium uppercase tracking-[0.18em] text-ink transition-colors hover:bg-gold"
             >
               Find a group near me
               <Icon name="arrow-right" size={16} />
             </Link>
             <Link
-              href="/locations/request"
+              href="/join?path=start"
               className="lift inline-flex h-12 items-center gap-3 border border-bone/30 px-6 text-sm font-medium uppercase tracking-[0.18em] text-foreground transition-colors hover:border-brass hover:text-brass"
             >
               Plant a group

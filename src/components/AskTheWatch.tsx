@@ -205,7 +205,7 @@ export function AskTheWatch() {
             <div className="mt-10 flex flex-wrap items-center gap-4">
               <Magnetic>
                 <Link
-                  href="/locations"
+                  href="/groups"
                   className="lift group inline-flex h-11 items-center gap-2 border border-bone bg-bone px-6 text-sm font-medium text-ink transition-colors hover:bg-stone"
                 >
                   Find a brother near you

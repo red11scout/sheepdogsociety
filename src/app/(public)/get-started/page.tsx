@@ -86,7 +86,7 @@ export default function GetStartedPage() {
               size="lg"
               className="lift h-12 rounded-none border border-iron bg-background px-8 text-base text-foreground hover:bg-background/90"
             >
-              <Link href="/locations">
+              <Link href="/groups">
                 <Icon name="map-pin" size={18} className="mr-2" />
                 Find a group
               </Link>
@@ -97,7 +97,7 @@ export default function GetStartedPage() {
               variant="outline"
               className="lift h-12 rounded-none border border-iron/30 bg-transparent px-8 text-base text-iron hover:border-iron hover:bg-background/5"
             >
-              <Link href="/locations/request">
+              <Link href="/join?path=start">
                 Start a group
                 <Icon name="arrow-right" size={18} className="ml-2" />
               </Link>
@@ -198,7 +198,7 @@ export default function GetStartedPage() {
               size="lg"
               className="lift h-12 rounded-none border border-bone bg-bone px-8 text-base text-ink hover:bg-stone"
             >
-              <Link href="/locations">
+              <Link href="/groups">
                 <Icon name="map-pin" size={18} className="mr-2" />
                 Find a group
               </Link>
@@ -209,7 +209,7 @@ export default function GetStartedPage() {
               variant="outline"
               className="lift h-12 rounded-none border border-bone/30 bg-transparent px-8 text-base text-foreground hover:border-bone hover:bg-bone/5"
             >
-              <Link href="/locations/request">
+              <Link href="/join?path=start">
                 Start a group
                 <Icon name="arrow-right" size={18} className="ml-2" />
               </Link>

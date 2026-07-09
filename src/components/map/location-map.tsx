@@ -12,6 +12,7 @@ const MAP_STYLE_LIGHT = "mapbox://styles/mapbox/light-v11";
 export type LocationPin = {
   id: string;
   name: string;
+  slug: string | null;
   latitude: string;
   longitude: string;
   city: string;
@@ -143,7 +144,7 @@ export function LocationMap({
           <h3 style="font-family: var(--font-fraunces), 'Helvetica Neue', Arial, sans-serif; font-weight: 800; font-size: 20px; line-height: 1; margin: 8px 0 0; letter-spacing: -0.01em;">${loc.name}</h3>
           ${meta ? `<div style="font-family: var(--font-jetbrains-mono), monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: ${BRASS}; margin-top: 12px;">${meta}</div>` : ""}
           ${loc.meetingPlace ? `<p style="font-size: 13px; opacity: 0.7; margin: 8px 0 0; line-height: 1.5;">${loc.meetingPlace}</p>` : ""}
-          <a href="/locations/${loc.id}" style="display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-jetbrains-mono), monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: ${BRASS}; text-decoration: none; margin-top: 14px; border-top: 1px solid rgba(199, 183, 154, 0.15); padding-top: 14px;">
+          <a href="/groups/${loc.slug ?? loc.id}" style="display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-jetbrains-mono), monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: ${BRASS}; text-decoration: none; margin-top: 14px; border-top: 1px solid rgba(199, 183, 154, 0.15); padding-top: 14px;">
             View details →
           </a>
         </div>

@@ -67,7 +67,7 @@ export function LocationsPreview() {
             <div className="flex flex-wrap gap-4">
               <Magnetic>
                 <Link
-                  href="/locations"
+                  href="/groups"
                   className="lift group inline-flex h-12 items-center gap-2 border border-bone bg-bone px-7 text-base font-medium text-ink transition-colors hover:bg-stone"
                 >
                   See every group
@@ -80,7 +80,7 @@ export function LocationsPreview() {
               </Magnetic>
               <Magnetic strength={0.18}>
                 <Link
-                  href="/locations/request"
+                  href="/join?path=start"
                   className="lift inline-flex h-12 items-center gap-2 border border-stone/30 bg-transparent px-7 text-base font-medium text-foreground transition-colors hover:border-brass hover:text-brass"
                 >
                   Plant one

@@ -267,7 +267,7 @@ export default async function EventsPage() {
               <p className="mt-3 text-iron/60">
                 Check back soon, or{" "}
                 <Link
-                  href="/locations"
+                  href="/groups"
                   className="text-brass underline decoration-brass/40 underline-offset-4 hover:text-gold"
                 >
                   find a weekly group

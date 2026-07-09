@@ -64,7 +64,7 @@ export default function HomePage() {
           <div className="mt-14 flex flex-wrap items-center gap-4">
             <Magnetic>
               <Link
-                href="/locations"
+                href="/groups"
                 className="lift group inline-flex h-12 items-center gap-3 border border-bone bg-bone px-7 text-base font-medium text-iron transition-colors hover:bg-stone"
               >
                 <Icon name="map-pin" size={18} />
