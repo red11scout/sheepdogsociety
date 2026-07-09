@@ -9,6 +9,10 @@ const schema = z.object({
   email: z.email(),
   topic: z.string().max(100).optional(),
   message: z.string().min(1).max(5000),
+  // No .max(0) — that would reject a filled honeypot at validation time,
+  // skipping the runtime check below and surfacing a visible 400 to bots
+  // instead of a silent fake-success.
+  honeypot: z.string().max(500).optional(),
 });
 
 export async function POST(request: Request) {
@@ -18,6 +22,11 @@ export async function POST(request: Request) {
 
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+    }
+
+    // Honeypot — bots fill this, humans never see it. Pretend success.
+    if (parsed.data.honeypot) {
+      return NextResponse.json({ success: true });
     }
 
     const topic = parsed.data.topic ?? "general";

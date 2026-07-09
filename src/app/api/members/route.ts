@@ -9,24 +9,42 @@ import { sendSms, SMS_OPT_IN_DISCLOSURE } from "@/lib/sms";
 
 export const runtime = "nodejs";
 
-const SignupBody = z.object({
-  name: z.string().min(1).max(120),
-  email: z.string().email().max(254),
-  phone: z.string().max(24).optional(),
-  intent: z.enum(["join", "start", "just_keep_posted"]),
-  groupId: z.string().uuid().optional(),
-  city: z.string().max(80).optional(),
-  state: z.string().max(2).optional(),
-  zip: z.string().max(10).optional(),
-  timeline: z.enum(["now", "three_months", "exploring"]).optional(),
-  note: z.string().max(2000).optional(),
-  wantsNewsletter: z.boolean().default(true),
-  wantsEvents: z.boolean().default(true),
-  wantsSms: z.boolean().default(false),
-  source: z.string().max(120).optional(),
-  honeypot: z.string().max(0).optional(), // Must be empty.
-  smsConsentTextShown: z.string().max(2000).optional(),
-});
+const SignupBody = z
+  .object({
+    name: z.string().min(1).max(120),
+    email: z.string().email().max(254),
+    phone: z.string().max(24).optional(),
+    intent: z.enum(["join", "start", "just_keep_posted"]),
+    groupId: z.string().uuid().optional(),
+    city: z.string().max(80).optional(),
+    state: z.string().max(2).optional(),
+    zip: z.string().max(10).optional(),
+    timeline: z.enum(["now", "three_months", "exploring"]).optional(),
+    note: z.string().max(2000).optional(),
+    wantsNewsletter: z.boolean().default(true),
+    wantsEvents: z.boolean().default(true),
+    wantsSms: z.boolean().default(false),
+    source: z.string().max(120).optional(),
+    // No .max(0) — that would throw a ZodError on a filled honeypot
+    // during .parse() below, skipping the runtime check further down
+    // and surfacing a visible 400 to bots instead of a silent fake-success.
+    honeypot: z.string().max(500).optional(),
+    smsConsentTextShown: z.string().max(2000).optional(),
+  })
+  // "Start a group" is meaningless without a place to start it. The UI
+  // marks city/state required for this path but neither the button's
+  // disable logic nor this schema enforced it — a start-intent signup
+  // could go through with no location at all.
+  .superRefine((data, ctx) => {
+    if (data.intent === "start") {
+      if (!data.city?.trim()) {
+        ctx.addIssue({ code: "custom", message: "City is required to start a group.", path: ["city"] });
+      }
+      if (!data.state?.trim()) {
+        ctx.addIssue({ code: "custom", message: "State is required to start a group.", path: ["state"] });
+      }
+    }
+  });
 
 export async function POST(req: Request) {
   // Parse + validate.

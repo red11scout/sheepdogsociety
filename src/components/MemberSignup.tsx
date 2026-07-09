@@ -318,7 +318,13 @@ export function MemberSignup({
       {/* Submit */}
       <button
         type="submit"
-        disabled={submitting || !terms || !name.trim() || !email.trim()}
+        disabled={
+          submitting ||
+          !terms ||
+          !name.trim() ||
+          !email.trim() ||
+          (intent === "start" && (!city.trim() || !state.trim()))
+        }
         className="lift inline-flex h-12 items-center gap-3 bg-foreground px-6 text-sm font-medium uppercase tracking-[0.18em] text-background transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-40"
       >
         {submitting ? "Sending…" : variant === "compact" ? "Save my seat" : "There is a chair"}

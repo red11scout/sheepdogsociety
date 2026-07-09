@@ -5,6 +5,7 @@ import { Icon } from "@/components/icons/Icon";
 
 export function NewsletterForm() {
   const [email, setEmail] = useState("");
+  const [honeypot, setHoneypot] = useState("");
   const [status, setStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
@@ -18,7 +19,7 @@ export function NewsletterForm() {
       const res = await fetch("/api/public/newsletter", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, honeypot }),
       });
 
       if (res.ok) {
@@ -46,9 +47,21 @@ export function NewsletterForm() {
         onSubmit={handleSubmit}
         className="flex items-center border border-stone/25 transition-colors focus-within:border-brass"
       >
+        {/* Honeypot — hidden via accessibility, not display:none (bots check that). */}
+        <label className="absolute left-[-9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
+          <span>Leave blank</span>
+          <input
+            type="text"
+            tabIndex={-1}
+            autoComplete="off"
+            value={honeypot}
+            onChange={(e) => setHoneypot(e.target.value)}
+          />
+        </label>
         <input
           type="email"
           placeholder="you@example.com"
+          maxLength={254}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required

@@ -5,26 +5,30 @@ import { Icon } from "@/components/icons/Icon";
 
 /**
  * "I'm interested" form for a group detail page. Posts to the existing
- * public interest API; the leader follows up by email. Copy preserved
- * from the retired /locations/[id] page.
+ * public interest API; the route notifies shepherd@ so a human sees
+ * every submission (this table previously had no reader at all).
  */
 export function GroupInterestForm({ locationId }: { locationId: string }) {
   const [form, setForm] = useState({ name: "", email: "", phone: "", message: "" });
+  const [honeypot, setHoneypot] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
+    setError(false);
     try {
       const res = await fetch("/api/public/locations/interest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ locationId, ...form }),
+        body: JSON.stringify({ locationId, ...form, honeypot }),
       });
       if (res.ok) setSubmitted(true);
+      else setError(true);
     } catch {
-      /* the retry is the form staying on screen */
+      setError(true);
     }
     setSubmitting(false);
   }
@@ -42,9 +46,21 @@ export function GroupInterestForm({ locationId }: { locationId: string }) {
 
   return (
     <form onSubmit={handleSubmit} className="mt-10 grid gap-6">
+      {/* Honeypot — hidden via accessibility, not display:none (bots check that). */}
+      <label className="absolute left-[-9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
+        <span>Leave blank</span>
+        <input
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+          value={honeypot}
+          onChange={(e) => setHoneypot(e.target.value)}
+        />
+      </label>
       <Field
         label="Name"
         required
+        maxLength={200}
         value={form.name}
         onChange={(v) => setForm((f) => ({ ...f, name: v }))}
       />
@@ -52,11 +68,13 @@ export function GroupInterestForm({ locationId }: { locationId: string }) {
         label="Email"
         type="email"
         required
+        maxLength={254}
         value={form.email}
         onChange={(v) => setForm((f) => ({ ...f, email: v }))}
       />
       <Field
         label="Phone (optional)"
+        maxLength={30}
         value={form.phone}
         onChange={(v) => setForm((f) => ({ ...f, phone: v }))}
       />
@@ -67,11 +85,17 @@ export function GroupInterestForm({ locationId }: { locationId: string }) {
         <textarea
           id="interest-message"
           rows={4}
+          maxLength={2000}
           value={form.message}
           onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
           className="mt-3 w-full border border-foreground/20 bg-transparent px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-foreground/40 focus:border-brass focus:outline-none"
         />
       </div>
+      {error && (
+        <p className="text-sm text-destructive">
+          That did not go through. Check your details and try again.
+        </p>
+      )}
       <div>
         <button
           type="submit"
@@ -90,12 +114,14 @@ function Field({
   label,
   required,
   type = "text",
+  maxLength,
   value,
   onChange,
 }: {
   label: string;
   required?: boolean;
   type?: string;
+  maxLength?: number;
   value: string;
   onChange: (v: string) => void;
 }) {
@@ -110,6 +136,7 @@ function Field({
         id={id}
         type={type}
         required={required}
+        maxLength={maxLength}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="mt-3 h-11 w-full border border-foreground/20 bg-transparent px-4 text-base text-foreground placeholder:text-foreground/40 focus:border-brass focus:outline-none"
