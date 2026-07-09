@@ -57,6 +57,16 @@ export default function ContactPage() {
             <br />
             <em>We read every one.</em>
           </h1>
+          <p className="mt-8 max-w-2xl text-lg text-muted-foreground">
+            Use the form below, or write us straight at{" "}
+            <a
+              href="mailto:shepherd@acts2028sheepdogsociety.com"
+              className="link-editorial font-medium text-foreground"
+            >
+              shepherd@acts2028sheepdogsociety.com
+            </a>
+            . It reaches the same watch.
+          </p>
         </div>
       </section>
 
