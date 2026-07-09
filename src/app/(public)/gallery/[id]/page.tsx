@@ -40,15 +40,15 @@ export default async function GalleryEventPage({
   if (!ev || ev.photos.length === 0) notFound();
 
   return (
-    <article className="bg-bone text-ink">
+    <article className="bg-background text-foreground">
       {/* Hero — title + meta on a wide brand band. The first photo is
        *  the dominant image; the grid below is the full set. */}
-      <header className="relative overflow-hidden bg-iron text-bone">
+      <header className="relative overflow-hidden bg-background text-foreground">
         <div className="aurora aurora--soft" aria-hidden />
         <div className="relative mx-auto max-w-5xl px-6 py-16 md:px-12 md:py-24">
           <Link
             href="/gallery"
-            className="inline-flex items-center gap-2 section-mark text-bone/55 transition-colors hover:text-brass"
+            className="inline-flex items-center gap-2 section-mark text-muted-foreground transition-colors hover:text-brass"
           >
             <Icon name="arrow-right" size={12} className="rotate-180" />
             All galleries
@@ -57,27 +57,27 @@ export default async function GalleryEventPage({
             <span className="section-mark text-brass">§ Gallery</span>
             <div className="hairline flex-1" />
           </div>
-          <h1 className="display-xl mt-8 text-[clamp(2.25rem,6vw,5rem)] text-bone">
+          <h1 className="display-xl mt-8 text-[clamp(2.25rem,6vw,5rem)] text-foreground">
             {ev.title}
           </h1>
           <dl className="mt-10 flex flex-wrap items-baseline gap-x-10 gap-y-4">
             <div>
-              <dt className="section-mark text-bone/55">When</dt>
-              <dd className="mt-1 font-display text-lg text-bone">
+              <dt className="section-mark text-muted-foreground">When</dt>
+              <dd className="mt-1 font-display text-lg text-foreground">
                 {format(ev.startTime, "EEEE, MMMM d, yyyy")}
               </dd>
             </div>
             {ev.location && (
               <div>
-                <dt className="section-mark text-bone/55">Where</dt>
-                <dd className="mt-1 font-display text-lg text-bone">
+                <dt className="section-mark text-muted-foreground">Where</dt>
+                <dd className="mt-1 font-display text-lg text-foreground">
                   {ev.location}
                 </dd>
               </div>
             )}
             <div>
-              <dt className="section-mark text-bone/55">Photos</dt>
-              <dd className="mt-1 font-display text-lg text-bone">
+              <dt className="section-mark text-muted-foreground">Photos</dt>
+              <dd className="mt-1 font-display text-lg text-foreground">
                 {ev.photos.length}
               </dd>
             </div>
@@ -89,15 +89,15 @@ export default async function GalleryEventPage({
        *  (it's the public-facing pre-event copy), recap below if the
        *  admin wrote one after the event. Both are optional. */}
       {(ev.description || ev.recap) && (
-        <section className="bg-bone">
+        <section className="bg-background">
           <div className="mx-auto max-w-3xl px-6 py-12 md:px-12 md:py-16">
             {ev.description && (
-              <p className="font-display text-lg leading-[1.7] text-iron whitespace-pre-line md:text-xl">
+              <p className="font-display text-lg leading-[1.7] text-foreground whitespace-pre-line md:text-xl">
                 {ev.description}
               </p>
             )}
             {ev.recap && (
-              <div className="mt-10 border-t border-iron/15 pt-8">
+              <div className="mt-10 border-t border-foreground/15 pt-8">
                 <div className="flex items-center gap-3">
                   <span className="section-mark text-brass">§ Recap</span>
                   <div className="hairline flex-1" />
@@ -106,7 +106,7 @@ export default async function GalleryEventPage({
                   {ev.recap.split(/\n\n+/).map((p, i) => (
                     <p
                       key={i}
-                      className="font-display text-lg leading-[1.7] text-iron"
+                      className="font-display text-lg leading-[1.7] text-foreground"
                     >
                       {p}
                     </p>
@@ -119,7 +119,7 @@ export default async function GalleryEventPage({
       )}
 
       {/* The grid + lightbox. PhotoGrid handles the magical part. */}
-      <section className="bg-bone">
+      <section className="bg-background">
         <div className="mx-auto max-w-7xl px-6 pb-20 md:px-12 md:pb-28">
           <div className="mb-6 flex items-center gap-3">
             <span className="section-mark text-brass">§ The night, in pictures</span>
@@ -130,11 +130,11 @@ export default async function GalleryEventPage({
       </section>
 
       {/* Footer CTA */}
-      <section className="bg-bone">
+      <section className="bg-background">
         <div className="mx-auto max-w-3xl px-6 pb-20 text-center md:px-12 md:pb-28">
           <Link
             href="/gallery"
-            className="lift inline-flex h-11 items-center gap-2 border border-iron/30 px-6 text-xs font-medium uppercase tracking-[0.18em] text-iron transition-colors hover:border-brass hover:text-brass"
+            className="lift inline-flex h-11 items-center gap-2 border border-foreground/30 px-6 text-xs font-medium uppercase tracking-[0.18em] text-foreground transition-colors hover:border-brass hover:text-brass"
           >
             <Icon name="arrow-right" size={12} className="rotate-180" />
             More galleries
