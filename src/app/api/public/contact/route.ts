@@ -5,10 +5,10 @@ import { z } from "zod/v4";
 import { resend, FROM_TRANSACTIONAL } from "@/lib/email";
 
 const schema = z.object({
-  name: z.string().min(1),
+  name: z.string().min(1).max(200),
   email: z.email(),
-  topic: z.string().optional(),
-  message: z.string().min(1),
+  topic: z.string().max(100).optional(),
+  message: z.string().min(1).max(5000),
 });
 
 export async function POST(request: Request) {

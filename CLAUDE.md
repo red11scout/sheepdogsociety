@@ -44,7 +44,7 @@ Pastoral, warm, direct, masculine without macho. Short Anglo-Saxon sentences. Im
 **Public (`(public)`):** `/`, `/groups`, `/groups/[slug]`, `/events`, `/events/[id]`, `/letter`, `/letter/[slug]`, `/letter/archive`, `/join` (single entry, ?path=start), `/stories`, `/resources`, `/resources/[slug]`, `/about`, `/faq`, `/what-to-expect`, `/how-we-gather`, `/contact`, `/giving`, `/partnerships`, `/acts-20-28`, `/privacy`, `/sms-terms`. 308s: `/locations*`→`/groups*`, `/encouragements*`→`/letter*`, `/get-started`+`/groups/start`+`/locations/request`→`/join`. `/gallery` is login-gated (admin tool; masthead tab renders for signed-in admins only). Contact: form notifies shepherd@acts2028sheepdogsociety.com (forwards to the on-duty admin).
 **Auth (`(auth)`):** `/admin/sign-in`, `/admin/check-email`
 **Admin (`(app)/admin`):** `/admin/dashboard`, `/admin/letters`, `/admin/letters/[id]`, `/admin/blog`, `/admin/contacts`, `/admin/devotionals`, `/admin/events`, `/admin/groups`, `/admin/locations`, `/admin/location-requests`, `/admin/newsletter`, `/admin/prayer`, `/admin/reading-plans`, `/admin/resources`, `/admin/scripture`, `/admin/testimonies`, `/admin/users`
-**SEO:** `/sitemap.xml`, `/robots.txt`, `/feed.xml`
+**SEO:** `/sitemap.xml`, `/robots.txt`
 **API:** `/api/auth/[...nextauth]`, `/api/ai/draft`, `/api/ai/improve`, `/api/ai/blog-draft`, `/api/ai/devotional`, `/api/ai/scripture-of-day`, `/api/ai/reading-plan`, `/api/webhooks/resend`, plus existing CRUD under `/api/admin/*` and public reads under `/api/public/*`
 
 ## Required Env Vars

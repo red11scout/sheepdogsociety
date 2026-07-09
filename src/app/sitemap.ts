@@ -7,6 +7,8 @@ import { listPublishedEncouragements } from "@/server/encouragements";
 const SITE =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.acts2028sheepdogsociety.com";
 
+export const revalidate = 3600;
+
 /**
  * Canonical public URLs only — every legacy path (/locations*,
  * /encouragements*, /get-started, /groups/start) 308s via next.config.ts

@@ -21,7 +21,7 @@ export async function generateMetadata({
   } catch {
     row = null;
   }
-  if (!row) return { title: "Encouragement — Sheepdog Society" };
+  if (!row) return { title: "The Letter — Sheepdog Society" };
   return {
     title: `${row.title} — Sheepdog Society`,
     description: row.intro ?? "Weekly encouragement.",

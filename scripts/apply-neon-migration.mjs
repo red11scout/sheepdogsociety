@@ -33,6 +33,17 @@ if (sqlFiles.length === 0) {
 
 console.log(`Applying ${sqlFiles.length} migration(s) from ${migrationsDir}`);
 
+// SQLSTATE codes that only ever mean "this object already exists" — safe to
+// tolerate on an idempotent re-run. Anything else (or a message that doesn't
+// mention "already exists") is a hard failure.
+const TOLERATED_SQLSTATES = new Set([
+  "42P07", // duplicate_table
+  "42701", // duplicate_column
+  "42710", // duplicate_object
+]);
+
+let hardFailures = 0;
+
 for (const file of sqlFiles) {
   const path = join(migrationsDir, file);
   const contents = await readFile(path, "utf8");
@@ -52,12 +63,25 @@ for (const file of sqlFiles) {
       console.log("OK");
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
+      const code = err && typeof err === "object" ? err.code : undefined;
+      const tolerated =
+        TOLERATED_SQLSTATES.has(code) || /already exists/i.test(msg);
       console.log(`FAIL\n     ${msg}`);
-      // Continue; many failures are "already exists" which we tolerate
-      // when re-running. A hard failure should be inspected.
+      if (tolerated) {
+        console.log("     (tolerated — idempotent re-run)");
+      } else {
+        hardFailures++;
+        console.log("     (HARD FAILURE)");
+      }
     }
   }
 }
 
 await sql.end();
+
+if (hardFailures > 0) {
+  console.log(`\nDone with ${hardFailures} hard failure(s).`);
+  process.exit(1);
+}
+
 console.log("\nDone.");
