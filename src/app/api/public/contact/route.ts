@@ -53,6 +53,20 @@ export async function POST(request: Request) {
       console.error("contact notification email failed", err);
     }
 
+    // Auto-reply to the sender — separate try/catch so a failure here
+    // never blocks the shepherd@ notification above or the response.
+    try {
+      const { error } = await resend().emails.send({
+        from: FROM_TRANSACTIONAL,
+        to: parsed.data.email,
+        subject: "We got your message",
+        text: buildContactAutoReply(parsed.data.name),
+      });
+      if (error) console.error("contact auto-reply rejected", error);
+    } catch (err) {
+      console.error("contact auto-reply failed", err);
+    }
+
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json(
@@ -60,4 +74,19 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+}
+
+function buildContactAutoReply(name: string) {
+  const first = name.trim().split(/\s+/)[0] ?? "brother";
+  return `${first},
+
+Got your message. Someone will read it and get back to you soon.
+
+If it is urgent, reply to this email and it will reach us directly.
+
+Acts 20:28
+"Pay careful attention to yourselves and to all the flock, in which the Holy Spirit has made you overseers, to care for the church of God, which he obtained with his own blood."
+
+— Sheepdog Society
+acts2028sheepdogsociety.com`;
 }

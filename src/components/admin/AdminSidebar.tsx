@@ -22,15 +22,18 @@ interface AdminSidebarProps {
   pendingCount?: number;
   pendingTestimonies?: number;
   pendingLocationRequests?: number;
+  pendingLocationInterests?: number;
 }
 
 export function AdminSidebar({
   pendingCount = 0,
   pendingTestimonies = 0,
   pendingLocationRequests = 0,
+  pendingLocationInterests = 0,
 }: AdminSidebarProps) {
   const pathname = usePathname();
-  const totalInbox = pendingCount + pendingTestimonies + pendingLocationRequests;
+  const totalInbox =
+    pendingCount + pendingTestimonies + pendingLocationRequests + pendingLocationInterests;
 
   const groups: NavGroup[] = [
     {
@@ -47,7 +50,7 @@ export function AdminSidebar({
           label: "Inbox",
           icon: "inbox",
           badge: totalInbox > 0 ? totalInbox : undefined,
-          hint: "Contact submissions, testimonies awaiting approval, group-start requests. The number is what's still unread or pending.",
+          hint: "Contact submissions, testimonies awaiting approval, group-start requests, group-interest inquiries. The number is what's still unread or pending.",
         },
       ],
     },
@@ -113,6 +116,13 @@ export function AdminSidebar({
           icon: "plus",
           badge: pendingLocationRequests > 0 ? pendingLocationRequests : undefined,
           hint: "Men asking to start a group in their city. Mark each as you respond.",
+        },
+        {
+          href: "/admin/location-interests",
+          label: "Group Interest",
+          icon: "inbox",
+          badge: pendingLocationInterests > 0 ? pendingLocationInterests : undefined,
+          hint: "Men who clicked 'I'm interested' on a group's page. Mark contacted or resolved as you follow up.",
         },
       ],
     },

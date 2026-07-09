@@ -7,9 +7,14 @@ import { z } from "zod/v4";
 
 type Params = { params: Promise<{ id: string }> };
 
-const updateSchema = z.object({
-  isRead: z.boolean(),
-});
+const updateSchema = z
+  .object({
+    isRead: z.boolean().optional(),
+    resolved: z.boolean().optional(),
+  })
+  .refine((d) => d.isRead !== undefined || d.resolved !== undefined, {
+    message: "Provide isRead and/or resolved.",
+  });
 
 export async function PATCH(req: Request, { params }: Params) {
   const { userId } = await auth();
@@ -27,9 +32,15 @@ export async function PATCH(req: Request, { params }: Params) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
+  const updates: { isRead?: boolean; resolvedAt?: Date | null } = {};
+  if (parsed.data.isRead !== undefined) updates.isRead = parsed.data.isRead;
+  if (parsed.data.resolved !== undefined) {
+    updates.resolvedAt = parsed.data.resolved ? new Date() : null;
+  }
+
   const [updated] = await db
     .update(contactSubmissions)
-    .set({ isRead: parsed.data.isRead })
+    .set(updates)
     .where(eq(contactSubmissions.id, id))
     .returning();
 

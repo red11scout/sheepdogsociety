@@ -5,6 +5,7 @@ import {
   testimonies,
   locationRequests,
   contactSubmissions,
+  locationInterests,
 } from "@/db/schema";
 import { eq, sql, and } from "drizzle-orm";
 import { redirect } from "next/navigation";
@@ -40,6 +41,11 @@ export default async function AdminLayout({
     .from(contactSubmissions)
     .where(eq(contactSubmissions.isRead, false));
 
+  const [newInterestsRow] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(locationInterests)
+    .where(eq(locationInterests.status, "new"));
+
   return (
     <AdminShell
       user={{
@@ -53,6 +59,7 @@ export default async function AdminLayout({
       pendingCount={unreadInboxRow?.count ?? 0}
       pendingTestimonies={pendingTestimoniesRow?.count ?? 0}
       pendingLocationRequests={pendingRequestsRow?.count ?? 0}
+      pendingLocationInterests={newInterestsRow?.count ?? 0}
     >
       {children}
     </AdminShell>

@@ -29,6 +29,10 @@ type DashboardStats = {
   activeSubscribers: number;
   aiGenerationsThisWeek: number;
   aiGenerationsTotal: number;
+  unresolvedContacts: number;
+  pendingLocationRequests: number;
+  newLocationInterests: number;
+  newMembers: number;
 };
 
 type RecentLetter = {
@@ -106,7 +110,12 @@ export function AdminDashboard({ greetingName = "brother" }: AdminDashboardProps
   });
 
   const inboxTotal =
-    stats.pendingTestimonies + stats.pendingUsers + (data.stats ? 0 : 0);
+    stats.pendingTestimonies +
+    stats.pendingUsers +
+    stats.unresolvedContacts +
+    stats.pendingLocationRequests +
+    stats.newLocationInterests +
+    stats.newMembers;
 
   return (
     <div className="mx-auto max-w-[1400px] px-6 py-10 md:px-12 md:py-14">
@@ -166,16 +175,30 @@ export function AdminDashboard({ greetingName = "brother" }: AdminDashboardProps
             <InboxRow
               icon="message"
               label="Contact submissions"
-              count={0}
+              count={stats.unresolvedContacts}
               href="/admin/contacts"
               hint="Open inbox"
             />
             <InboxRow
               icon="plus"
               label="Plant requests"
-              count={0}
+              count={stats.pendingLocationRequests}
               href="/admin/location-requests"
               hint="Group-start applications"
+            />
+            <InboxRow
+              icon="inbox"
+              label="Group interest"
+              count={stats.newLocationInterests}
+              href="/admin/location-interests"
+              hint="Open inbox"
+            />
+            <InboxRow
+              icon="brothers"
+              label="New member signups"
+              count={stats.newMembers}
+              href="/admin/members"
+              hint="Open inbox"
             />
           </ul>
         </div>

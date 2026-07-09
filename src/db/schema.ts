@@ -977,6 +977,11 @@ export const locationInterests = pgTable("location_interests", {
   email: text("email").notNull(),
   phone: text("phone").default(""),
   message: text("message").default(""),
+  /** "new" | "contacted" | "resolved". Plain text (matches locationRequests'
+   *  own status column) — these submissions had no admin visibility at all
+   *  until this column was added; see /admin/location-interests. */
+  status: text("status").notNull().default("new"),
+  respondedAt: timestamp("responded_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -991,6 +996,8 @@ export const contactSubmissions = pgTable("contact_submissions", {
   topic: text("topic").default("general"),
   message: text("message").notNull(),
   isRead: boolean("is_read").notNull().default(false),
+  /** Separate from isRead — a submission can be read but not yet handled. */
+  resolvedAt: timestamp("resolved_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
