@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { db } from "@/db";
-import { events, locations } from "@/db/schema";
+import { events, locations, resources } from "@/db/schema";
 import { and, desc, eq } from "drizzle-orm";
 import { listPublishedEncouragements } from "@/server/encouragements";
 
@@ -87,5 +87,29 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     /* degrade */
   }
 
-  return [...staticRoutes, ...groupRoutes, ...letterRoutes, ...eventRoutes];
+  let resourceRoutes: MetadataRoute.Sitemap = [];
+  try {
+    // isPublic=true is the /resources list gate, and a strict subset of what
+    // the detail page serves (getPublicResourceBySlug filters on slug only),
+    // so nothing listed here can 404. Soft delete sets isPublic=false, so
+    // deleted rows are excluded by the same predicate.
+    const rows = await db
+      .select({ slug: resources.slug, createdAt: resources.createdAt })
+      .from(resources)
+      .where(eq(resources.isPublic, true));
+    resourceRoutes = rows.map((r) => ({
+      url: `${SITE}/resources/${r.slug}`,
+      lastModified: r.createdAt ?? now,
+    }));
+  } catch {
+    /* degrade */
+  }
+
+  return [
+    ...staticRoutes,
+    ...groupRoutes,
+    ...letterRoutes,
+    ...eventRoutes,
+    ...resourceRoutes,
+  ];
 }
