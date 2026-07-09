@@ -442,7 +442,7 @@ function CovenantSuccess({
       </div>
 
       {/* Covenant card preview — actual share image is the OG response. */}
-      <div className="overflow-hidden border border-foreground/15 bg-card">
+      <div className="overflow-hidden border border-foreground/15 bg-iron">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={covenantUrl}
