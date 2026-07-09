@@ -7,6 +7,8 @@ import { and, asc, desc, eq, gte, isNull, lt, or, sql } from "drizzle-orm";
 import { Icon } from "@/components/icons/Icon";
 import { format } from "date-fns";
 import { cadenceLabel, type SeriesCadence } from "@/lib/events/series";
+import { Kicker } from "@/components/public/kicker";
+import { StaggerReveal } from "@/components/motion/StaggerReveal";
 
 export const revalidate = 60;
 
@@ -145,36 +147,28 @@ export default async function EventsPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-background text-foreground">
-        <div className="aurora aurora--soft" aria-hidden />
-        <div className="dotted-grid absolute inset-0 opacity-[0.04]" aria-hidden />
-        <div className="relative mx-auto max-w-5xl px-6 py-24 md:px-12 md:py-32">
-          <div className="flex items-center gap-4">
-            <span className="section-mark">§ Gatherings</span>
-            <div className="hairline flex-1" />
-          </div>
-          <h1 className="display-xl mt-10 text-[clamp(2.25rem,6vw,5rem)] text-foreground">
+      <section className="bg-background text-foreground">
+        <div className="mx-auto max-w-7xl px-6 pb-12 pt-16 md:px-10 md:pt-24">
+          <Kicker left="Gatherings" right="Come once · Come often" />
+          <h1 className="display-xl mt-10 text-display-xl">
             Bring a brother.
             <br />
-            <span className="text-brass">Bring a friend.</span>
+            <em>Bring a friend.</em>
           </h1>
-          <p className="mt-8 max-w-2xl font-pullquote text-xl italic text-foreground/80 md:text-2xl">
+          <p className="mt-8 max-w-2xl font-pullquote text-lede italic text-muted-foreground">
             Weekly tables. Monthly breakfasts. Prayer nights. Camping. The
             calendar below is what is on the books.
           </p>
         </div>
       </section>
 
-      {/* List */}
-      <section className="bg-bone">
-        <div className="mx-auto max-w-5xl px-6 py-24 md:px-12 md:py-32">
-          <div className="flex items-center gap-4">
-            <span className="section-mark text-brass">§ Upcoming</span>
-            <div className="hairline flex-1 text-iron/40" />
-          </div>
+      {/* Upcoming — ruled ledger */}
+      <section className="bg-background text-foreground">
+        <div className="mx-auto max-w-7xl px-6 pb-20 md:px-10 md:pb-28">
+          <Kicker left="Upcoming" />
 
           {upcomingItems.length > 0 ? (
-            <ul className="mt-12 divide-y divide-iron/10 border-y border-iron/10">
+            <ul className="mt-10 divide-y divide-foreground/10 border-y border-foreground/15">
               {upcomingItems.map((item) => {
                 const ev = item.row;
                 const start = new Date(ev.startTime);
@@ -182,33 +176,31 @@ export default async function EventsPage() {
                   <li key={ev.id}>
                     <Link
                       href={`/events/${ev.id}`}
-                      className="group grid gap-4 py-8 transition-colors hover:bg-background/[0.02] md:grid-cols-[140px_1fr_auto] md:items-start md:gap-8"
+                      className="group grid cursor-pointer gap-4 py-8 transition-colors hover:bg-foreground/[0.03] md:grid-cols-[140px_1fr_auto] md:items-start md:gap-8"
                     >
                       <div className="flex items-baseline gap-3 md:flex-col md:items-start md:gap-1">
-                        <span className="font-display text-3xl font-semibold text-brass">
-                          {format(start, "MMM").toUpperCase()}
+                        <span className="display-xl text-3xl text-brass-deep">
+                          {format(start, "MMM")}
                         </span>
-                        <span className="font-display text-3xl font-semibold text-iron">
+                        <span className="display-xl text-3xl">
                           {format(start, "d")}
                         </span>
                       </div>
                       <div>
                         <span className="flex flex-wrap items-center gap-3">
                           {item.kind === "series" && (
-                            <span className="section-mark text-brass">
-                              {item.label}
-                            </span>
+                            <span className="section-mark">{item.label}</span>
                           )}
                           {ev.eventType && (
-                            <span className="section-mark text-iron/50">
+                            <span className="section-mark text-muted-foreground">
                               {ev.eventType}
                             </span>
                           )}
                         </span>
-                        <h3 className="mt-2 font-display text-xl font-semibold text-iron group-hover:text-brass md:text-2xl">
+                        <h3 className="mt-2 font-display text-xl transition-colors group-hover:text-brass md:text-2xl">
                           {ev.title}
                         </h3>
-                        <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-iron/60">
+                        <div className="mt-2 flex flex-wrap items-center gap-4 text-sm text-muted-foreground">
                           <span className="inline-flex items-center gap-1.5">
                             <Icon name="clock" size={14} />
                             {format(start, "EEEE · h:mm a")}
@@ -221,22 +213,22 @@ export default async function EventsPage() {
                           )}
                         </div>
                         {ev.description && (
-                          <p className="mt-3 max-w-prose text-iron/70">
+                          <p className="mt-3 max-w-prose text-foreground/70">
                             {ev.description}
                           </p>
                         )}
                       </div>
-                      <span className="section-mark text-iron/40 group-hover:text-brass">
+                      <span className="section-mark text-muted-foreground transition-colors group-hover:text-brass">
                         Details →
                       </span>
                     </Link>
                     {item.kind === "series" && item.later.length > 0 && (
                       <details className="-mt-4 pb-6 pl-4 md:pl-[172px]">
-                        <summary className="cursor-pointer list-none section-mark text-brass/80 transition-colors hover:text-brass">
+                        <summary className="section-mark cursor-pointer list-none transition-colors hover:text-brass">
                           + {item.later.length} more date
                           {item.later.length === 1 ? "" : "s"}
                         </summary>
-                        <ul className="mt-3 space-y-2 text-sm text-iron/60">
+                        <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
                           {item.later.map((r) => (
                             <li key={r.id}>
                               <Link
@@ -255,21 +247,14 @@ export default async function EventsPage() {
               })}
             </ul>
           ) : (
-            <div className="mt-12 border border-dashed border-iron/15 p-12 text-center">
-              <Icon
-                name="calendar"
-                size={32}
-                className="mx-auto text-iron/30"
-              />
-              <p className="mt-4 font-pullquote text-xl italic text-iron/60">
+            <div className="mt-10 border border-dashed border-foreground/15 p-12 text-center">
+              <Icon name="calendar" size={32} className="mx-auto text-foreground/30" />
+              <p className="mt-4 font-pullquote text-xl italic text-muted-foreground">
                 No gatherings on the books yet.
               </p>
-              <p className="mt-3 text-iron/60">
+              <p className="mt-3 text-muted-foreground">
                 Check back soon, or{" "}
-                <Link
-                  href="/groups"
-                  className="text-brass underline decoration-brass/40 underline-offset-4 hover:text-gold"
-                >
+                <Link href="/groups" className="link-editorial text-foreground">
                   find a weekly group
                 </Link>
                 .
@@ -279,77 +264,78 @@ export default async function EventsPage() {
         </div>
       </section>
 
-      {/* Past Events — only renders sections with at least one recap'd event */}
+      {/* Past gatherings — paper-card grid (the public gallery surface) */}
       {past.length > 0 && (
-        <section className="bg-bone">
-          <div className="mx-auto max-w-7xl px-6 pb-24 md:px-12 md:pb-32">
-            <div className="flex items-center gap-4">
-              <span className="section-mark text-brass">§ Past gatherings</span>
-              <div className="hairline flex-1 text-iron/40" />
-            </div>
-            <p className="mt-4 max-w-2xl font-pullquote text-lg italic text-iron/60">
+        <section className="bg-background text-foreground">
+          <div className="mx-auto max-w-7xl px-6 pb-20 md:px-10 md:pb-28">
+            <Kicker left="Past gatherings" />
+            <p className="mt-4 max-w-2xl font-pullquote text-lg italic text-muted-foreground">
               The brothers who showed up, and what they came home with.
             </p>
-            <ul className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <StaggerReveal
+              className="mt-10 grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+              selector=":scope > a"
+            >
               {past.map((ev) => {
-                const photos = (ev.photos as Array<{ url: string; alt?: string; caption?: string }> | null) ?? [];
+                const photos =
+                  (ev.photos as Array<{ url: string; alt?: string; caption?: string }> | null) ??
+                  [];
                 const cover = photos[0];
                 const start = new Date(ev.startTime);
                 return (
-                  <li key={ev.id}>
-                    <Link
-                      href={`/events/${ev.id}`}
-                      className="lift group/past block border border-iron/10 bg-bone transition-colors hover:border-brass"
-                    >
-                      <div className="relative aspect-[4/3] w-full overflow-hidden bg-iron/5">
-                        {cover ? (
-                          <Image
-                            src={cover.url}
-                            alt={cover.alt ?? ev.title}
-                            fill
-                            sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-                            className="object-cover transition-transform duration-500 group-hover/past:scale-[1.03]"
-                            unoptimized
-                          />
-                        ) : (
-                          <div className="flex h-full items-center justify-center text-iron/25">
-                            <Icon name="calendar" size={48} />
-                          </div>
-                        )}
-                        {photos.length > 1 && (
-                          <span className="pointer-events-none absolute bottom-3 right-3 inline-flex h-6 items-center gap-1 bg-iron/85 px-2 text-[0.625rem] font-medium text-bone backdrop-blur-sm">
-                            <Icon name="image" size={10} />
-                            {photos.length} photos
-                          </span>
-                        )}
-                      </div>
-                      <div className="p-5">
-                        <p className="section-mark text-iron/55">
-                          {format(start, "MMMM d, yyyy")}
-                          {ev.eventType && <> · {ev.eventType}</>}
+                  <Link
+                    key={ev.id}
+                    href={`/events/${ev.id}`}
+                    className="paper-card lift group/past block overflow-hidden"
+                  >
+                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-foreground/5">
+                      {cover ? (
+                        <Image
+                          src={cover.url}
+                          alt={cover.alt ?? ev.title}
+                          fill
+                          sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                          className="object-cover transition-transform duration-500 group-hover/past:scale-[1.03]"
+                          unoptimized
+                        />
+                      ) : (
+                        <div className="flex h-full items-center justify-center text-foreground/25">
+                          <Icon name="calendar" size={48} />
+                        </div>
+                      )}
+                      {photos.length > 0 && (
+                        <span className="pointer-events-none absolute bottom-3 right-3 inline-flex h-6 items-center gap-1 bg-foreground/85 px-2 text-[0.625rem] uppercase tracking-[0.14em] text-background">
+                          <Icon name="image" size={10} />
+                          {photos.length} photo{photos.length === 1 ? "" : "s"}
+                        </span>
+                      )}
+                    </div>
+                    <div className="p-5">
+                      <p className="folio">
+                        {format(start, "MMMM d, yyyy")}
+                        {ev.eventType && <> · {ev.eventType}</>}
+                      </p>
+                      <h3 className="mt-2 font-display text-xl transition-colors group-hover/past:text-brass">
+                        {ev.title}
+                      </h3>
+                      {ev.recap && (
+                        <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-muted-foreground">
+                          {ev.recap}
                         </p>
-                        <h3 className="display-xl mt-2 text-lg text-iron group-hover/past:text-brass md:text-xl">
-                          {ev.title}
-                        </h3>
-                        {ev.recap && (
-                          <p className="mt-3 line-clamp-3 text-sm leading-relaxed text-iron/70">
-                            {ev.recap}
-                          </p>
-                        )}
-                        <p className="mt-4 inline-flex items-center gap-2 section-mark text-brass">
-                          See the night
-                          <Icon
-                            name="arrow-right"
-                            size={12}
-                            className="transition-transform group-hover/past:translate-x-1"
-                          />
-                        </p>
-                      </div>
-                    </Link>
-                  </li>
+                      )}
+                      <p className="section-mark mt-4 inline-flex items-center gap-2">
+                        See the night
+                        <Icon
+                          name="arrow-right"
+                          size={12}
+                          className="transition-transform group-hover/past:translate-x-1"
+                        />
+                      </p>
+                    </div>
+                  </Link>
                 );
               })}
-            </ul>
+            </StaggerReveal>
           </div>
         </section>
       )}
