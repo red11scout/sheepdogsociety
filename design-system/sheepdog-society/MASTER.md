@@ -16,7 +16,7 @@
 | `--c-ink` | `#141414` | `#EDE7DA` (as text-on-dark) | Body text |
 | `--c-brass` | `#C8932A` | `#D8A93E` (warmed) | Accent, marks, CTAs |
 | `--c-gold` | `#DBAA48` | `#E3B85C` | Hover accent |
-| `--c-oxblood` | `#7A1E1E` | `#9C3434` | Cancelled/destructive notes |
+| `--c-oxblood` | `#7A1E1E` | `#B84545` (AA-retuned) | Cancelled/destructive notes |
 | `--c-olive` | (existing) | warmed variant | Secondary accent |
 | `--c-stone` | (existing) | warmed variant | Muted text on dark |
 
@@ -46,7 +46,7 @@
 --text-display-md: clamp(1.5rem, 1.15rem + 1.8vw, 2.5rem); /* card titles */
 --text-lede:       clamp(1.125rem, 1rem + 0.6vw, 1.375rem);/* ledes/pull-quotes */
 ```
-Line-height 0.92–1.05 for display, tracking -0.015em (existing `.display-xl` values stay).
+Line-height 0.92–1.05 for display, tracking -0.018em (matches the revised Fraunces `.display-xl`).
 
 **Icons:** the custom ~60-glyph `Icon.tsx` set ONLY on public pages (consistency pass: stroke width 1.75, optical 16/20/24 sizes). Lucide stays admin-only. Never emoji as icons.
 
