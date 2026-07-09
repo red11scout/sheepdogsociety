@@ -17,8 +17,9 @@ const navLinks: NavLink[] = [
   { href: "/groups", label: "Groups" },
   { href: "/events", label: "Events" },
   { href: "/letter", label: "The Letter" },
+  { href: "/bible", label: "Bible" },
   // Gallery is an admin tool (login-gated in middleware); it is spliced
-  // in after The Letter for signed-in admins only — see `links` below.
+  // in after Bible for signed-in admins only — see `links` below.
   { href: "/resources", label: "Resources" },
   {
     href: "/about",
@@ -68,11 +69,14 @@ export function PublicNav() {
     };
   }, []);
 
+  // slice(0, 5) = Home, Groups, Events, The Letter, Bible — the Gallery
+  // tab lands between Bible and Resources. These indices MUST move when
+  // navLinks changes (Phase 3 moved them 4 -> 5 for the Bible tab).
   const links: NavLink[] = isAdmin
     ? [
-        ...navLinks.slice(0, 4),
+        ...navLinks.slice(0, 5),
         { href: "/gallery", label: "Gallery" },
-        ...navLinks.slice(4),
+        ...navLinks.slice(5),
       ]
     : navLinks;
 
