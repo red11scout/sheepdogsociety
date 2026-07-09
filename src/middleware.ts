@@ -30,6 +30,7 @@ const PUBLIC_ROUTES = [
   /^\/daily-scripture(\/.*)?$/,
   /^\/locations(\/.*)?$/,
   /^\/letter(\/.*)?$/,
+  /^\/bible(\/.*)?$/,
   /^\/devotionals(\/.*)?$/,
   /^\/groups(\/.*)?$/,
   /^\/events(\/.*)?$/,

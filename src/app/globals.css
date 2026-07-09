@@ -510,6 +510,62 @@
   }
 }
 
+/* ---- Bible reader (Phase 3) ---------------------------------------- */
+
+/* Scripture body — ONE serif reserved for the Word (Merriweather), 18px
+   on a 1.85 leading at light weight, paragraphs spaced one half-line
+   apart. The money values are BibleProject's measured anatomy
+   (phase2-design-study.md §1.2); mobile drops to 16px/1.75 (§1.7).
+   Color inherits the semantic foreground. NOT the legacy .font-scripture
+   (17px/1.8 lede serif) — that class keeps its existing consumers. */
+@utility scripture-body {
+  font-family: var(--font-merriweather), Georgia, "Times New Roman", serif;
+  font-size: 1.125rem;
+  font-weight: 300;
+  line-height: 1.85;
+  & p + p {
+    margin-top: 1.125rem;
+  }
+  @media (max-width: 40rem) {
+    font-size: 1rem;
+    line-height: 1.75;
+  }
+}
+
+/* Verse number — same serif as the body (inherited), 80% size,
+   superscript, 75% opacity, NON-interactive: present for reference,
+   invisible while reading (the BibleProject recipe). pointer-events off
+   and unselectable so copied text is clean scripture. line-height 0 keeps
+   the superscript from stretching the 1.85 leading. */
+@utility verse-num {
+  font-size: 0.8em;
+  line-height: 0;
+  vertical-align: super;
+  opacity: 0.75;
+  margin-right: 0.125em;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* Verse anchor — every numbered span carries this so the target wash can
+   fade OUT when .verse-target is removed (the transition must live on
+   the base class, not the state class). */
+@utility verse-anchor {
+  border-radius: 2px;
+  transition:
+    background-color 0.7s ease,
+    box-shadow 0.7s ease;
+}
+
+/* Verse target — the brass wash while a #v16 deep link settles. Added and
+   removed by VerseScroll. Decorative 18% alpha over the page background;
+   text stays --foreground, so no new contrast pair (check-contrast
+   unchanged — see Global Constraints). */
+@utility verse-target {
+  background-color: color-mix(in srgb, var(--color-brass) 18%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brass) 18%, transparent);
+}
+
 /* Cursor-tracked spotlight on dark cards. Pure CSS variables, no JS state. */
 .spotlight {
   position: relative;
