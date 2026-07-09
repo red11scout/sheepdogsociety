@@ -32,21 +32,25 @@ export function PlantRequestForm() {
     proposedMeetingDetails: "",
     reason: "",
   });
+  const [honeypot, setHoneypot] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
+    setError(false);
     try {
       const res = await fetch("/api/public/locations/request", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, honeypot }),
       });
       if (res.ok) setSubmitted(true);
+      else setError(true);
     } catch {
-      /* form stays on screen; user can retry */
+      setError(true);
     }
     setSubmitting(false);
   }
@@ -76,6 +80,18 @@ export function PlantRequestForm() {
 
   return (
     <form onSubmit={handleSubmit} className="grid gap-8">
+      {/* Honeypot — hidden via accessibility, not display:none (bots check that). */}
+      <label className="absolute left-[-9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
+        <span>Leave blank</span>
+        <input
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+          value={honeypot}
+          onChange={(e) => setHoneypot(e.target.value)}
+        />
+      </label>
+
       <p className="max-w-2xl font-pullquote text-lede italic text-muted-foreground">
         Two to twelve men. Weekly Scripture study. Tell us about your vision
         and we will set up a video call.
@@ -90,6 +106,7 @@ export function PlantRequestForm() {
         <Field
           label="Your name"
           required
+          maxLength={200}
           value={form.requesterName}
           onChange={(v) => update("requesterName", v)}
         />
@@ -97,6 +114,7 @@ export function PlantRequestForm() {
           label="Email"
           type="email"
           required
+          maxLength={254}
           value={form.requesterEmail}
           onChange={(v) => update("requesterEmail", v)}
         />
@@ -104,6 +122,7 @@ export function PlantRequestForm() {
 
       <Field
         label="Phone (optional)"
+        maxLength={30}
         value={form.requesterPhone}
         onChange={(v) => update("requesterPhone", v)}
       />
@@ -117,6 +136,7 @@ export function PlantRequestForm() {
         <Field
           label="City"
           required
+          maxLength={200}
           value={form.proposedCity}
           onChange={(v) => update("proposedCity", v)}
         />
@@ -150,6 +170,7 @@ export function PlantRequestForm() {
         <textarea
           id="plant-meeting"
           rows={3}
+          maxLength={2000}
           placeholder="e.g. Saturday mornings 7am at the diner on 5th"
           value={form.proposedMeetingDetails}
           onChange={(e) => update("proposedMeetingDetails", e.target.value)}
@@ -164,12 +185,19 @@ export function PlantRequestForm() {
         <textarea
           id="plant-reason"
           rows={4}
+          maxLength={2000}
           placeholder="Tell us about yourself and your vision."
           value={form.reason}
           onChange={(e) => update("reason", e.target.value)}
           className="mt-3 w-full border border-foreground/20 bg-transparent px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-foreground/40 focus:border-brass focus:outline-none"
         />
       </div>
+
+      {error && (
+        <p className="text-sm text-destructive">
+          That did not go through. Check your details and try again.
+        </p>
+      )}
 
       <div>
         <button
@@ -189,12 +217,14 @@ function Field({
   label,
   required,
   type = "text",
+  maxLength,
   value,
   onChange,
 }: {
   label: string;
   required?: boolean;
   type?: string;
+  maxLength?: number;
   value: string;
   onChange: (v: string) => void;
 }) {
@@ -209,6 +239,7 @@ function Field({
         id={id}
         type={type}
         required={required}
+        maxLength={maxLength}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="mt-3 h-11 w-full border border-foreground/20 bg-transparent px-4 text-base text-foreground placeholder:text-foreground/40 focus:border-brass focus:outline-none"

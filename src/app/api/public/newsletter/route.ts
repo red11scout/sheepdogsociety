@@ -7,6 +7,10 @@ import { resend } from "@/lib/email";
 const schema = z.object({
   email: z.email(),
   firstName: z.string().optional(),
+  // No .max(0) — that would reject a filled honeypot at validation time,
+  // skipping the runtime check below and surfacing a visible 400 to bots
+  // instead of a silent fake-success.
+  honeypot: z.string().max(500).optional(),
 });
 
 export async function POST(request: Request) {
@@ -16,6 +20,11 @@ export async function POST(request: Request) {
 
     if (!parsed.success) {
       return NextResponse.json({ error: "Invalid email" }, { status: 400 });
+    }
+
+    // Honeypot — bots fill this, humans never see it. Pretend success.
+    if (parsed.data.honeypot) {
+      return NextResponse.json({ success: true });
     }
 
     const { email, firstName } = parsed.data;
