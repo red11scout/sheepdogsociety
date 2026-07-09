@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "The Letter archive — Sheepdog Society",
-  description: "Every issue of the Letter, oldest to newest. Scripture, guidance, a word from the Watch.",
+  description: "Every issue of the Letter, newest to oldest. Scripture, guidance, a word from the Watch.",
 };
 
 export default async function LetterArchivePage() {
