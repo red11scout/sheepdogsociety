@@ -14,4 +14,4 @@
  * this exact string into `members.member_notification_prefs.sms_consent_text_shown`
  * at submit time — A2P 10DLC requires we can prove the disclosure shown.
  */
-export const SMS_OPT_IN_DISCLOSURE = `I agree to receive recurring text messages from Acts 2:28 Sheepdog Society about events, dispatches, and group updates at the number provided. Consent is not a condition of any service. Msg & data rates may apply. Msg frequency varies. Reply STOP to opt out, HELP for help. See SMS Terms (/sms-terms) and Privacy Policy (/privacy).`;
+export const SMS_OPT_IN_DISCLOSURE = `I agree to receive recurring text messages from Acts 20:28 Sheepdog Society about events, dispatches, and group updates at the number provided. Consent is not a condition of any service. Msg & data rates may apply. Msg frequency varies. Reply STOP to opt out, HELP for help. See SMS Terms (/sms-terms) and Privacy Policy (/privacy).`;

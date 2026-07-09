@@ -230,10 +230,10 @@ export function AdminHelp() {
               <p className="text-xs leading-relaxed text-stone/60">
                 Need something not covered here? Email{" "}
                 <a
-                  href="mailto:hello@acts2028sheepdogsociety.com"
+                  href="mailto:shepherd@acts2028sheepdogsociety.com"
                   className="text-brass underline decoration-brass/40 underline-offset-4 hover:text-gold"
                 >
-                  hello@acts2028sheepdogsociety.com
+                  shepherd@acts2028sheepdogsociety.com
                 </a>
                 . A real human reads it.
               </p>

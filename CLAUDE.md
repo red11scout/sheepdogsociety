@@ -6,7 +6,7 @@ A weekly editorial newsletter for Christian men, anchored in Acts 20:28. Brief a
 ## Stack
 - **Framework**: Next.js 16 (App Router, Turbopack) + TypeScript strict
 - **UI**: shadcn/ui + Tailwind CSS v4 + Radix UI + Lucide icons
-- **Brand**: Pasture & Iron palette (bone, iron, navy, brass, olive, oxblood, stone) + Fraunces (display) + Cormorant Garamond (pull-quotes/scripture) + Inter (UI/body) + Merriweather (legacy scripture class)
+- **Brand**: Pasture & Iron palette + broadsheet-editorial system (2026-07-08 elevation): Fraunces variable (display/masthead, opsz/SOFT/WONK axes), Inter (folio/UI/body), Cormorant Garamond (pull-quotes/ember-band verse), Merriweather (reader serif), JetBrains Mono (section marks). Design truth: design-system/sheepdog-society/MASTER.md. Furniture utilities are Tailwind v4 @utility (cascade-layer safe).
 - **Auth**: Auth.js v5 (NextAuth) + Resend magic-link + Drizzle adapter (allowlist via `ADMIN_EMAILS`)
 - **Database**: Neon Postgres in production (`DATABASE_URL` = pooled endpoint, host suffix `-pooler`; `DATABASE_URL_UNPOOLED` available for migrations). Wired into Vercel via the Marketplace integration so env vars sync automatically. Previous Supabase install was retired 2026-05-08.
 - **ORM**: Drizzle ORM (`src/db/schema.ts`, 38 tables)
@@ -15,7 +15,7 @@ A weekly editorial newsletter for Christian men, anchored in Acts 20:28. Brief a
 - **Editor**: Tiptap v3 (StarterKit + Underline + Link + Image + Placeholder + BubbleMenu via `@tiptap/react/menus`)
 - **Maps**: Mapbox GL + react-map-gl (Phase E geocoder/draggable-pin admin not yet built; existing `LocationMap` component covers reads)
 - **Storage**: Vercel Blob (`@vercel/blob`)
-- **Theme**: next-themes (default LIGHT for public site; members can toggle)
+- **Theme**: next-themes, defaultTheme="system" + enableSystem (2026-07-08); every public surface has true dark variants; AA gated by `npm run check:contrast` (scripts/check-contrast.mjs, both themes).
 
 ## Commands
 ```bash
@@ -41,10 +41,10 @@ NEVER `drizzle-kit push` to prod. Migrations apply via `scripts/apply-neon-migra
 Pastoral, warm, direct, masculine without macho. Short Anglo-Saxon sentences. Imperative + invitation, never command. Tender and tough. NEVER: delve, leverage, navigate, robust, tapestry, journey (n.), rise, reclaim, real men, alpha, based, toxic masculinity. NEVER em-dashes when commas work. NEVER political/culture-war framing.
 
 ## Active Routes
-**Public (`(public)`):** `/`, `/letter`, `/letter/[slug]`, `/letter/archive`, `/devotionals`, `/devotionals/[slug]`, `/groups`, `/groups/[slug]`, `/groups/start`, `/events`, `/events/[slug]`, `/resources`, `/resources/[slug]`, `/subscribe`, `/merch`, `/statement-of-faith`, `/about`, `/contact`, `/get-started`, `/giving`, `/how-we-gather`, `/faq`, `/locations` (legacy alias for /groups), `/scripture-reader`, `/daily-scripture`, `/stories`, `/partnerships`
+**Public (`(public)`):** `/`, `/groups`, `/groups/[slug]`, `/events`, `/events/[id]`, `/letter`, `/letter/[slug]`, `/letter/archive`, `/join` (single entry, ?path=start), `/stories`, `/resources`, `/resources/[slug]`, `/about`, `/faq`, `/what-to-expect`, `/how-we-gather`, `/contact`, `/giving`, `/partnerships`, `/acts-20-28`, `/privacy`, `/sms-terms`. 308s: `/locations*`→`/groups*`, `/encouragements*`→`/letter*`, `/get-started`+`/groups/start`+`/locations/request`→`/join`. `/gallery` is login-gated (admin tool; masthead tab renders for signed-in admins only). Contact: form notifies shepherd@acts2028sheepdogsociety.com (forwards to the on-duty admin).
 **Auth (`(auth)`):** `/admin/sign-in`, `/admin/check-email`
 **Admin (`(app)/admin`):** `/admin/dashboard`, `/admin/letters`, `/admin/letters/[id]`, `/admin/blog`, `/admin/contacts`, `/admin/devotionals`, `/admin/events`, `/admin/groups`, `/admin/locations`, `/admin/location-requests`, `/admin/newsletter`, `/admin/prayer`, `/admin/reading-plans`, `/admin/resources`, `/admin/scripture`, `/admin/testimonies`, `/admin/users`
-**SEO:** `/sitemap.xml`, `/robots.txt`, `/feed.xml`
+**SEO:** `/sitemap.xml`, `/robots.txt`
 **API:** `/api/auth/[...nextauth]`, `/api/ai/draft`, `/api/ai/improve`, `/api/ai/blog-draft`, `/api/ai/devotional`, `/api/ai/scripture-of-day`, `/api/ai/reading-plan`, `/api/webhooks/resend`, plus existing CRUD under `/api/admin/*` and public reads under `/api/public/*`
 
 ## Required Env Vars

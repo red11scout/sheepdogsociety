@@ -269,7 +269,7 @@ export function MemberSignup({
       </Field>
 
       {/* Notification preferences */}
-      <fieldset className="border-t border-iron/15 pt-6">
+      <fieldset className="border-t border-foreground/15 pt-6">
         <legend className="section-mark text-brass">§ Reach me</legend>
         <div className="mt-4 space-y-3">
           <Toggle checked={wantsNewsletter} onChange={setWantsNewsletter}>
@@ -285,7 +285,7 @@ export function MemberSignup({
           )}
         </div>
         {phone && wantsSms && (
-          <p className="mt-3 max-w-prose text-xs leading-relaxed text-iron/55">
+          <p className="mt-3 max-w-prose text-xs leading-relaxed text-muted-foreground">
             {SMS_OPT_IN_DISCLOSURE}
           </p>
         )}
@@ -319,13 +319,13 @@ export function MemberSignup({
       <button
         type="submit"
         disabled={submitting || !terms || !name.trim() || !email.trim()}
-        className="lift inline-flex h-12 items-center gap-3 bg-iron px-6 text-sm font-medium uppercase tracking-[0.18em] text-bone transition-colors hover:bg-iron/90 disabled:cursor-not-allowed disabled:opacity-40"
+        className="lift inline-flex h-12 items-center gap-3 bg-foreground px-6 text-sm font-medium uppercase tracking-[0.18em] text-background transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-40"
       >
         {submitting ? "Sending…" : variant === "compact" ? "Save my seat" : "There is a chair"}
         {!submitting && <Icon name="arrow-right" size={16} />}
       </button>
 
-      <p className="text-xs leading-relaxed text-iron/55">
+      <p className="text-xs leading-relaxed text-muted-foreground">
         No password. No account. We will not show up uninvited.
       </p>
     </form>
@@ -349,12 +349,12 @@ function Field({
 }) {
   return (
     <label className="block">
-      <span className="section-mark text-iron/70">
+      <span className="section-mark text-muted-foreground">
         § {label}
         {required && <span className="ml-1 text-brass">*</span>}
       </span>
       <div className="mt-2">{children}</div>
-      {hint && <p className="mt-2 text-xs leading-relaxed text-iron/55">{hint}</p>}
+      {hint && <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{hint}</p>}
     </label>
   );
 }
@@ -375,8 +375,8 @@ function Segment({
       aria-pressed={selected}
       className={`h-11 border px-4 text-sm transition-colors ${
         selected
-          ? "border-brass bg-brass text-ink"
-          : "border-iron/15 bg-transparent text-iron hover:border-brass/60"
+          ? "border-brass bg-brass text-iron"
+          : "border-foreground/15 bg-transparent text-foreground hover:border-brass/60"
       }`}
     >
       {children}
@@ -401,13 +401,13 @@ function Toggle({
         onChange={(e) => onChange(e.target.checked)}
         className="mt-1 size-4 shrink-0 cursor-pointer accent-brass"
       />
-      <span className="text-sm leading-relaxed text-iron">{children}</span>
+      <span className="text-sm leading-relaxed text-foreground">{children}</span>
     </label>
   );
 }
 
 function inputCls() {
-  return "block h-11 w-full border border-iron/15 bg-transparent px-3 text-base text-iron placeholder:text-iron/30 focus:border-brass focus:outline-none";
+  return "block h-11 w-full border border-foreground/15 bg-transparent px-3 text-base text-foreground placeholder:text-foreground/30 focus:border-brass focus:outline-none";
 }
 
 function firstNameOf(full: string): string {
@@ -433,16 +433,16 @@ function CovenantSuccess({
     <div className="space-y-10">
       <div>
         <span className="section-mark text-brass">§ A brother saved you a seat</span>
-        <h2 className="display-xl mt-4 text-[clamp(2rem,5vw,4rem)] text-iron">
+        <h2 className="display-xl mt-4 text-[clamp(2rem,5vw,4rem)] text-foreground">
           Welcome, {firstName}.
         </h2>
-        <p className="mt-6 max-w-prose font-pullquote text-xl italic text-iron/70">
+        <p className="mt-6 max-w-prose font-pullquote text-xl italic text-foreground/70">
           Check your email — a leader will follow up. In the meantime, here is your watch card. Save it. Text it to a brother who needs to hear about this.
         </p>
       </div>
 
       {/* Covenant card preview — actual share image is the OG response. */}
-      <div className="overflow-hidden border border-iron/15 bg-iron">
+      <div className="overflow-hidden border border-foreground/15 bg-iron">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
           src={covenantUrl}
@@ -455,14 +455,14 @@ function CovenantSuccess({
         <a
           href={covenantUrl}
           download={`watch-card-${firstName.toLowerCase()}.png`}
-          className="lift inline-flex h-12 items-center gap-3 bg-brass px-6 text-sm font-medium uppercase tracking-[0.18em] text-ink transition-colors hover:bg-gold"
+          className="lift inline-flex h-12 items-center gap-3 bg-brass px-6 text-sm font-medium uppercase tracking-[0.18em] text-iron transition-colors hover:bg-gold"
         >
           Save image
           <Icon name="download" size={16} />
         </a>
         <a
           href={`sms:?&body=${encodeURIComponent(shareText)}`}
-          className="lift inline-flex h-12 items-center gap-3 border border-iron px-6 text-sm font-medium uppercase tracking-[0.18em] text-iron transition-colors hover:bg-iron hover:text-bone"
+          className="lift inline-flex h-12 items-center gap-3 border border-foreground px-6 text-sm font-medium uppercase tracking-[0.18em] text-foreground transition-colors hover:bg-foreground hover:text-background"
         >
           Text a brother
           <Icon name="arrow-right" size={16} />
@@ -470,14 +470,14 @@ function CovenantSuccess({
       </div>
 
       {smsStatus === "not_configured" && (
-        <p className="text-xs leading-relaxed text-iron/55">
+        <p className="text-xs leading-relaxed text-muted-foreground">
           Heads up: text reminders are still being set up. We logged your
           preference and will start sending them once Twilio approves us. You
           will get the email reminders in the meantime.
         </p>
       )}
 
-      <p className="border-t border-iron/15 pt-6 text-xs leading-relaxed text-iron/55">
+      <p className="border-t border-foreground/15 pt-6 text-xs leading-relaxed text-muted-foreground">
         You can update preferences or unsubscribe from any email we send.
         Reply STOP to any text we send. We will not show up uninvited.
       </p>

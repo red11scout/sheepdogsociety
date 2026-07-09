@@ -8,9 +8,9 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-inter);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-jetbrains-mono);
   --font-scripture: var(--font-merriweather);
-  --font-display: var(--font-barlow-condensed);
+  --font-display: var(--font-fraunces);
   --font-pullquote: var(--font-cormorant);
   --font-mark: var(--font-jetbrains-mono);
 
@@ -30,6 +30,18 @@
   --color-olive: var(--c-olive);
   --color-oxblood: var(--c-oxblood);
   --color-stone: var(--c-stone);
+
+  /** Darker brass for small-type marks (.section-mark, kicker accents).
+   *  Raw brass #C8932A fails AA for small text on parchment; MASTER.md
+   *  reserves it for fills, icons, and >=18px semibold. */
+  --color-brass-deep: var(--c-brass-deep);
+
+  /* Fluid editorial type scale (MASTER.md). Tailwind v4 turns --text-*
+     theme tokens into text-display-xl etc. utilities. */
+  --text-display-xl: clamp(2.5rem, 1.2rem + 6vw, 6rem);
+  --text-display-lg: clamp(2rem, 1.1rem + 4vw, 4rem);
+  --text-display-md: clamp(1.5rem, 1.15rem + 1.8vw, 2.5rem);
+  --text-lede: clamp(1.125rem, 1rem + 0.6vw, 1.375rem);
 
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -71,17 +83,17 @@
   --radius-4xl: calc(var(--radius) + 16px);
 }
 
-/* Pasture & Iron — public site keeps iron/bone/cream/ink as CONSTANTS so
-   editorial cards stay editorial:
-     - bg-iron text-bone   = always-dark hero card (e.g. /letter hero)
-     - bg-bone text-iron   = always-light card with dark text (buttons, cards)
-     - bg-cream text-ink   = lightest paper with constant deep ink
-     - bg-brass text-ink   = brass amber CTA with constant ink (AA contrast)
-   The PAGE background still flips via shadcn's --background token below
-   (body bg + text-foreground), so light mode reads as a light page with
-   intentional dark editorial cards on it, dark mode reads as a deep ink
-   page with intentional light cards. Brass / navy / olive / oxblood /
-   stone are theme-aware to warm at low candlelight in dark mode. */
+/* Pasture & Iron — TRUE dual theme (Phase 2). The old contract pinned
+   iron/bone/cream/ink as constants so editorial cards stayed light in
+   dark mode; that is retired on public pages (spec §2, MASTER.md).
+     - iron  stays constant (deep ink surface + paper-card shadow color)
+     - bone/cream flip to raised iron surfaces in dark
+     - ink   flips to light text in dark
+   New public work should prefer the semantic tokens (background/card/
+   foreground); these flips are the safety net for legacy bone/ink
+   utilities that have not been swept yet. Brass fills always pair with
+   text-iron (constant), never text-ink. brass-deep is the small-type
+   accent that passes AA on parchment. */
 :root {
   --c-iron: #0E1624;
   --c-bone: #F2EBDD;
@@ -89,17 +101,23 @@
   --c-ink: #0E1624;
   --c-navy: #1A2438;
   --c-brass: #C8932A;
+  --c-brass-deep: #856018;
   --c-gold: #DBAA48;
   --c-olive: #5A6B3E;
   --c-oxblood: #7A1E1E;
-  --c-stone: #8A8275;
+  --c-stone: #6E6754;
 }
 .dark {
+  --c-bone: #1A2433;
+  --c-cream: #202C40;
+  --c-ink: #EDE7DA;
   --c-navy: #0B111C;
   --c-brass: #D9A53A;
+  --c-brass-deep: #D9A53A;
   --c-gold: #E5B856;
   --c-olive: #7A8C56;
-  --c-oxblood: #A33333;
+  /* Lightened from #A33333 so oxblood display <em>s clear 3:1 on iron. */
+  --c-oxblood: #B84545;
   --c-stone: #C7BFAE;
 }
 
@@ -114,6 +132,8 @@
 .dark .admin-shell {
   --c-iron: #0E1624;
   --c-bone: #F2EBDD;
+  --c-cream: #F8F2E2;
+  --c-ink: #0E1624;
   --c-stone: #C7BFAE;
 }
 
@@ -199,6 +219,10 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-brass);
+    outline-offset: 2px;
   }
 }
 
@@ -297,17 +321,6 @@
   }
 }
 
-/* Hero-scale headline kerning — Barlow Condensed responds well to tight
-   tracking at large sizes. (Replaced the Fraunces opsz/SOFT/WONK
-   variation tricks; Barlow Condensed is a static face.) */
-.display-xl {
-  font-feature-settings: "kern", "liga";
-}
-.display-soft {
-  font-feature-settings: "kern";
-  letter-spacing: -0.005em;
-}
-
 /* Glass card — semi-transparent on iron, hairline brass border, lift on hover. */
 .glass-card {
   background: color-mix(in oklab, var(--color-bone) 4%, transparent);
@@ -352,14 +365,14 @@
   background-size: 24px 24px;
 }
 
-/* Section mark — mono small-caps label sitting above a hairline rule. */
-.section-mark {
+/* Section mark — mono small-caps label. brass-deep for AA on parchment. */
+@utility section-mark {
   font-family: var(--font-jetbrains-mono), ui-monospace, monospace;
   font-size: 0.6875rem;
   font-weight: 500;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: color-mix(in oklab, var(--color-brass) 100%, transparent);
+  color: var(--color-brass-deep);
 }
 
 /* Hairline rule — 1px @ low opacity, paired with a section-mark above. */
@@ -368,29 +381,133 @@
   background: color-mix(in oklab, currentColor 14%, transparent);
 }
 
-/* Display headline — Barlow Condensed Black, poster-tight tracking,
-   compressed line-height so multi-line hero copy reads as one block.
-   Headlines should feel commanding, not pretty. */
-.display-xl {
-  font-family: var(--font-barlow-condensed), "Helvetica Neue", Arial, sans-serif;
-  font-weight: 900;
-  letter-spacing: -0.015em;
-  line-height: 0.92;
-  text-transform: none;
+/* Display headline — Fraunces variable at high optical size with the
+   wonky cut (opsz 144 / SOFT 30 / WONK 1). The emphasized word of a
+   headline is an <em>: Fraunces italic in oxblood, per the prototype.
+   @utility (not plain CSS) so stacked utilities can override — see the
+   cascade-layer comment in the plan / commit body. */
+@utility display-xl {
+  font-family: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  font-variation-settings: "opsz" 144, "SOFT" 30, "WONK" 1;
+  font-weight: 560;
+  letter-spacing: -0.018em;
+  line-height: 1;
+  font-feature-settings: "kern", "liga";
+  & em {
+    font-style: italic;
+    color: var(--color-oxblood);
+  }
 }
 
-/* Brand wordmark — softer than display-xl. Barlow Condensed at 600
-   (semibold, not black) with a touch more tracking so it reads as a
-   wordmark, not a billboard. Used wherever "Sheepdog Society" appears
-   as the brand lockup (nav, footer, admin sidebar, print letterhead).
-   The bolder display-xl was hard to read at small sizes — it
-   collapsed into a dense black blob next to the shield logo. */
-.brand-wordmark {
-  font-family: var(--font-barlow-condensed), "Helvetica Neue", Arial, sans-serif;
+/* Detail-page H1s — the calmer Fraunces cut (opsz 100 / SOFT 60 / WONK 0). */
+@utility display-soft {
+  font-family: var(--font-fraunces), Georgia, "Times New Roman", serif;
+  font-variation-settings: "opsz" 100, "SOFT" 60, "WONK" 0;
+  font-weight: 500;
+  letter-spacing: -0.008em;
+  line-height: 1.06;
+  font-feature-settings: "kern";
+  & em {
+    font-style: italic;
+    color: var(--color-oxblood);
+  }
+}
+
+/* Brand wordmark — Fraunces 600 at wordmark optical size. Used wherever
+   "Sheepdog Society" appears as the lockup (masthead, nav, footer,
+   admin sidebar, print letterhead). */
+@utility brand-wordmark {
+  font-family: var(--font-fraunces), Georgia, "Times New Roman", serif;
   font-weight: 600;
-  letter-spacing: 0.01em;
+  font-variation-settings: "opsz" 40, "SOFT" 20, "WONK" 0;
+  letter-spacing: 0.005em;
   line-height: 1.1;
-  text-transform: none;
+}
+
+/* Folio — the newspaper's small print. Inter 11px, tracked wide,
+   uppercase, stone. Kicker rows, masthead topbar, photo meta lines. */
+@utility folio {
+  font-family: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-stone);
+}
+
+/* Drop cap — one per page, on the lede. Fraunces wonky cut in oxblood. */
+@utility dropcap {
+  &::first-letter {
+    font-family: var(--font-fraunces), Georgia, "Times New Roman", serif;
+    font-variation-settings: "opsz" 144, "WONK" 1;
+    float: left;
+    color: var(--color-oxblood);
+    font-size: 3.4em;
+    font-weight: 600;
+    line-height: 0.82;
+    padding-right: 0.09em;
+    margin-top: 0.04em;
+  }
+}
+
+/* Paper card — photo content only. Squared, hairline-bordered, brass
+   border + iron shadow on hover (iron, not ink: ink flips light in dark
+   mode and a light shadow reads as glow). Border is the semantic
+   --border, deviating from MASTER's literal "stone": Phase 2 retunes
+   stone as a TEXT color (light #C7BFAE in dark) which would glow as a
+   border; --border matches the prototype's computed card borders
+   (#d8d0c1 light / #372f25 dark). Pair with .lift. */
+@utility paper-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 0;
+  transition:
+    border-color 0.24s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  &:hover {
+    border-color: var(--color-brass);
+    box-shadow:
+      0 1px 0 var(--color-iron),
+      0 10px 30px -18px var(--color-iron);
+  }
+}
+
+/* Ember band — the one dark interlude per long page. Near-black with a
+   warm ember glow rising from the bottom edge; Cormorant verse inside.
+   Constant in both themes (already dark). Values verbatim from the
+   prototype study. Nested folio/section-mark go copper (higher
+   specificity within the utilities layer, so it wins over their base
+   colors regardless of source order). */
+@utility ember-band {
+  color: #efe7d5;
+  background:
+    radial-gradient(
+      120% 90% at 50% 118%,
+      lab(47.79 36.13 31.13 / 0.16),
+      transparent 62%
+    ),
+    #1c1610;
+  & .folio,
+  & .section-mark {
+    color: #c9834a; /* copper kicker on ember, per the prototype */
+  }
+  & em {
+    color: #efe7d5;
+  }
+}
+
+/* Editorial text link — underline offset 3px, brass on hover. */
+@utility link-editorial {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+  transition:
+    color 0.16s ease,
+    text-decoration-color 0.16s ease;
+  &:hover {
+    color: var(--color-brass);
+    text-decoration-color: var(--color-brass);
+  }
 }
 
 /* Cursor-tracked spotlight on dark cards. Pure CSS variables, no JS state. */
@@ -421,15 +538,19 @@
   z-index: 1;
 }
 
-/* Magnetic CTA — 4-6px lift, no scale, no bounce. */
+/* Lift — 2px rise over 0.18s, no scale, no bounce (prototype values).
+   Stays UNLAYERED on purpose: it is a pre-existing class composed with
+   transition-* utilities all over the site (admin included), and moving
+   it into the utilities layer would change which transition declaration
+   wins at every one of those call sites. Out of scope. */
 .lift {
   transition:
-    transform 200ms cubic-bezier(0.16, 1, 0.3, 1),
-    box-shadow 200ms cubic-bezier(0.16, 1, 0.3, 1);
+    transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   will-change: transform;
 }
 .lift:hover {
-  transform: translateY(-5px);
+  transform: translateY(-2px);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -448,7 +569,7 @@
 ==================================================================== */
 .resource-prose {
   font-family: var(--font-merriweather), Georgia, serif;
-  color: var(--color-iron, #1a1a1a);
+  color: var(--foreground);
   line-height: 1.7;
   font-size: 1.0625rem;
 }
@@ -457,10 +578,10 @@
 .resource-prose h2,
 .resource-prose h3,
 .resource-prose h4 {
-  font-family: var(--font-barlow-condensed), "Helvetica Neue", Arial, sans-serif;
-  font-weight: 800;
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 600;
   letter-spacing: -0.005em;
-  color: var(--color-iron, #1a1a1a);
+  color: var(--foreground);
   margin: 2em 0 0.5em;
   line-height: 1.05;
 }
@@ -475,7 +596,7 @@
   font-family: var(--font-cormorant), Georgia, serif;
   font-style: italic;
   font-size: 1.2rem;
-  color: rgba(0, 0, 0, 0.78);
+  color: var(--muted-foreground);
 }
 .resource-prose blockquote.intense { border-left-color: var(--color-oxblood, #6e1f1f); }
 .resource-prose ul,
@@ -493,7 +614,7 @@
 }
 .resource-prose hr {
   border: none;
-  border-top: 1px solid rgba(0, 0, 0, 0.12);
+  border-top: 1px solid var(--border);
   margin: 2.4em 0;
 }
 .resource-prose table {
@@ -504,7 +625,7 @@
 }
 .resource-prose th,
 .resource-prose td {
-  border: 1px solid rgba(0, 0, 0, 0.15);
+  border: 1px solid var(--border);
   padding: 0.5em 0.75em;
   text-align: left;
   vertical-align: top;
@@ -524,7 +645,7 @@
   font-family: var(--font-cormorant), Georgia, serif;
   font-style: italic;
   font-size: 1.25rem;
-  color: rgba(0, 0, 0, 0.7);
+  color: var(--muted-foreground);
   margin-bottom: 1.4em;
 }
 

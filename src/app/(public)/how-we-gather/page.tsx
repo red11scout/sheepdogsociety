@@ -1,6 +1,7 @@
 import { Icon } from "@/components/icons/Icon";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import { Kicker } from "@/components/public/kicker";
 
 export const metadata = {
   title: "How We Gather — Sheepdog Society",
@@ -72,19 +73,15 @@ export default function HowWeGatherPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-bone text-ink">
-        <div className="dotted-grid absolute inset-0 opacity-50" aria-hidden />
-        <div className="relative mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
-          <div className="flex items-center gap-4">
-            <span className="section-mark">§ How We Gather</span>
-            <div className="hairline flex-1" />
-          </div>
-          <h1 className="display-xl mt-10 max-w-4xl text-[clamp(2.5rem,7vw,6.5rem)]">
+      <section className="bg-background text-foreground">
+        <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
+          <Kicker left="How We Gather" />
+          <h1 className="display-xl mt-10 max-w-4xl text-display-xl">
             Four rhythms.
             <br />
-            <span className="text-brass">One brotherhood.</span>
+            <em>One brotherhood.</em>
           </h1>
-          <p className="mt-10 max-w-2xl font-pullquote text-xl italic leading-relaxed text-iron/70 md:text-2xl">
+          <p className="mt-10 max-w-2xl font-pullquote text-lede italic leading-relaxed text-muted-foreground">
             Weekly. Monthly. Quarterly. Yearly. We gather in person, eat
             together, climb together, and stand watch together.
           </p>
@@ -94,7 +91,7 @@ export default function HowWeGatherPage() {
       {/* Rhythms */}
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
-          <ol className="divide-y divide-stone/15 border-y border-stone/15">
+          <ol className="divide-y divide-foreground/10 border-y border-foreground/15">
             {rhythms.map((r) => (
               <li key={r.title} className="py-12 md:py-20">
                 <div className="grid gap-8 md:grid-cols-[120px_1fr_240px] md:gap-12">
@@ -108,15 +105,15 @@ export default function HowWeGatherPage() {
                     />
                   </div>
                   <div>
-                    <span className="section-mark text-stone/60">{r.sub}</span>
-                    <h2 className="display-xl mt-3 text-3xl text-foreground md:text-5xl">
+                    <span className="folio">{r.sub}</span>
+                    <h2 className="display-soft mt-3 text-display-md">
                       {r.title}
                     </h2>
-                    <p className="mt-6 max-w-2xl text-base leading-relaxed text-stone md:text-lg">
+                    <p className="mt-6 max-w-2xl text-base leading-relaxed text-muted-foreground md:text-lg">
                       {r.copy}
                     </p>
                     {r.notes.length > 0 && (
-                      <ul className="mt-8 space-y-2 text-sm text-stone/80">
+                      <ul className="mt-8 space-y-2 text-sm text-muted-foreground">
                         {r.notes.map((note) => (
                           <li
                             key={note}
@@ -143,25 +140,22 @@ export default function HowWeGatherPage() {
       </section>
 
       {/* Guidelines */}
-      <section className="bg-bone text-ink">
+      <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
-          <div className="flex items-center gap-4">
-            <span className="section-mark">§ Group size guidelines</span>
-            <div className="hairline flex-1" />
-          </div>
+          <Kicker left="Group size guidelines" />
           <div className="mt-10 grid gap-12 md:grid-cols-[2fr_3fr] md:gap-20">
-            <h2 className="display-xl text-4xl md:text-6xl">
+            <h2 className="display-xl text-display-lg">
               Two to twelve.
               <br />
-              <span className="text-brass">Then plant another.</span>
+              <em>Then plant another.</em>
             </h2>
             <div className="space-y-8">
               {guidelines.map((g) => (
                 <div key={g.label} className="border-l-2 border-brass pl-6">
-                  <p className="display-xl text-xl text-iron md:text-2xl">
+                  <p className="display-xl text-xl md:text-2xl">
                     {g.label}
                   </p>
-                  <p className="mt-2 text-base leading-relaxed text-iron/70">
+                  <p className="mt-2 text-base leading-relaxed text-muted-foreground">
                     {g.body}
                   </p>
                 </div>
@@ -180,31 +174,27 @@ export default function HowWeGatherPage() {
             strokeWidth={2}
             className="mx-auto text-brass"
           />
-          <h2 className="display-xl mt-10 text-3xl text-foreground md:text-5xl">
+          <h2 className="display-xl mt-10 text-display-lg">
             Find a group, or plant one.
           </h2>
-          <div className="mt-12 flex flex-wrap items-center justify-center gap-4">
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-6">
             <Button
               asChild
               size="lg"
-              className="lift h-12 rounded-none border border-bone bg-bone px-8 text-base text-ink hover:bg-stone"
+              className="lift h-12 rounded-none bg-foreground px-7 text-base font-medium text-background hover:bg-foreground/90"
             >
-              <Link href="/locations">
+              <Link href="/groups">
                 <Icon name="map-pin" size={18} className="mr-2" />
                 Find a group
               </Link>
             </Button>
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="lift h-12 rounded-none border border-bone/30 bg-transparent px-8 text-base text-foreground hover:border-bone hover:bg-bone/5"
+            <Link
+              href="/join?path=start"
+              className="link-editorial inline-flex items-center gap-2 text-base"
             >
-              <Link href="/locations/request">
-                Start a group
-                <Icon name="arrow-right" size={18} className="ml-2" />
-              </Link>
-            </Button>
+              Start a group
+              <Icon name="arrow-right" size={18} />
+            </Link>
           </div>
         </div>
       </section>

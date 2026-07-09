@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Icon, type IconName } from "@/components/icons/Icon";
 import { Spotlight } from "@/components/motion/Spotlight";
+import { Kicker } from "@/components/public/kicker";
 
 export const metadata = {
   title: "Give — Sheepdog Society",
@@ -39,18 +40,13 @@ export default function GivingPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-bone text-ink">
-        <div className="aurora aurora--soft" aria-hidden />
-        <div className="dotted-grid absolute inset-0 opacity-50" aria-hidden />
-        <div className="relative mx-auto max-w-7xl px-6 py-24 md:px-12 md:py-32">
-          <div className="flex items-center gap-4">
-            <span className="section-mark">§ Give</span>
-            <div className="hairline flex-1" />
-          </div>
-          <h1 className="display-xl mt-10 max-w-4xl text-[clamp(2.5rem,7vw,6rem)]">
+      <section className="bg-background text-foreground">
+        <div className="mx-auto max-w-7xl px-6 py-24 md:px-12 md:py-32">
+          <Kicker left="Give" />
+          <h1 className="display-xl mt-10 max-w-4xl text-display-xl">
             Fuel the brotherhood.
             <br />
-            <span className="text-brass">Support the mission.</span>
+            <em>Support the mission.</em>
           </h1>
         </div>
       </section>
@@ -58,17 +54,14 @@ export default function GivingPage() {
       {/* Why we give */}
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
-          <div className="flex items-center gap-4">
-            <span className="section-mark">§ Why we give</span>
-            <div className="hairline flex-1" />
-          </div>
+          <Kicker left="Why we give" />
           <div className="mt-10 grid gap-12 md:grid-cols-[2fr_3fr] md:gap-20">
-            <h2 className="display-xl text-4xl text-foreground md:text-6xl">
+            <h2 className="display-xl text-display-lg">
               Always free
               <br />
-              <span className="text-brass">for every man.</span>
+              <em>for every man.</em>
             </h2>
-            <div className="space-y-6 text-base leading-relaxed text-stone md:text-lg">
+            <div className="space-y-6 text-base leading-relaxed text-muted-foreground md:text-lg">
               <p>
                 Sheepdog Society is free for every man who walks through the
                 door. Always has been. Always will be.
@@ -91,13 +84,10 @@ export default function GivingPage() {
       </section>
 
       {/* Ways to give */}
-      <section className="bg-bone text-ink">
+      <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
-          <div className="flex items-center gap-4">
-            <span className="section-mark">§ Ways to give</span>
-            <div className="hairline flex-1" />
-          </div>
-          <h2 className="display-xl mt-10 max-w-3xl text-4xl md:text-6xl">
+          <Kicker left="Ways to give" />
+          <h2 className="display-xl mt-10 max-w-3xl text-display-lg">
             Three ways to invest.
           </h2>
           <div className="mt-16 grid gap-px bg-background/10 md:grid-cols-3">
@@ -106,7 +96,7 @@ export default function GivingPage() {
                 key={w.title}
                 size={520}
                 color="var(--color-brass)"
-                className="lift bg-bone"
+                className="lift bg-card border border-foreground/15"
               >
                 <article className="p-10 md:p-12">
                   <div className="flex items-center justify-between">
@@ -118,10 +108,10 @@ export default function GivingPage() {
                     />
                     <span className="section-mark">§ {w.roman}</span>
                   </div>
-                  <h3 className="display-xl mt-12 text-2xl text-iron md:text-3xl">
+                  <h3 className="display-soft mt-12 text-display-md">
                     {w.title}
                   </h3>
-                  <p className="mt-3 text-base leading-relaxed text-iron/70">
+                  <p className="mt-3 text-base leading-relaxed text-muted-foreground">
                     {w.copy}
                   </p>
                   <Link
@@ -142,19 +132,19 @@ export default function GivingPage() {
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-5xl px-6 py-28 text-center md:px-12 md:py-40">
           <span className="section-mark text-brass">§ Sheepdog Partners</span>
-          <h2 className="display-xl mt-6 text-3xl text-foreground md:text-5xl">
+          <h2 className="display-xl mt-6 text-display-lg">
             Churches. Organizations.
             <br />
-            <span className="text-brass">Brothers.</span>
+            <em>Brothers.</em>
           </h2>
-          <p className="mx-auto mt-8 max-w-xl font-pullquote text-xl italic leading-relaxed text-stone md:text-2xl">
+          <p className="mx-auto mt-8 max-w-xl font-pullquote text-xl italic leading-relaxed text-muted-foreground md:text-2xl">
             Our partners believe in the Sheepdog mission and stand with us
             through prayer, resources, and giving.
           </p>
           <div className="mt-12">
             <Link
               href="/contact"
-              className="lift inline-flex h-12 items-center gap-2 border border-bone bg-bone px-8 text-base font-medium text-ink transition-colors hover:bg-stone"
+              className="lift inline-flex h-12 items-center gap-2 bg-foreground px-7 text-base font-medium text-background"
             >
               Become a partner
               <Icon name="arrow-right" size={18} />

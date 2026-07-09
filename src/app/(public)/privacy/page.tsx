@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { Kicker } from "@/components/public/kicker";
 
 export const metadata: Metadata = {
   title: "Privacy — Sheepdog Society",
@@ -60,25 +61,22 @@ const SECTIONS = [
   {
     heading: "Contact",
     body: [
-      "Questions, requests, or corrections: hello@acts2028sheepdogsociety.com.",
+      "Questions, requests, or corrections: shepherd@acts2028sheepdogsociety.com.",
     ],
   },
 ] as const;
 
 export default function PrivacyPage() {
   return (
-    <section className="bg-bone">
+    <section className="bg-background text-foreground">
       <div className="mx-auto max-w-3xl px-6 py-24 md:px-12 md:py-32">
-        <div className="flex items-center gap-4">
-          <span className="section-mark text-brass">§ Privacy</span>
-          <div className="hairline flex-1 text-iron/40" />
-        </div>
-        <h1 className="display-xl mt-10 text-[clamp(2.25rem,5vw,4rem)] text-iron">
+        <Kicker left="Privacy" />
+        <h1 className="display-xl mt-10 text-display-lg">
           What we keep.
           <br />
-          <span className="text-brass">What we will not do.</span>
+          <em>What we will not do.</em>
         </h1>
-        <p className="mt-8 font-pullquote text-xl italic text-iron/70">
+        <p className="mt-8 font-pullquote text-lede italic text-muted-foreground">
           Plain English, not lawyer English. If something here seems unclear,
           email us and we will fix it.
         </p>
@@ -86,14 +84,14 @@ export default function PrivacyPage() {
         <div className="mt-16 space-y-12">
           {SECTIONS.map((s) => (
             <section key={s.heading}>
-              <h2 className="font-display text-2xl font-semibold text-iron md:text-3xl">
+              <h2 className="font-display text-2xl font-semibold md:text-3xl">
                 {s.heading}
               </h2>
               <div className="mt-4 space-y-4">
                 {s.body.map((p, i) => (
                   <p
                     key={i}
-                    className="text-lg leading-relaxed text-iron/75"
+                    className="text-lg leading-relaxed text-muted-foreground"
                   >
                     {p}
                   </p>
@@ -103,15 +101,15 @@ export default function PrivacyPage() {
           ))}
         </div>
 
-        <div className="mt-20 border-t border-iron/15 pt-8">
-          <p className="section-mark text-iron/50">
-            Last revised · April 2026
+        <div className="mt-20 border-t border-foreground/15 pt-8">
+          <p className="folio">
+            Last revised · July 2026
           </p>
-          <p className="mt-3 text-sm text-iron/60">
+          <p className="mt-3 text-sm text-muted-foreground">
             See also the{" "}
             <Link
               href="/sms-terms"
-              className="underline decoration-brass underline-offset-4 hover:text-brass"
+              className="link-editorial"
             >
               SMS Terms
             </Link>

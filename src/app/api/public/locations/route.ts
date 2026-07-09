@@ -15,6 +15,7 @@ export async function GET() {
       .select({
         id: locations.id,
         name: locations.name,
+        slug: locations.slug,
         description: locations.description,
         latitude: locations.latitude,
         longitude: locations.longitude,

@@ -136,4 +136,4 @@ export const STOP_KEYWORDS = ["STOP", "STOPALL", "UNSUBSCRIBE", "CANCEL", "END",
 export const HELP_KEYWORDS = ["HELP", "INFO"];
 export const CONFIRM_KEYWORDS = ["YES", "Y", "CONFIRM"];
 
-export const HELP_RESPONSE_TEXT = `Acts 2:28 Sheepdog Society — for support, email hello@acts2028sheepdogsociety.com. Msg & data rates may apply. Reply STOP to unsubscribe.`;
+export const HELP_RESPONSE_TEXT = `Acts 20:28 Sheepdog Society — for support, email shepherd@acts2028sheepdogsociety.com. Msg & data rates may apply. Reply STOP to unsubscribe.`;

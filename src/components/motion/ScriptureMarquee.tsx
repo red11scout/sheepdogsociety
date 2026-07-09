@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 const REFS = [
   "Acts 20:28",
-  "Romans 5:3—4",
+  "Romans 5:3-4",
   "1 Peter 5:8",
   "Ezekiel 34:11",
   "Psalm 23",

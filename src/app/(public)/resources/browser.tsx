@@ -126,7 +126,7 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
       {/* Hero — tighter padding on mobile so the search bar reaches the
        *  viewport quickly. The whole point of /resources is "find a thing
        *  fast"; a 60% viewport-height hero gets in the way. */}
-      <section className="relative overflow-hidden bg-bone text-ink">
+      <section className="relative overflow-hidden bg-background text-foreground">
         <div className="aurora aurora--soft" aria-hidden />
         <div className="dotted-grid absolute inset-0 opacity-50" aria-hidden />
         <div className="relative mx-auto max-w-7xl px-6 py-10 md:px-12 md:py-28">
@@ -137,9 +137,9 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
           <h1 className="display-xl mt-5 max-w-4xl text-[clamp(2rem,7vw,6rem)] md:mt-10">
             Take, read,
             <br />
-            <span className="text-brass">use it Tuesday.</span>
+            <span className="text-brass-deep">use it Tuesday.</span>
           </h1>
-          <p className="mt-5 max-w-2xl font-pullquote text-base italic leading-relaxed text-iron/70 md:mt-10 md:text-2xl">
+          <p className="mt-5 max-w-2xl font-pullquote text-base italic leading-relaxed text-muted-foreground md:mt-10 md:text-2xl">
             Studies, leader guides, devotionals, sermon notes. Search by topic, theme, or book of the Bible. Free. Bring it to your group.
           </p>
         </div>
@@ -155,26 +155,26 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
        *  of section pills here — that's the primary navigation move 99%
        *  of mobile users make. The remaining facets are tucked behind
        *  the MobileFilterSheet disclosure below the search. */}
-      <section className="sticky top-16 z-20 border-b border-iron/10 bg-bone/95 backdrop-blur">
+      <section className="sticky top-[61px] z-20 border-b border-foreground/10 bg-background/95 backdrop-blur">
         <div className="mx-auto max-w-7xl px-6 py-3 md:px-12 md:py-4">
           <div className="flex items-center gap-3">
             <label className="relative flex flex-1 items-center">
               <Icon
                 name="search"
                 size={16}
-                className="absolute left-3 text-iron/40"
+                className="absolute left-3 text-muted-foreground"
               />
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search resources..."
-                className="block h-11 w-full border border-iron/15 bg-white/60 pl-10 pr-9 text-sm text-iron placeholder:text-iron/40 focus:border-brass focus:outline-none"
+                className="block h-11 w-full border border-foreground/15 bg-white/60 pl-10 pr-9 text-sm text-foreground placeholder:text-foreground/40 focus:border-brass focus:outline-none"
               />
               {query && (
                 <button
                   type="button"
                   onClick={() => setQuery("")}
-                  className="absolute right-2 text-iron/40 hover:text-iron"
+                  className="absolute right-2 text-muted-foreground hover:text-foreground"
                   aria-label="Clear"
                 >
                   <Icon name="close" size={14} />
@@ -185,12 +185,12 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
               <button
                 type="button"
                 onClick={clearFilters}
-                className="hidden text-xs text-iron/55 underline-offset-4 hover:text-brass hover:underline sm:inline-flex"
+                className="hidden text-xs text-muted-foreground underline-offset-4 hover:text-brass hover:underline sm:inline-flex"
               >
                 Clear all
               </button>
             )}
-            <span className="hidden text-xs text-iron/55 sm:inline-flex">
+            <span className="hidden text-xs text-muted-foreground sm:inline-flex">
               {filtered.length} {filtered.length === 1 ? "item" : "items"}
             </span>
           </div>
@@ -235,7 +235,7 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
       </section>
 
       {/* Body: facets + grid */}
-      <section className="bg-bone text-ink">
+      <section className="bg-background text-foreground">
         <div className="mx-auto grid max-w-7xl gap-10 px-6 py-8 md:grid-cols-[260px_1fr] md:px-12 md:py-20">
           {/* Facets — desktop only. Mobile uses the pill rail + sheet above. */}
           <aside className="hidden space-y-8 md:block">
@@ -282,12 +282,12 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
           {/* Results */}
           <div className="min-w-0">
             {filtered.length === 0 ? (
-              <div className="border border-dashed border-iron/15 p-16 text-center">
+              <div className="border border-dashed border-foreground/15 p-16 text-center">
                 <Icon name="search" size={36} className="mx-auto text-brass" />
-                <h2 className="display-xl mt-6 text-2xl text-iron">
+                <h2 className="display-xl mt-6 text-2xl text-foreground">
                   Nothing matches that yet.
                 </h2>
-                <p className="mx-auto mt-3 max-w-md font-pullquote text-base italic text-iron/60">
+                <p className="mx-auto mt-3 max-w-md font-pullquote text-base italic text-muted-foreground">
                   Adjust the filters or clear them. New material is added regularly.
                 </p>
               </div>
@@ -324,17 +324,17 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
                           size={24}
                           className="text-brass"
                         />
-                        <h2 className="display-xl text-2xl text-iron md:text-3xl">
+                        <h2 className="display-xl text-2xl text-foreground md:text-3xl">
                           {section.name}
                         </h2>
                       </div>
-                      <span className="section-mark text-iron/45">
+                      <span className="section-mark text-muted-foreground">
                         {sectionItems.length}{" "}
                         {sectionItems.length === 1 ? "item" : "items"}
                       </span>
                     </div>
                     {section.description && (
-                      <p className="mt-2 max-w-2xl text-sm text-iron/65">
+                      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
                         {section.description}
                       </p>
                     )}
@@ -409,7 +409,7 @@ function SectionPill({
         "shrink-0 whitespace-nowrap border px-3 py-1.5 text-xs uppercase tracking-wider transition-colors " +
         (active
           ? "border-brass bg-brass text-iron"
-          : "border-iron/15 bg-bone text-iron/65 hover:border-brass hover:text-brass")
+          : "border-foreground/15 bg-card text-muted-foreground hover:border-brass hover:text-brass")
       }
     >
       {label}
@@ -457,7 +457,7 @@ function MobileFilterSheet({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 border border-iron/15 bg-white/60 px-3 py-2 text-xs uppercase tracking-wider text-iron/70 transition-colors hover:border-brass hover:text-brass"
+        className="flex w-full items-center justify-between gap-3 border border-foreground/15 bg-white/60 px-3 py-2 text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:border-brass hover:text-brass"
         aria-expanded={open}
       >
         <span className="flex items-center gap-2">
@@ -469,13 +469,13 @@ function MobileFilterSheet({
             </span>
           )}
         </span>
-        <span className="flex items-center gap-3 text-iron/45">
+        <span className="flex items-center gap-3 text-muted-foreground">
           <span className="normal-case tracking-normal">{count} items</span>
           <Icon name={open ? "chevron-down" : "chevron-right"} size={12} />
         </span>
       </button>
       {open && (
-        <div className="mt-2 space-y-4 border border-iron/10 bg-bone p-3">
+        <div className="mt-2 space-y-4 border border-foreground/15 bg-card p-3">
           {allBooks.length > 0 && (
             <ChipFacet title="Book of the Bible" options={allBooks} value={activeBook} onChange={onBook} />
           )}
@@ -497,7 +497,7 @@ function MobileFilterSheet({
             <button
               type="button"
               onClick={onClearAll}
-              className="text-xs text-iron/55 underline-offset-4 hover:text-brass hover:underline"
+              className="text-xs text-muted-foreground underline-offset-4 hover:text-brass hover:underline"
             >
               Clear all filters
             </button>
@@ -528,7 +528,7 @@ function ChipFacet({
 }) {
   return (
     <div>
-      <p className="mb-2 section-mark text-iron/55">{title}</p>
+      <p className="mb-2 section-mark text-muted-foreground">{title}</p>
       <div className="flex flex-wrap gap-1.5">
         {options.map((opt) => {
           const active = value === opt;
@@ -541,7 +541,7 @@ function ChipFacet({
                 "border px-2 py-1 text-[0.6875rem] uppercase tracking-wider transition-colors " +
                 (active
                   ? "border-brass bg-brass text-iron"
-                  : "border-iron/15 bg-bone text-iron/70 hover:border-brass hover:text-brass")
+                  : "border-foreground/15 bg-card text-muted-foreground hover:border-brass hover:text-brass")
               }
             >
               {labelFor ? labelFor(opt) : opt}
@@ -574,24 +574,24 @@ function ClusterDisclosure({
   const [open, setOpen] = useState(false);
   const isOpen = forceOpen || open;
   return (
-    <div className="border border-iron/10 bg-bone">
+    <div className="border border-foreground/15 bg-card">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-iron/5 md:px-5 md:py-4"
+        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-foreground/5 md:px-5 md:py-4"
         aria-expanded={isOpen}
       >
         <div className="flex items-baseline gap-3">
-          <h3 className="display-xl text-base text-iron md:text-lg">{label}</h3>
-          <span className="section-mark text-iron/40">{count}</span>
+          <h3 className="display-xl text-base text-foreground md:text-lg">{label}</h3>
+          <span className="section-mark text-muted-foreground">{count}</span>
         </div>
         <Icon
           name={isOpen ? "chevron-down" : "chevron-right"}
           size={14}
-          className="text-iron/45"
+          className="text-muted-foreground"
         />
       </button>
-      {isOpen && <div className="border-t border-iron/10 px-4 pb-5 pt-2 md:px-5">{children}</div>}
+      {isOpen && <div className="border-t border-foreground/10 px-4 pb-5 pt-2 md:px-5">{children}</div>}
     </div>
   );
 }
@@ -610,12 +610,12 @@ function Facet({
   return (
     <div>
       <div className="flex items-center justify-between">
-        <span className="section-mark text-iron/55">{title}</span>
+        <span className="section-mark text-muted-foreground">{title}</span>
         {value && (
           <button
             type="button"
             onClick={() => onChange("")}
-            className="text-[0.625rem] uppercase tracking-wider text-iron/45 hover:text-brass"
+            className="text-[0.625rem] uppercase tracking-wider text-muted-foreground hover:text-brass"
           >
             Clear
           </button>
@@ -632,7 +632,7 @@ function Facet({
                 className={`block w-full px-2 py-1 text-left text-sm transition-colors ${
                   active
                     ? "bg-brass/15 text-iron"
-                    : "text-iron/70 hover:bg-iron/5 hover:text-iron"
+                    : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
                 }`}
               >
                 {opt.label}
@@ -701,7 +701,7 @@ function ResourceCard({ item }: { item: ItemLite }) {
   const aspectClass = item.provider === "amazon" ? "aspect-[2/3]" : "aspect-video";
 
   return (
-    <article className="lift group/card flex h-full flex-col overflow-hidden border border-iron/10 bg-bone transition-colors hover:border-brass">
+    <article className="lift group/card flex h-full flex-col overflow-hidden border border-foreground/15 bg-card transition-colors hover:border-brass">
       <Link href={href} className="flex flex-1 flex-col">
         {/* Thumbnail. Priority order:
          *   1. YouTube oEmbed or Amazon book cover (real cover art)
@@ -709,7 +709,7 @@ function ResourceCard({ item }: { item: ItemLite }) {
          *      mammoth-extracted .docx, etc.) — keyed by cluster theme
          *      with per-id pattern variation.
          */}
-        <div className={`relative ${aspectClass} w-full overflow-hidden bg-iron/5`}>
+        <div className={`relative ${aspectClass} w-full overflow-hidden bg-foreground/5`}>
           {!useGeneratedCover && hasThumbnail ? (
             <Image
               src={item.thumbnailUrl!}
@@ -729,8 +729,8 @@ function ResourceCard({ item }: { item: ItemLite }) {
           )}
           {/* YouTube play overlay */}
           {item.provider === "youtube" && hasThumbnail && (
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-iron/0 transition-colors group-hover/card:bg-iron/15">
-              <div className="flex h-14 w-14 items-center justify-center bg-iron/85 text-bone shadow-lg backdrop-blur-sm transition-transform group-hover/card:scale-110">
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-foreground/0 transition-colors group-hover/card:bg-foreground/15">
+              <div className="flex h-14 w-14 items-center justify-center bg-foreground/85 text-background shadow-lg backdrop-blur-sm transition-transform group-hover/card:scale-110">
                 <Icon name="play" size={20} />
               </div>
             </div>
@@ -738,7 +738,7 @@ function ResourceCard({ item }: { item: ItemLite }) {
           {/* Provider + audience badges */}
           <div className="pointer-events-none absolute inset-x-3 top-3 flex items-start justify-between gap-2">
             {providerBadge ? (
-              <span className="inline-flex h-6 items-center gap-1 border border-iron/20 bg-bone/95 px-2 text-[0.5625rem] font-medium uppercase tracking-wider text-iron backdrop-blur-sm">
+              <span className="inline-flex h-6 items-center gap-1 border border-foreground/15 bg-card/95 px-2 text-[0.5625rem] font-medium uppercase tracking-wider text-foreground backdrop-blur-sm">
                 <Icon name={providerBadge.icon} size={10} />
                 {providerBadge.label}
               </span>
@@ -746,14 +746,14 @@ function ResourceCard({ item }: { item: ItemLite }) {
               <span />
             )}
             {item.audience !== "all" && (
-              <span className="inline-flex h-6 items-center border border-iron/20 bg-bone/95 px-2 text-[0.5625rem] uppercase tracking-wider text-iron/65 backdrop-blur-sm">
+              <span className="inline-flex h-6 items-center border border-foreground/15 bg-card/95 px-2 text-[0.5625rem] uppercase tracking-wider text-muted-foreground backdrop-blur-sm">
                 {item.audience === "leader" ? "Leader" : "Newcomer"}
               </span>
             )}
           </div>
           {/* Duration / minutes */}
           {(duration || item.estimatedMinutes != null) && (
-            <span className="pointer-events-none absolute bottom-3 right-3 inline-flex h-6 items-center bg-iron/85 px-2 text-[0.625rem] font-medium text-bone backdrop-blur-sm">
+            <span className="pointer-events-none absolute bottom-3 right-3 inline-flex h-6 items-center bg-foreground/85 px-2 text-[0.625rem] font-medium text-background backdrop-blur-sm">
               {duration ?? `${item.estimatedMinutes} min read`}
             </span>
           )}
@@ -762,13 +762,13 @@ function ResourceCard({ item }: { item: ItemLite }) {
         {/* Body */}
         <div className="flex flex-1 flex-col p-6">
           {item.author && (
-            <p className="section-mark text-iron/55">{item.author}</p>
+            <p className="section-mark text-muted-foreground">{item.author}</p>
           )}
-          <h3 className="display-xl mt-2 text-lg text-iron md:text-xl">
+          <h3 className="display-xl mt-2 text-lg text-foreground md:text-xl">
             {item.title}
           </h3>
           {(item.summary || item.description) && (
-            <p className="mt-3 line-clamp-3 flex-1 text-sm leading-relaxed text-iron/70">
+            <p className="mt-3 line-clamp-3 flex-1 text-sm leading-relaxed text-muted-foreground">
               {item.summary || item.description}
             </p>
           )}
@@ -785,7 +785,7 @@ function ResourceCard({ item }: { item: ItemLite }) {
               {item.topics.slice(0, 4).map((t) => (
                 <span
                   key={`t-${t}`}
-                  className="inline-flex h-5 items-center border border-iron/15 bg-bone px-1.5 text-[0.5625rem] text-iron/65"
+                  className="inline-flex h-5 items-center border border-foreground/15 bg-card px-1.5 text-[0.5625rem] text-muted-foreground"
                 >
                   {t}
                 </span>

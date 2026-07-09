@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
 import { users, locations } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, like } from "drizzle-orm";
 import { z } from "zod/v4";
+import { locationSlug } from "@/lib/locations/slug";
 
 async function requireAdmin() {
   const { userId } = await auth();
@@ -57,10 +58,25 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
   }
 
+  // Pretty /groups/[slug] URL (migration 0015) — same dedupe as the
+  // admin server action, so no insert path creates slug-less rows.
+  const slugBase = locationSlug(parsed.data.name, parsed.data.city);
+  const taken = new Set(
+    (
+      await db
+        .select({ slug: locations.slug })
+        .from(locations)
+        .where(like(locations.slug, `${slugBase}%`))
+    ).map((r) => r.slug)
+  );
+  let slug = slugBase;
+  for (let n = 2; taken.has(slug); n++) slug = `${slugBase}-${n}`;
+
   const [newLocation] = await db
     .insert(locations)
     .values({
       name: parsed.data.name,
+      slug,
       description: parsed.data.description ?? "",
       latitude: parsed.data.latitude,
       longitude: parsed.data.longitude,

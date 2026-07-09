@@ -39,7 +39,7 @@ export const palette = {
 } as const;
 
 export const fonts = {
-  display: "var(--font-barlow-condensed)",
+  display: "var(--font-fraunces)",
   body: "var(--font-inter)",
   scripture: "var(--font-cormorant)",
   legacyScripture: "var(--font-merriweather)",

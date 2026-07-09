@@ -4,8 +4,9 @@ import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
 import { groups, locations, users } from "@/db/schema";
 import { members } from "@/db/schema-members";
-import { eq, desc, inArray, sql } from "drizzle-orm";
+import { eq, desc, inArray, like, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { locationSlug } from "@/lib/locations/slug";
 
 async function requireAdmin(): Promise<string> {
   const { userId } = await auth();
@@ -238,8 +239,25 @@ export async function upsertGroupLocation(input: UpsertGroupLocationInput) {
     // on the public locator immediately. Pending/rejected rows stay off.
     const initialDisplayedOnMap =
       input.displayedOnMap ?? input.approvalStatus === "approved";
+    // Pretty /groups/[slug] URL (migration 0015). Deduped against
+    // existing slugs with -2/-3... suffixes, matching the SQL backfill.
+    const slugBase = locationSlug(
+      input.locationName ?? input.groupName,
+      input.city ?? "Unknown"
+    );
+    const taken = new Set(
+      (
+        await db
+          .select({ slug: locations.slug })
+          .from(locations)
+          .where(like(locations.slug, `${slugBase}%`))
+      ).map((r) => r.slug)
+    );
+    let slug = slugBase;
+    for (let n = 2; taken.has(slug); n++) slug = `${slugBase}-${n}`;
     await db.insert(locations).values({
       name: input.locationName ?? input.groupName,
+      slug,
       latitude: input.latitude ?? "0",
       longitude: input.longitude ?? "0",
       city: input.city ?? "Unknown",
@@ -262,7 +280,7 @@ export async function upsertGroupLocation(input: UpsertGroupLocationInput) {
 
   revalidatePath("/admin/groups");
   revalidatePath("/admin/members");
-  revalidatePath("/locations");
+  revalidatePath("/groups");
   return { groupId };
 }
 
@@ -301,7 +319,7 @@ export async function bulkUpdateGroupsLocations(
   }
 
   revalidatePath("/admin/groups");
-  revalidatePath("/locations");
+  revalidatePath("/groups");
 }
 
 export async function deleteGroupLocation(groupId: string) {
@@ -312,5 +330,5 @@ export async function deleteGroupLocation(groupId: string) {
   await db.delete(groups).where(eq(groups.id, groupId));
   revalidatePath("/admin/groups");
   revalidatePath("/admin/members");
-  revalidatePath("/locations");
+  revalidatePath("/groups");
 }

@@ -1,4 +1,6 @@
+import Link from "next/link";
 import { Icon } from "@/components/icons/Icon";
+import { Kicker } from "@/components/public/kicker";
 import {
   Accordion,
   AccordionContent,
@@ -85,43 +87,34 @@ export default function FAQPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-bone text-ink">
-        <div className="dotted-grid absolute inset-0 opacity-50" aria-hidden />
-        <div className="relative mx-auto max-w-7xl px-6 py-24 md:px-12 md:py-32">
-          <div className="flex items-center gap-4">
-            <span className="section-mark">§ Frequently Asked</span>
-            <div className="hairline flex-1" />
-          </div>
-          <h1 className="display-xl mt-10 max-w-3xl text-[clamp(2.5rem,6vw,5.5rem)]">
+      <section className="bg-background text-foreground">
+        <div className="mx-auto max-w-7xl px-6 py-24 md:px-12 md:py-32">
+          <Kicker left="Frequently Asked" />
+          <h1 className="display-xl mt-10 max-w-3xl text-display-xl">
             Questions,
             <br />
-            <span className="text-brass">answered.</span>
+            <em>answered.</em>
           </h1>
         </div>
       </section>
 
       {/* Sections */}
-      <section className="bg-bone text-ink">
-        <div className="mx-auto max-w-5xl px-6 pb-28 md:px-12 md:pb-40">
+      <section className="bg-background text-foreground">
+        <div className="mx-auto max-w-5xl px-6 pt-4 pb-28 md:px-12 md:pt-8 md:pb-40">
           {sections.map((section) => (
             <div key={section.label} className="mt-16 first:mt-0 md:mt-24">
-              <div className="flex items-center gap-4">
-                <span className="section-mark text-brass">
-                  § {section.roman} &middot; {section.label}
-                </span>
-                <div className="hairline flex-1" />
-              </div>
+              <Kicker left={`${section.roman} · ${section.label}`} />
               <Accordion type="single" collapsible className="mt-8">
                 {section.items.map((faq, i) => (
                   <AccordionItem
                     key={i}
                     value={`${section.roman}-${i}`}
-                    className="border-0 border-b border-iron/10"
+                    className="border-0 border-b border-foreground/10"
                   >
-                    <AccordionTrigger className="display-xl py-6 text-left text-xl font-medium text-iron hover:no-underline md:text-2xl">
+                    <AccordionTrigger className="font-display text-lg md:text-xl text-left hover:no-underline">
                       {faq.q}
                     </AccordionTrigger>
-                    <AccordionContent className="pb-8 text-base leading-relaxed text-iron/70 md:text-lg">
+                    <AccordionContent className="pb-8 text-base leading-relaxed text-muted-foreground md:text-lg">
                       {faq.a}
                     </AccordionContent>
                   </AccordionItem>
@@ -141,20 +134,20 @@ export default function FAQPage() {
             strokeWidth={2}
             className="mx-auto text-brass"
           />
-          <h2 className="display-xl mt-8 text-3xl text-foreground md:text-5xl">
+          <h2 className="display-xl mt-8 text-display-lg">
             Still have a question?
           </h2>
-          <p className="mx-auto mt-6 max-w-xl font-pullquote text-xl italic leading-relaxed text-stone md:text-2xl">
+          <p className="mx-auto mt-6 max-w-xl font-pullquote text-lede italic leading-relaxed text-muted-foreground">
             Send us a note. We read every one.
           </p>
           <div className="mt-12">
-            <a
+            <Link
               href="/contact"
-              className="lift inline-flex h-12 items-center gap-2 border border-bone bg-bone px-8 text-base font-medium text-ink transition-colors hover:bg-stone"
+              className="lift inline-flex h-12 items-center gap-2 bg-foreground px-7 text-base font-medium text-background"
             >
               Contact us
               <Icon name="arrow-right" size={18} />
-            </a>
+            </Link>
           </div>
         </div>
       </section>

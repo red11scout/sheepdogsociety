@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { Kicker } from "@/components/public/kicker";
 
 export const metadata: Metadata = {
   title: "SMS Terms — Sheepdog Society",
@@ -60,7 +61,7 @@ const SECTIONS = [
   {
     heading: "Customer care",
     body: [
-      "Questions, problems, or to opt out by email instead: hello@acts2028sheepdogsociety.com.",
+      "Questions, problems, or to opt out by email instead: shepherd@acts2028sheepdogsociety.com.",
     ],
   },
   {
@@ -73,32 +74,29 @@ const SECTIONS = [
 
 export default function SmsTermsPage() {
   return (
-    <section className="bg-bone">
+    <section className="bg-background text-foreground">
       <div className="mx-auto max-w-3xl px-6 py-24 md:px-12 md:py-32">
-        <div className="flex items-center gap-4">
-          <span className="section-mark text-brass">§ SMS Terms</span>
-          <div className="hairline flex-1 text-iron/40" />
-        </div>
-        <h1 className="display-xl mt-10 text-[clamp(2.25rem,5vw,4rem)] text-iron">
+        <Kicker left="SMS Terms" />
+        <h1 className="display-xl mt-10 text-display-lg">
           What we will text.
           <br />
-          <span className="text-brass">How to stop.</span>
+          <em>How to stop.</em>
         </h1>
-        <p className="mt-8 font-pullquote text-xl italic text-iron/70">
+        <p className="mt-8 font-pullquote text-lede italic text-muted-foreground">
           Federal law requires we be specific. We will be.
         </p>
 
         <div className="mt-16 space-y-12">
           {SECTIONS.map((s) => (
             <section key={s.heading}>
-              <h2 className="font-display text-2xl font-semibold text-iron md:text-3xl">
+              <h2 className="font-display text-2xl font-semibold md:text-3xl">
                 {s.heading}
               </h2>
               <div className="mt-4 space-y-4">
                 {s.body.map((p, i) => (
                   <p
                     key={i}
-                    className="text-lg leading-relaxed text-iron/75"
+                    className="text-lg leading-relaxed text-muted-foreground"
                   >
                     {p}
                     {"link" in s && s.link && i === s.body.length - 1 && (
@@ -106,7 +104,7 @@ export default function SmsTermsPage() {
                         {" "}
                         <Link
                           href={s.link.href}
-                          className="underline decoration-brass underline-offset-4 hover:text-brass"
+                          className="link-editorial"
                         >
                           {s.link.label}
                         </Link>
@@ -120,14 +118,14 @@ export default function SmsTermsPage() {
           ))}
         </div>
 
-        <div className="mt-20 border-t border-iron/15 pt-8">
-          <p className="section-mark text-iron/50">
-            Last revised · April 2026
+        <div className="mt-20 border-t border-foreground/15 pt-8">
+          <p className="folio">
+            Last revised · July 2026
           </p>
-          <p className="mt-3 text-sm text-iron/60">
-            Reply <span className="font-mono text-iron">STOP</span> to opt out
+          <p className="mt-3 text-sm text-muted-foreground">
+            Reply <span className="font-mono text-foreground">STOP</span> to opt out
             ·{" "}
-            <span className="font-mono text-iron">HELP</span> for help · Msg &
+            <span className="font-mono text-foreground">HELP</span> for help · Msg &
             data rates may apply.
           </p>
         </div>

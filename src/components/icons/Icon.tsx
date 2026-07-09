@@ -60,7 +60,7 @@ export type IconName =
 const STROKE_GROUP_PROPS = {
   fill: "none",
   stroke: "currentColor",
-  strokeWidth: 2.25,
+  strokeWidth: 1.75,
   strokeLinecap: "round" as const,
   strokeLinejoin: "round" as const,
 };

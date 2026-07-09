@@ -41,27 +41,34 @@ export function NewsletterForm() {
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex items-center border border-stone/25 transition-colors focus-within:border-brass"
-    >
-      <input
-        type="email"
-        placeholder="you@example.com"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        aria-label="Email address"
-        className="h-11 flex-1 bg-transparent px-4 text-sm text-foreground placeholder:text-stone/50 focus:outline-none"
-      />
-      <button
-        type="submit"
-        disabled={status === "loading"}
-        className="lift flex h-11 items-center gap-2 bg-brass px-4 text-xs font-medium uppercase tracking-wider text-ink transition-colors hover:bg-stone disabled:cursor-not-allowed disabled:opacity-60"
+    <>
+      <form
+        onSubmit={handleSubmit}
+        className="flex items-center border border-stone/25 transition-colors focus-within:border-brass"
       >
-        {status === "loading" ? "..." : "Join"}
-        {status !== "loading" && <Icon name="arrow-right" size={14} />}
-      </button>
-    </form>
+        <input
+          type="email"
+          placeholder="you@example.com"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          aria-label="Email address"
+          className="h-11 flex-1 bg-transparent px-4 text-sm text-foreground placeholder:text-stone/50 focus:outline-none"
+        />
+        <button
+          type="submit"
+          disabled={status === "loading"}
+          className="lift flex h-11 items-center gap-2 bg-brass px-4 text-xs font-medium uppercase tracking-wider text-iron transition-colors hover:bg-gold disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {status === "loading" ? "..." : "Join"}
+          {status !== "loading" && <Icon name="arrow-right" size={14} />}
+        </button>
+      </form>
+      {status === "error" && (
+        <p className="mt-2 text-sm text-destructive">
+          That did not go through. Check the address and try again.
+        </p>
+      )}
+    </>
   );
 }

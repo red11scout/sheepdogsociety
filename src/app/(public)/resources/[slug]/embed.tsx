@@ -7,7 +7,7 @@
 export function Embed({ html }: { html: string }) {
   return (
     <div
-      className="resource-embed relative aspect-video w-full overflow-hidden border border-iron/10 bg-iron/10"
+      className="resource-embed relative aspect-video w-full overflow-hidden border border-foreground/10 bg-foreground/10"
       dangerouslySetInnerHTML={{ __html: html }}
     />
   );

@@ -32,7 +32,7 @@ export default function CheckEmailPage() {
           Wrong email?{" "}
           <Link
             href="/admin/sign-in"
-            className="text-brass underline underline-offset-4 hover:text-iron"
+            className="text-brass underline underline-offset-4 hover:text-foreground"
           >
             Try again
           </Link>
@@ -40,10 +40,10 @@ export default function CheckEmailPage() {
         <p>
           Trouble signing in?{" "}
           <Link
-            href="mailto:beargodwin@gmail.com?subject=Sheepdog%20Society%20sign-in%20help"
-            className="text-brass underline underline-offset-4 hover:text-iron"
+            href="mailto:shepherd@acts2028sheepdogsociety.com?subject=Sheepdog%20Society%20sign-in%20help"
+            className="text-brass underline underline-offset-4 hover:text-foreground"
           >
-            Email Drew
+            Email the Watch
           </Link>
         </p>
       </div>

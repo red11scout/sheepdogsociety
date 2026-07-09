@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Icon } from "@/components/icons/Icon";
+import { Kicker } from "@/components/public/kicker";
 
 export const metadata: Metadata = {
   title: "What to expect — Sheepdog Society",
@@ -75,20 +76,15 @@ export default function WhatToExpectPage() {
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-background text-foreground">
-        <div className="aurora aurora--soft" aria-hidden />
-        <div className="dotted-grid absolute inset-0 opacity-[0.04]" aria-hidden />
-        <div className="relative mx-auto max-w-5xl px-6 py-24 md:px-12 md:py-40">
-          <div className="flex items-center gap-4">
-            <span className="section-mark">§ Before you come</span>
-            <div className="hairline flex-1" />
-          </div>
-          <h1 className="display-xl mt-10 text-[clamp(2.5rem,7vw,6rem)] text-foreground">
+      <section className="bg-background text-foreground">
+        <div className="mx-auto max-w-5xl px-6 py-24 md:px-12 md:py-40">
+          <Kicker left="Before you come" />
+          <h1 className="display-xl mt-10 text-display-xl">
             Come hungry.
             <br />
-            <span className="text-brass">Bring nothing else.</span>
+            <em>Bring nothing else.</em>
           </h1>
-          <p className="mt-10 max-w-2xl font-pullquote text-xl italic text-foreground/80 md:text-2xl">
+          <p className="mt-10 max-w-2xl font-pullquote text-lede italic text-muted-foreground">
             You do not need to have your life in order. You do not need to know
             what to say. Come sit down. Listen. Open the Word with us.
           </p>
@@ -96,16 +92,13 @@ export default function WhatToExpectPage() {
       </section>
 
       {/* The rhythm of a table */}
-      <section className="bg-bone">
+      <section className="bg-background text-foreground">
         <div className="mx-auto max-w-5xl px-6 py-24 md:px-12 md:py-32">
-          <div className="flex items-center gap-4">
-            <span className="section-mark text-brass">§ The rhythm</span>
-            <div className="hairline flex-1 text-iron/40" />
-          </div>
-          <h2 className="display-xl mt-10 text-[clamp(2rem,5vw,3.5rem)] text-iron">
+          <Kicker left="The rhythm" />
+          <h2 className="display-xl mt-10 text-display-lg">
             Five things happen at a table.
           </h2>
-          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-iron/75">
+          <p className="mt-6 max-w-2xl text-lg leading-relaxed text-muted-foreground">
             Most groups follow this rhythm, in this order. It is simple on
             purpose. A man should be able to walk in the door and know what is
             coming.
@@ -117,15 +110,12 @@ export default function WhatToExpectPage() {
                 key={step.eyebrow}
                 className="grid gap-6 md:grid-cols-[200px_1fr] md:gap-12"
               >
+                <Kicker left={step.eyebrow} />
                 <div>
-                  <span className="section-mark text-brass">{step.eyebrow}</span>
-                  <div className="hairline mt-3 text-iron/40" />
-                </div>
-                <div>
-                  <h3 className="font-display text-2xl font-semibold text-iron md:text-3xl">
+                  <h3 className="display-soft text-display-md">
                     {step.title}
                   </h3>
-                  <p className="mt-4 text-lg leading-relaxed text-iron/75">
+                  <p className="mt-4 text-lg leading-relaxed text-muted-foreground">
                     {step.body}
                   </p>
                 </div>
@@ -135,42 +125,37 @@ export default function WhatToExpectPage() {
         </div>
       </section>
 
-      {/* Verse plate */}
-      <section className="bg-background text-foreground">
+      {/* Verse plate: the page's one dark interlude */}
+      <section className="ember-band">
         <div className="mx-auto max-w-4xl px-6 py-24 md:px-12 md:py-32">
-          <div className="flex items-center gap-4">
-            <span className="section-mark">§ The Charge</span>
-            <div className="hairline flex-1" />
-          </div>
-          <blockquote className="mt-12 border-l-2 border-brass pl-8 font-pullquote text-2xl italic leading-relaxed text-foreground md:text-3xl">
+          <Kicker left="The Charge" />
+          <p className="mt-12 section-mark">§ Acts 20:28</p>
+          <blockquote className="mt-6 font-pullquote text-2xl italic leading-relaxed md:text-4xl">
             Pay careful attention to yourselves and to all the flock, in which
             the Holy Spirit has made you overseers, to care for the church of
             God, which he obtained with his own blood.
           </blockquote>
-          <p className="mt-6 pl-8 section-mark text-brass">
+          <p className="mt-6 section-mark text-brass">
             Acts 20:28 · ESV
           </p>
         </div>
       </section>
 
       {/* FAQ */}
-      <section className="bg-bone">
+      <section className="bg-background text-foreground">
         <div className="mx-auto max-w-3xl px-6 py-24 md:px-12 md:py-32">
-          <div className="flex items-center gap-4">
-            <span className="section-mark text-brass">§ Plain answers</span>
-            <div className="hairline flex-1 text-iron/40" />
-          </div>
-          <h2 className="display-xl mt-10 text-[clamp(2rem,5vw,3.5rem)] text-iron">
+          <Kicker left="Plain answers" />
+          <h2 className="display-xl mt-10 text-display-lg">
             What men ask.
           </h2>
 
-          <dl className="mt-16 divide-y divide-iron/10 border-y border-iron/10">
+          <dl className="mt-16 divide-y divide-foreground/10 border-y border-foreground/15">
             {FAQ.map((item) => (
               <div key={item.q} className="py-8">
-                <dt className="font-display text-xl font-semibold text-iron md:text-2xl">
+                <dt className="font-display text-xl font-semibold md:text-2xl">
                   {item.q}
                 </dt>
-                <dd className="mt-3 text-lg leading-relaxed text-iron/75">
+                <dd className="mt-3 text-lg leading-relaxed text-muted-foreground">
                   {item.a}
                 </dd>
               </div>
@@ -182,26 +167,23 @@ export default function WhatToExpectPage() {
       {/* CTA */}
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-4xl px-6 py-24 md:px-12 md:py-32">
-          <div className="flex items-center gap-4">
-            <span className="section-mark">§ Next step</span>
-            <div className="hairline flex-1" />
-          </div>
-          <h2 className="display-xl mt-10 text-[clamp(2.25rem,6vw,4.5rem)] text-foreground">
+          <Kicker left="Next step" />
+          <h2 className="display-xl mt-10 text-display-lg">
             There is a chair.
             <br />
-            <span className="text-brass">Sit in it.</span>
+            <em>Sit in it.</em>
           </h2>
-          <div className="mt-12 flex flex-col gap-4 sm:flex-row">
+          <div className="mt-12 flex flex-col gap-4 sm:flex-row sm:items-center">
             <Link
-              href="/locations"
-              className="lift inline-flex h-12 items-center gap-3 bg-brass px-6 text-sm font-medium uppercase tracking-[0.18em] text-ink transition-colors hover:bg-gold"
+              href="/groups"
+              className="lift inline-flex h-12 items-center gap-3 bg-brass px-6 text-sm font-medium uppercase tracking-[0.18em] text-iron transition-colors hover:bg-gold"
             >
               Find a group near me
               <Icon name="arrow-right" size={16} />
             </Link>
             <Link
-              href="/locations/request"
-              className="lift inline-flex h-12 items-center gap-3 border border-bone/30 px-6 text-sm font-medium uppercase tracking-[0.18em] text-foreground transition-colors hover:border-brass hover:text-brass"
+              href="/join?path=start"
+              className="link-editorial inline-flex items-center gap-2 text-sm font-medium uppercase tracking-[0.18em]"
             >
               Plant a group
               <Icon name="arrow-up-right" size={16} />

@@ -30,7 +30,7 @@ export function PrintButton({
           document.title = prevTitle;
         }, 500);
       }}
-      className="lift inline-flex h-9 items-center gap-2 border border-iron/20 bg-iron px-4 text-xs font-medium uppercase tracking-wider text-bone transition-colors hover:bg-brass hover:text-iron"
+      className="lift inline-flex h-9 items-center gap-2 border border-foreground/20 bg-foreground px-4 text-xs font-medium uppercase tracking-wider text-background transition-colors hover:bg-brass hover:text-iron"
       title="Opens the print dialog. Choose 'Save as PDF' as the destination to download a branded copy."
     >
       <Icon name="download" size={12} />

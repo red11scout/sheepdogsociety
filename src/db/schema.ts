@@ -933,6 +933,10 @@ export const locations = pgTable(
     leaderId: text("leader_id").references(() => users.id),
     groupId: uuid("group_id").references(() => groups.id),
     imageUrl: text("image_url").default(""),
+    /** Pretty public URL segment for /groups/[slug] (migration 0015).
+     *  Backfilled from name+city; nullable so legacy admin flows that
+     *  don't set it keep working (public pages fall back to the id). */
+    slug: text("slug"),
     approvedBy: text("approved_by"),
     approvedAt: timestamp("approved_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
@@ -942,6 +946,9 @@ export const locations = pgTable(
     index("locations_city_idx").on(table.city),
     index("locations_state_idx").on(table.state),
     index("locations_status_idx").on(table.status),
+    uniqueIndex("locations_slug_unique")
+      .on(table.slug)
+      .where(sql`slug IS NOT NULL`),
   ]
 );
 

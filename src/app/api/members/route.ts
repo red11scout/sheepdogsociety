@@ -178,7 +178,7 @@ export async function POST(req: Request) {
       const result = await sendSms({
         to: body.phone,
         message:
-          "Reply YES to confirm event reminders from Acts 2:28 Sheepdog Society. Msg & data rates may apply. Reply STOP to opt out, HELP for help.",
+          "Reply YES to confirm event reminders from Acts 20:28 Sheepdog Society. Msg & data rates may apply. Reply STOP to opt out, HELP for help.",
         category: "double_opt_in",
         memberId,
       });
@@ -198,7 +198,7 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error("members POST failed", err);
     return NextResponse.json(
-      { error: "Something broke on our end. Try again, or email hello@acts2028sheepdogsociety.com." },
+      { error: "Something broke on our end. Try again, or email shepherd@acts2028sheepdogsociety.com." },
       { status: 500 }
     );
   }

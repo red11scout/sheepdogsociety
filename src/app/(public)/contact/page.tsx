@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Icon } from "@/components/icons/Icon";
 import { Magnetic } from "@/components/motion/Magnetic";
+import { Kicker } from "@/components/public/kicker";
 
 const TOPICS = [
   { value: "general", label: "General question" },
@@ -48,18 +49,13 @@ export default function ContactPage() {
       />
 
       {/* Hero */}
-      <section className="relative overflow-hidden bg-bone text-ink">
-        <div className="aurora aurora--soft" aria-hidden />
-        <div className="dotted-grid absolute inset-0 opacity-50" aria-hidden />
-        <div className="relative mx-auto max-w-7xl px-6 py-24 md:px-12 md:py-32">
-          <div className="flex items-center gap-4">
-            <span className="section-mark">§ Contact</span>
-            <div className="hairline flex-1" />
-          </div>
-          <h1 className="display-xl mt-10 max-w-4xl text-[clamp(2.5rem,7vw,6rem)]">
+      <section className="bg-background text-foreground">
+        <div className="mx-auto max-w-7xl px-6 py-24 md:px-12 md:py-32">
+          <Kicker left="Contact" />
+          <h1 className="display-xl mt-10 max-w-4xl text-display-xl">
             Send a note.
             <br />
-            <span className="text-brass">We read every one.</span>
+            <em>We read every one.</em>
           </h1>
         </div>
       </section>
@@ -75,19 +71,16 @@ export default function ContactPage() {
                 strokeWidth={2.25}
                 className="mx-auto text-brass"
               />
-              <h2 className="display-xl mt-8 text-3xl text-foreground md:text-4xl">
+              <h2 className="display-xl mt-8 text-display-lg">
                 Message received.
               </h2>
-              <p className="mx-auto mt-4 max-w-md font-pullquote text-lg italic text-stone">
+              <p className="mx-auto mt-4 max-w-md font-pullquote text-lg italic text-muted-foreground">
                 Thank you, brother. We will get back to you soon.
               </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="grid gap-8">
-              <div className="flex items-center gap-4">
-                <span className="section-mark text-brass">§ Your message</span>
-                <div className="hairline flex-1" />
-              </div>
+              <Kicker left="Your message" />
 
               <div className="grid gap-6 md:grid-cols-2">
                 <Field
@@ -106,13 +99,13 @@ export default function ContactPage() {
               </div>
 
               <div>
-                <label className="section-mark text-stone/60">Topic</label>
+                <label className="folio">Topic</label>
                 <select
                   value={form.topic}
                   onChange={(e) =>
                     setForm((f) => ({ ...f, topic: e.target.value }))
                   }
-                  className="mt-3 h-11 w-full border border-stone/25 bg-transparent px-4 text-sm text-foreground focus:border-brass focus:outline-none"
+                  className="mt-3 h-11 w-full border border-foreground/20 bg-transparent px-4 text-sm text-foreground focus:border-brass focus:outline-none"
                 >
                   {TOPICS.map((t) => (
                     <option
@@ -127,7 +120,7 @@ export default function ContactPage() {
               </div>
 
               <div>
-                <label className="section-mark text-stone/60">Message</label>
+                <label className="folio">Message</label>
                 <textarea
                   required
                   rows={6}
@@ -135,7 +128,7 @@ export default function ContactPage() {
                   onChange={(e) =>
                     setForm((f) => ({ ...f, message: e.target.value }))
                   }
-                  className="mt-3 w-full border border-stone/25 bg-transparent px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-stone/40 focus:border-brass focus:outline-none"
+                  className="mt-3 w-full border border-foreground/20 bg-transparent px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-foreground/40 focus:border-brass focus:outline-none"
                 />
               </div>
 
@@ -143,7 +136,7 @@ export default function ContactPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="lift inline-flex h-12 items-center gap-2 border border-bone bg-bone px-8 text-sm font-medium uppercase tracking-wider text-ink transition-colors hover:bg-stone disabled:cursor-not-allowed disabled:opacity-60"
+                  className="lift inline-flex h-12 items-center gap-2 bg-foreground px-7 text-sm font-medium uppercase tracking-wider text-background disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {submitting ? "Sending..." : "Send message"}
                   {!submitting && <Icon name="arrow-right" size={16} />}
@@ -172,7 +165,7 @@ function Field({
 }) {
   return (
     <div>
-      <label className="section-mark text-stone/60">
+      <label className="folio">
         {label}
         {required && <span className="ml-1 text-brass">*</span>}
       </label>
@@ -181,7 +174,7 @@ function Field({
         required={required}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-3 h-11 w-full border border-stone/25 bg-transparent px-4 text-base text-foreground placeholder:text-stone/40 focus:border-brass focus:outline-none"
+        className="mt-3 h-11 w-full border border-foreground/20 bg-transparent px-4 text-base text-foreground placeholder:text-foreground/40 focus:border-brass focus:outline-none"
       />
     </div>
   );
