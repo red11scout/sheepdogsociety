@@ -225,7 +225,7 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search resources..."
-                className="block h-11 w-full border border-foreground/15 bg-white/60 pl-10 pr-9 text-sm text-foreground placeholder:text-foreground/40 focus:border-brass focus:outline-none"
+                className="block h-11 w-full border border-foreground/15 bg-foreground/[0.04] pl-10 pr-9 text-sm text-foreground placeholder:text-foreground/50 focus:border-brass focus:outline-none"
               />
               {query && (
                 <button
@@ -301,6 +301,7 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
               options={sections.map((s) => ({ value: s.id, label: s.name }))}
               value={activeSectionId}
               onChange={setActiveSectionId}
+              defaultOpen
             />
             {allBooks.length > 0 && (
               <Facet
@@ -514,7 +515,7 @@ function MobileFilterSheet({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 border border-foreground/15 bg-white/60 px-3 py-2 text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:border-brass hover:text-brass"
+        className="flex w-full items-center justify-between gap-3 border border-foreground/15 bg-foreground/[0.04] px-3 py-2 text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:border-brass hover:text-brass"
         aria-expanded={open}
       >
         <span className="flex items-center gap-2">
@@ -653,61 +654,92 @@ function ClusterDisclosure({
   );
 }
 
+/**
+ * Collapsible filter group. The header toggles the option list open and
+ * closed so a long sidebar (66 books, 90+ topics) reads as a tidy stack
+ * of headers instead of an endless scroll. Opens automatically when it
+ * carries an active filter; a Clear control sits outside the toggle so
+ * it stays reachable while collapsed. Long open lists scroll internally.
+ */
 function Facet({
   title,
   options,
   value,
   onChange,
+  defaultOpen = false,
 }: {
   title: string;
   options: { value: string; label: string; heading?: boolean }[];
   value: string;
   onChange: (v: string) => void;
+  defaultOpen?: boolean;
 }) {
+  const [open, setOpen] = useState(defaultOpen || Boolean(value));
+  const count = options.filter((o) => !o.heading).length;
   return (
-    <div>
-      <div className="flex items-center justify-between">
-        <span className="section-mark text-muted-foreground">{title}</span>
+    <div className="border-b border-foreground/10 pb-4">
+      <div className="flex items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className="flex flex-1 items-center gap-2 py-1 text-left"
+        >
+          <Icon
+            name="chevron-right"
+            size={12}
+            className={`shrink-0 text-muted-foreground transition-transform ${open ? "rotate-90" : ""}`}
+          />
+          <span className="section-mark text-muted-foreground">{title}</span>
+          <span className="text-[0.625rem] tabular-nums text-muted-foreground/60">
+            {count}
+          </span>
+          {value && !open && (
+            <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brass" aria-hidden />
+          )}
+        </button>
         {value && (
           <button
             type="button"
             onClick={() => onChange("")}
-            className="text-[0.625rem] uppercase tracking-wider text-muted-foreground hover:text-brass"
+            className="shrink-0 text-[0.625rem] uppercase tracking-wider text-muted-foreground hover:text-brass"
           >
             Clear
           </button>
         )}
       </div>
-      <ul className="mt-3 space-y-1">
-        {options.map((opt) => {
-          if (opt.heading) {
+      {open && (
+        <ul className="mt-3 max-h-80 space-y-1 overflow-y-auto pr-1">
+          {options.map((opt) => {
+            if (opt.heading) {
+              return (
+                <li
+                  key={opt.value}
+                  className="px-2 pb-1 pt-3 text-[0.625rem] uppercase tracking-wider text-brass first:pt-0"
+                >
+                  {opt.label}
+                </li>
+              );
+            }
+            const active = value === opt.value;
             return (
-              <li
-                key={opt.value}
-                className="px-2 pb-1 pt-3 text-[0.625rem] uppercase tracking-wider text-brass first:pt-0"
-              >
-                {opt.label}
+              <li key={opt.value}>
+                <button
+                  type="button"
+                  onClick={() => onChange(active ? "" : opt.value)}
+                  className={`block w-full px-2 py-1 text-left text-sm transition-colors ${
+                    active
+                      ? "bg-brass/15 font-medium text-foreground"
+                      : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
+                  }`}
+                >
+                  {opt.label}
+                </button>
               </li>
             );
-          }
-          const active = value === opt.value;
-          return (
-            <li key={opt.value}>
-              <button
-                type="button"
-                onClick={() => onChange(active ? "" : opt.value)}
-                className={`block w-full px-2 py-1 text-left text-sm transition-colors ${
-                  active
-                    ? "bg-brass/15 text-iron"
-                    : "text-muted-foreground hover:bg-foreground/5 hover:text-foreground"
-                }`}
-              >
-                {opt.label}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+          })}
+        </ul>
+      )}
     </div>
   );
 }

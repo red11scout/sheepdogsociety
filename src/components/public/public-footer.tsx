@@ -120,6 +120,14 @@ export function PublicFooter() {
                   Contact
                 </Link>
               </li>
+              <li>
+                <a
+                  href="mailto:shepherd@acts2028sheepdogsociety.com"
+                  className="text-foreground/80 transition-colors hover:text-brass"
+                >
+                  Email us
+                </a>
+              </li>
             </ul>
           </div>
 
