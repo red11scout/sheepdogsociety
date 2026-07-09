@@ -119,9 +119,9 @@ export async function GET(req: Request) {
 
   // Revalidate public surfaces so the newly-published letters render.
   try {
-    revalidatePath("/encouragements");
+    revalidatePath("/letter");
     for (const row of due) {
-      revalidatePath(`/encouragements/${row.slug}`);
+      revalidatePath(`/letter/${row.slug}`);
     }
   } catch {
     // revalidatePath throws on edge runtime; nodejs is fine

@@ -481,7 +481,7 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
         <p className="flex items-center gap-2">
           <Icon name="info" size={12} className="text-stone/40" />
           Auto-saves 700ms after you stop typing. Status changes are atomic.
-          Publish broadcasts to <code className="text-brass">/encouragements/{initial.slug}</code>.
+          Publish broadcasts to <code className="text-brass">/letter/{initial.slug}</code>.
         </p>
       </div>
     </div>

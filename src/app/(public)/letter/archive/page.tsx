@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 
-// Legacy /letter/archive → /encouragements (the new home for the
-// weekly post archive).
-export default function LegacyLetterArchiveRedirect() {
-  redirect("/encouragements");
+// The full-ledger archive page lands in the letter/stories elevation
+// task (Phase 2 Task 9). Until then every issue is on the index.
+export default function LetterArchivePage() {
+  redirect("/letter");
 }

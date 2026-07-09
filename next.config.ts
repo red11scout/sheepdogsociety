@@ -19,6 +19,8 @@ const nextConfig: NextConfig = {
   // or "start" would fall into /groups/[slug] and 404.
   async redirects() {
     return [
+      { source: "/encouragements/:slug", destination: "/letter/:slug", permanent: true },
+      { source: "/encouragements", destination: "/letter", permanent: true },
       {
         source: "/locations/request",
         destination: "/join?path=start",

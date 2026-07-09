@@ -77,7 +77,7 @@ export default function HomePage() {
               </Link>
             </Magnetic>
             <Link
-              href="/encouragements"
+              href="/letter"
               className="inline-flex h-12 items-center gap-2 px-2 text-base text-foreground/80 transition-colors hover:text-brass"
             >
               Read this week&rsquo;s Letter

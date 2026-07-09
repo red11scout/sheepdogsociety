@@ -213,7 +213,7 @@ export async function setEncouragementStatus(
   }
 
   revalidatePath("/admin/encouragements");
-  revalidatePath("/encouragements");
+  revalidatePath("/letter");
   return { broadcast: broadcastResult };
 }
 
@@ -250,7 +250,7 @@ export async function broadcastEncouragement(
 
   const siteUrl =
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.acts2028sheepdogsociety.com";
-  const publicUrl = `${siteUrl}/encouragements/${row.slug}`;
+  const publicUrl = `${siteUrl}/letter/${row.slug}`;
 
   const scriptures = Array.isArray(row.scriptures)
     ? (row.scriptures as ScriptureRef[])
