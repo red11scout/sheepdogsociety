@@ -30,6 +30,7 @@
     "@vercel/blob": "^2.3.3",
     "@vercel/og": "^0.6.8",
     "ai": "^6.0.86",
+    "animejs": "^4.5.0",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
