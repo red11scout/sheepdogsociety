@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { AdminPageHeader } from "@/components/admin/admin-page-header";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
-import { Mail, MailOpen, Trash2 } from "lucide-react";
+import { Mail, MailOpen, Trash2, CheckCircle2, Circle } from "lucide-react";
 
 type Contact = {
   id: string;
@@ -22,6 +22,7 @@ type Contact = {
   topic: string | null;
   message: string;
   isRead: boolean;
+  resolvedAt: string | null;
   createdAt: string;
 };
 
@@ -32,6 +33,7 @@ export default function AdminContactsPage() {
   const [selectedContact, setSelectedContact] = useState<Contact | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Contact | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [showResolved, setShowResolved] = useState(false);
 
   const fetchSubmissions = useCallback(async () => {
     setLoading(true);
@@ -75,6 +77,30 @@ export default function AdminContactsPage() {
     }
   }
 
+  async function toggleResolved(contact: Contact) {
+    const res = await fetch(`/api/admin/contacts/${contact.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resolved: !contact.resolvedAt }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      setSubmissions((prev) =>
+        prev.map((s) =>
+          s.id === contact.id
+            ? { ...s, resolvedAt: data.submission.resolvedAt }
+            : s
+        )
+      );
+      if (selectedContact?.id === contact.id) {
+        setSelectedContact({
+          ...selectedContact,
+          resolvedAt: data.submission.resolvedAt,
+        });
+      }
+    }
+  }
+
   async function handleDelete() {
     if (!deleteTarget) return;
     setDeleting(true);
@@ -91,11 +117,15 @@ export default function AdminContactsPage() {
     setDeleteTarget(null);
   }
 
-  const filtered = submissions.filter(
-    (s) =>
-      s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.email.toLowerCase().includes(search.toLowerCase())
-  );
+  const resolvedCount = submissions.filter((s) => s.resolvedAt).length;
+
+  const filtered = submissions
+    .filter((s) => showResolved || !s.resolvedAt)
+    .filter(
+      (s) =>
+        s.name.toLowerCase().includes(search.toLowerCase()) ||
+        s.email.toLowerCase().includes(search.toLowerCase())
+    );
 
   return (
     <div className="mx-auto max-w-5xl p-6">
@@ -106,6 +136,19 @@ export default function AdminContactsPage() {
         onSearchChange={setSearch}
         searchPlaceholder="Search by name or email..."
       />
+
+      <div className="mt-3 flex items-center justify-between">
+        <p className="text-xs text-muted-foreground">
+          {resolvedCount} resolved
+        </p>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowResolved((v) => !v)}
+        >
+          {showResolved ? "Hide resolved" : "Show resolved"}
+        </Button>
+      </div>
 
       {loading ? (
         <p className="mt-8 text-center text-muted-foreground">Loading...</p>
@@ -135,6 +178,9 @@ export default function AdminContactsPage() {
                     {contact.topic && (
                       <Badge variant="outline">{contact.topic}</Badge>
                     )}
+                    {contact.resolvedAt && (
+                      <Badge variant="secondary">resolved</Badge>
+                    )}
                     {!contact.isRead && (
                       <span className="h-2 w-2 rounded-full bg-blue-500" />
                     )}
@@ -162,6 +208,21 @@ export default function AdminContactsPage() {
                       <MailOpen className="h-4 w-4" />
                     ) : (
                       <Mail className="h-4 w-4" />
+                    )}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    title={contact.resolvedAt ? "Reopen" : "Mark resolved"}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleResolved(contact);
+                    }}
+                  >
+                    {contact.resolvedAt ? (
+                      <CheckCircle2 className="h-4 w-4 text-olive" />
+                    ) : (
+                      <Circle className="h-4 w-4" />
                     )}
                   </Button>
                   <Button
@@ -207,6 +268,23 @@ export default function AdminContactsPage() {
               <p className="whitespace-pre-wrap text-sm">
                 {selectedContact.message}
               </p>
+              <Button
+                size="sm"
+                variant={selectedContact.resolvedAt ? "ghost" : "default"}
+                onClick={() => toggleResolved(selectedContact)}
+              >
+                {selectedContact.resolvedAt ? (
+                  <>
+                    <Circle className="mr-1 h-4 w-4" />
+                    Reopen
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="mr-1 h-4 w-4" />
+                    Mark Resolved
+                  </>
+                )}
+              </Button>
             </div>
           )}
         </DialogContent>

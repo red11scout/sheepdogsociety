@@ -8,7 +8,11 @@ import {
   letters,
   aiGenerations,
   newsletterSubscribers,
+  contactSubmissions,
+  locationRequests,
+  locationInterests,
 } from "@/db/schema";
+import { members } from "@/db/schema-members";
 import { weeklyEncouragements } from "@/db/schema-new";
 import { sql, gte, desc, isNull, and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
@@ -49,6 +53,10 @@ export async function GET() {
     aiThisWeekRow,
     activeSubscribersRow,
     encouragementSnapshot,
+    unresolvedContactsRow,
+    pendingLocationRequestsRow,
+    newLocationInterestsRow,
+    newMembersRow,
   ] = await Promise.all([
     // 1: All user-status counts in one pass.
     db
@@ -132,6 +140,29 @@ export async function GET() {
         return [] as never[];
       }
     })(),
+
+    // 10-13: Inbox counts for contact/plant-request/group-interest/member
+    // triage rows — previously hardcoded to 0 on the client (contact,
+    // plant requests) or absent entirely (group interest, members).
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(contactSubmissions)
+      .where(isNull(contactSubmissions.resolvedAt)),
+
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(locationRequests)
+      .where(eq(locationRequests.status, "pending")),
+
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(locationInterests)
+      .where(eq(locationInterests.status, "new")),
+
+    db
+      .select({ count: sql<number>`count(*)::int` })
+      .from(members)
+      .where(and(eq(members.status, "new"), isNull(members.deletedAt))),
   ]);
 
   // "This week" snapshot for the hero — is the most recent encouragement
@@ -163,6 +194,10 @@ export async function GET() {
       publishedLetters: letterStats[0].published,
       activeSubscribers: activeSubscribersRow[0].count,
       aiGenerationsThisWeek: aiThisWeekRow[0].count,
+      unresolvedContacts: unresolvedContactsRow[0].count,
+      pendingLocationRequests: pendingLocationRequestsRow[0].count,
+      newLocationInterests: newLocationInterestsRow[0].count,
+      newMembers: newMembersRow[0].count,
     },
     thisWeek: {
       status: thisWeekStatus,

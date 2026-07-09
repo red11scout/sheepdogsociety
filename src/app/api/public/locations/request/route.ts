@@ -68,6 +68,20 @@ export async function POST(request: Request) {
       console.error("plant-request notification failed", err);
     }
 
+    // Auto-reply to the requester — separate try/catch so a failure here
+    // never blocks the shepherd@ notification above.
+    try {
+      const { error } = await resend().emails.send({
+        from: FROM_TRANSACTIONAL,
+        to: requesterEmail,
+        subject: "Got your request to start a group",
+        text: buildPlantRequestAutoReply(requesterName, proposedCity, proposedState),
+      });
+      if (error) console.error("plant-request auto-reply rejected", error);
+    } catch (err) {
+      console.error("plant-request auto-reply failed", err);
+    }
+
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json(
@@ -75,4 +89,19 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
+}
+
+function buildPlantRequestAutoReply(name: string, city: string, state: string) {
+  const first = name.trim().split(/\s+/)[0] ?? "brother";
+  return `${first},
+
+Got your request to start a group in ${city}, ${state}. That is no small thing, and we do not take it lightly.
+
+Someone will reach out to talk through next steps. It may take a few days. We are grateful you are willing to lead.
+
+Acts 20:28
+"Pay careful attention to yourselves and to all the flock, in which the Holy Spirit has made you overseers, to care for the church of God, which he obtained with his own blood."
+
+— Sheepdog Society
+acts2028sheepdogsociety.com`;
 }

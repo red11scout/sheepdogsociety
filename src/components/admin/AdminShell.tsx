@@ -13,6 +13,7 @@ interface AdminShellProps {
   pendingCount?: number;
   pendingTestimonies?: number;
   pendingLocationRequests?: number;
+  pendingLocationInterests?: number;
   children: React.ReactNode;
 }
 
@@ -21,6 +22,7 @@ export function AdminShell({
   pendingCount,
   pendingTestimonies,
   pendingLocationRequests,
+  pendingLocationInterests,
   children,
 }: AdminShellProps) {
   const pathname = usePathname();
@@ -62,6 +64,7 @@ export function AdminShell({
           pendingCount={pendingCount}
           pendingTestimonies={pendingTestimonies}
           pendingLocationRequests={pendingLocationRequests}
+          pendingLocationInterests={pendingLocationInterests}
         />
       </div>
 
