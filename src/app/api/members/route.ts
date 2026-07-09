@@ -198,7 +198,7 @@ export async function POST(req: Request) {
   } catch (err) {
     console.error("members POST failed", err);
     return NextResponse.json(
-      { error: "Something broke on our end. Try again, or email hello@acts2028sheepdogsociety.com." },
+      { error: "Something broke on our end. Try again, or email shepherd@acts2028sheepdogsociety.com." },
       { status: 500 }
     );
   }

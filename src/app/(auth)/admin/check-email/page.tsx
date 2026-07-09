@@ -40,7 +40,7 @@ export default function CheckEmailPage() {
         <p>
           Trouble signing in?{" "}
           <Link
-            href="mailto:beargodwin@gmail.com?subject=Sheepdog%20Society%20sign-in%20help"
+            href="mailto:shepherd@acts2028sheepdogsociety.com?subject=Sheepdog%20Society%20sign-in%20help"
             className="text-brass underline underline-offset-4 hover:text-foreground"
           >
             Email Drew

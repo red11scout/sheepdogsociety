@@ -61,7 +61,7 @@ const SECTIONS = [
   {
     heading: "Customer care",
     body: [
-      "Questions, problems, or to opt out by email instead: hello@acts2028sheepdogsociety.com.",
+      "Questions, problems, or to opt out by email instead: shepherd@acts2028sheepdogsociety.com.",
     ],
   },
   {

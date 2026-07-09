@@ -160,7 +160,7 @@ export default async function AdminLettersPage({
 
       <div className="mt-12 pt-6 border-t border-border text-center">
         <p className="font-body text-sm text-muted-foreground">
-          Need help? <a href="mailto:beargodwin@gmail.com" className="underline underline-offset-4">Email Drew</a>
+          Need help? <a href="mailto:shepherd@acts2028sheepdogsociety.com" className="underline underline-offset-4">Email the Watch</a>
         </p>
       </div>
     </div>

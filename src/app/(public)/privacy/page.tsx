@@ -61,7 +61,7 @@ const SECTIONS = [
   {
     heading: "Contact",
     body: [
-      "Questions, requests, or corrections: hello@acts2028sheepdogsociety.com.",
+      "Questions, requests, or corrections: shepherd@acts2028sheepdogsociety.com.",
     ],
   },
 ] as const;

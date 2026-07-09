@@ -95,7 +95,7 @@ export default async function SignInPage({
         <p className="mt-10 text-center text-xs text-stone/65">
           Admin access only.{" "}
           <Link
-            href="mailto:beargodwin@gmail.com?subject=Sheepdog%20Society%20sign-in%20help"
+            href="mailto:shepherd@acts2028sheepdogsociety.com?subject=Sheepdog%20Society%20sign-in%20help"
             className="text-brass underline underline-offset-4 transition-colors hover:text-gold"
           >
             Email Drew

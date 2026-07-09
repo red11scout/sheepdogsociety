@@ -18,3 +18,6 @@ export const FROM_AUTH =
 export const FROM_NEWSLETTER =
   process.env.RESEND_FROM_NEWSLETTER ??
   "letter@acts2028sheepdogsociety.com";
+export const FROM_TRANSACTIONAL =
+  process.env.RESEND_FROM_TRANSACTIONAL ??
+  "notifications@acts2028sheepdogsociety.com";
