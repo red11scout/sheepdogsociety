@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Kicker } from "@/components/public/kicker";
+import { BiblePicker } from "@/components/bible/bible-picker";
 import { booksByGenre } from "@/lib/bible/books";
 
 export const metadata: Metadata = {
@@ -29,6 +30,9 @@ export default function BibleLandingPage() {
           nothing between you and the text. Pick a book below, or jump
           straight to a chapter.
         </p>
+        <div className="mt-8">
+          <BiblePicker variant="hero" />
+        </div>
       </section>
 
       {/* Featured chapter — the verse this society is named for.

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Icon } from "@/components/icons/Icon";
 import { Kicker } from "@/components/public/kicker";
+import { BiblePicker } from "@/components/bible/bible-picker";
 import { Scripture } from "@/components/bible/scripture";
 import { VerseScroll } from "@/components/bible/verse-scroll";
 import { getESVChapter, type ChapterResult } from "@/lib/bible/chapter";
@@ -85,10 +86,7 @@ export default async function BibleChapterPage({ params }: { params: Params }) {
       <div className="border-b border-foreground/10">
         <div className="mx-auto flex max-w-3xl items-center justify-center gap-3 px-4 py-4">
           {chevron(prev, "prev")}
-          {/* Task 4 swaps this static label for <BiblePicker current=… /> */}
-          <span className="inline-flex h-11 w-full max-w-xl items-center justify-center border border-foreground/25 bg-card px-6 text-sm font-medium">
-            {book.name} {chapter}
-          </span>
+          <BiblePicker current={{ bookSlug: book.slug, chapter }} />
           {chevron(next, "next")}
         </div>
       </div>
