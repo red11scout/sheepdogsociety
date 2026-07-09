@@ -3,6 +3,7 @@ import Image from "next/image";
 import { notFound } from "next/navigation";
 import { getPublishedEncouragementBySlug } from "@/server/encouragements";
 import { Icon } from "@/components/icons/Icon";
+import { Kicker } from "@/components/public/kicker";
 import { LetterCover } from "@/components/letters/LetterCover";
 import { format } from "date-fns";
 
@@ -57,13 +58,11 @@ export default async function LetterPage({
   return (
     <>
       {/* Hero */}
-      <section className="relative overflow-hidden bg-background text-foreground">
-        <div className="aurora aurora--soft" aria-hidden />
-        <div className="dotted-grid absolute inset-0 opacity-[0.04]" aria-hidden />
-        <div className="relative mx-auto max-w-5xl px-6 py-20 md:px-12 md:py-28">
+      <section className="bg-background text-foreground">
+        <div className="mx-auto max-w-5xl px-6 py-20 md:px-12 md:py-28">
           <Link
             href="/letter"
-            className="inline-flex items-center gap-2 section-mark text-stone/60 hover:text-brass"
+            className="link-editorial inline-flex items-center gap-2 text-sm text-foreground/70"
           >
             <Icon name="arrow-right" size={12} className="rotate-180" />
             All letters
@@ -73,21 +72,21 @@ export default async function LetterPage({
               No. {row.issueNumber}
             </span>
             {row.publishDate && (
-              <span className="section-mark text-stone/55">
+              <span className="folio">
                 {format(new Date(row.publishDate), "MMMM d, yyyy")}
               </span>
             )}
             {(row as { theme?: string | null }).theme && (
-              <span className="section-mark text-stone/55">
+              <span className="folio">
                 · {(row as { theme?: string | null }).theme}
               </span>
             )}
           </div>
-          <h1 className="display-xl mt-6 max-w-4xl text-[clamp(2.5rem,7vw,6rem)] text-foreground">
+          <h1 className="display-soft mt-6 max-w-4xl text-display-lg">
             {row.title}
           </h1>
           {row.intro && (
-            <p className="mt-10 max-w-2xl font-pullquote text-xl italic leading-relaxed text-stone md:text-2xl">
+            <p className="dropcap mt-10 max-w-2xl font-scripture text-lg text-foreground/85">
               {row.intro}
             </p>
           )}
@@ -100,7 +99,7 @@ export default async function LetterPage({
        *  archive. */}
       <section className="bg-background">
         <div className="mx-auto max-w-5xl px-6 md:px-12">
-          <div className="aspect-[16/9] overflow-hidden">
+          <div className="aspect-[16/9] overflow-hidden border border-foreground/15">
             {row.coverImageUrl ? (
               <Image
                 src={row.coverImageUrl}
@@ -125,17 +124,14 @@ export default async function LetterPage({
 
       {/* Updates */}
       {updatesLines.length > 0 && (
-        <section className="bg-bone text-ink">
+        <section className="bg-background text-foreground">
           <div className="mx-auto max-w-3xl px-6 py-16 md:px-12 md:py-24">
-            <div className="flex items-center gap-4">
-              <span className="section-mark">§ This Week</span>
-              <div className="hairline flex-1" />
-            </div>
+            <Kicker left="This Week" />
             <ul className="mt-8 space-y-4">
               {updatesLines.map((line, i) => (
                 <li
                   key={i}
-                  className="flex gap-4 text-base leading-relaxed text-iron/80 md:text-lg"
+                  className="flex gap-4 text-base leading-relaxed text-foreground/80 md:text-lg"
                 >
                   <span
                     className="mt-3 inline-block h-px w-4 shrink-0 bg-brass"
@@ -153,10 +149,7 @@ export default async function LetterPage({
       {scriptures.length > 0 && (
         <section className="bg-background text-foreground">
           <div className="mx-auto max-w-3xl px-6 py-16 md:px-12 md:py-24">
-            <div className="flex items-center gap-4">
-              <span className="section-mark text-brass">§ Scriptures</span>
-              <div className="hairline flex-1" />
-            </div>
+            <Kicker left="Scriptures" />
             <ul className="mt-8 space-y-6">
               {scriptures.map((s, i) => (
                 <li key={i} className="border-l-2 border-brass pl-6">
@@ -164,7 +157,7 @@ export default async function LetterPage({
                     {s.ref}
                   </div>
                   {s.note && (
-                    <p className="mt-3 font-pullquote text-base italic leading-relaxed text-stone md:text-lg">
+                    <p className="mt-3 font-pullquote text-base italic leading-relaxed text-muted-foreground md:text-lg">
                       {s.note}
                     </p>
                   )}
@@ -177,13 +170,10 @@ export default async function LetterPage({
 
       {/* Guidance */}
       {row.guidance && (
-        <section className="bg-bone text-ink">
+        <section className="bg-background text-foreground">
           <div className="mx-auto max-w-3xl px-6 py-16 md:px-12 md:py-24">
-            <div className="flex items-center gap-4">
-              <span className="section-mark">§ Guidance</span>
-              <div className="hairline flex-1" />
-            </div>
-            <div className="mt-8 whitespace-pre-wrap text-base leading-relaxed text-iron/80 md:text-lg">
+            <Kicker left="Guidance" />
+            <div className="mt-8 whitespace-pre-wrap text-base leading-relaxed text-foreground/80 md:text-lg">
               {row.guidance}
             </div>
           </div>
@@ -194,11 +184,8 @@ export default async function LetterPage({
       {row.notes && (
         <section className="bg-background text-foreground">
           <div className="mx-auto max-w-3xl px-6 py-16 md:px-12 md:py-24">
-            <div className="flex items-center gap-4">
-              <span className="section-mark text-brass">§ Notes from the Watch</span>
-              <div className="hairline flex-1" />
-            </div>
-            <div className="mt-8 whitespace-pre-wrap font-pullquote text-lg italic leading-relaxed text-stone md:text-xl">
+            <Kicker left="Notes from the Watch" />
+            <div className="mt-8 whitespace-pre-wrap font-pullquote text-lg italic leading-relaxed text-muted-foreground md:text-xl">
               {row.notes}
             </div>
           </div>
@@ -206,19 +193,19 @@ export default async function LetterPage({
       )}
 
       {/* Footer CTAs */}
-      <section className="bg-bone text-ink">
+      <section className="bg-background text-foreground">
         <div className="mx-auto max-w-3xl px-6 py-20 text-center md:px-12 md:py-28">
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link
               href="/letter"
-              className="lift inline-flex h-11 items-center gap-2 border border-iron bg-background px-6 text-sm font-medium text-foreground transition-colors hover:bg-background/90"
+              className="lift inline-flex h-11 items-center gap-2 bg-foreground px-6 text-sm font-medium text-background"
             >
               All letters
               <Icon name="arrow-right" size={14} />
             </Link>
             <Link
               href="/join"
-              className="lift inline-flex h-11 items-center gap-2 border border-iron/30 bg-transparent px-6 text-sm font-medium text-iron transition-colors hover:border-iron"
+              className="link-editorial text-sm text-foreground/80"
             >
               Join the brotherhood
             </Link>
