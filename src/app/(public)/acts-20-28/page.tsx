@@ -65,7 +65,7 @@ export default function VerseSharePage() {
             size="lg"
             className="lift h-12 rounded-none border border-bone bg-bone px-8 text-base text-iron hover:bg-stone"
           >
-            <Link href="/get-started">
+            <Link href="/join">
               Join the brotherhood
               <Icon name="arrow-right" size={18} className="ml-2" />
             </Link>

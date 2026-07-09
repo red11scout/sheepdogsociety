@@ -131,7 +131,7 @@ export default function HomePage() {
             <div className="hairline flex-1" />
             <Magnetic strength={0.18}>
               <Link
-                href="/get-started"
+                href="/what-to-expect"
                 className="lift inline-flex h-11 items-center gap-2 border border-stone/30 bg-transparent px-6 text-sm font-medium text-foreground transition-colors hover:border-brass hover:text-brass"
               >
                 What to expect

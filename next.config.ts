@@ -33,6 +33,7 @@ const nextConfig: NextConfig = {
         destination: "/join?path=start",
         permanent: true,
       },
+      { source: "/get-started", destination: "/join", permanent: true },
     ];
   },
 };
