@@ -111,7 +111,7 @@ export default function FAQPage() {
                     value={`${section.roman}-${i}`}
                     className="border-0 border-b border-foreground/10"
                   >
-                    <AccordionTrigger className="font-display text-lg md:text-xl text-left">
+                    <AccordionTrigger className="font-display text-lg md:text-xl text-left hover:no-underline">
                       {faq.q}
                     </AccordionTrigger>
                     <AccordionContent className="pb-8 text-base leading-relaxed text-muted-foreground md:text-lg">

@@ -491,6 +491,9 @@
   & .section-mark {
     color: #c9834a; /* copper kicker on ember, per the prototype */
   }
+  & em {
+    color: #efe7d5;
+  }
 }
 
 /* Editorial text link — underline offset 3px, brass on hover. */
