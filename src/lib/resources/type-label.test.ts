@@ -12,6 +12,8 @@ describe("typeLabel", () => {
   it("readable body means Guide when no provider", () => {
     expect(typeLabel({ ...base, hasBody: true })).toBe("Guide");
     expect(typeLabel({ ...base, hasBody: true, sourceMime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" })).toBe("Guide");
+    // Order matters: a readable body beats a mime that would say Video.
+    expect(typeLabel({ ...base, hasBody: true, sourceMime: "video/mp4" })).toBe("Guide");
   });
   it("mime drives file types", () => {
     expect(typeLabel({ ...base, sourceMime: "video/mp4", fileKey: "x" })).toBe("Video");
