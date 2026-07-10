@@ -74,11 +74,14 @@ export function PublicNav() {
 
   const pathname = usePathname();
 
-  // A tab-bar tap navigates without touching this component's state; close
-  // the slide-down panel so it never covers the new page (spec §A.1).
-  useEffect(() => {
+  // Close the slide-down panel when the route changes (e.g. a bottom
+  // tab-bar tap) — render-time adjustment per React docs, so the old
+  // panel never paints over the new page.
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
     setMobileOpen(false);
-  }, [pathname]);
+  }
 
   useEffect(() => {
     let alive = true;
