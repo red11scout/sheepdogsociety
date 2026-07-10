@@ -178,7 +178,10 @@ export function PublicNav() {
 
       {/* Row 3: the slim sticky nav (mobile: the whole masthead) */}
       <div className="sticky top-0 z-50 border-b border-foreground/15 bg-background/95 text-foreground backdrop-blur supports-[backdrop-filter]:bg-background/85">
-        <nav className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-2 md:px-10">
+        <nav
+          className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-6 py-2 md:px-10"
+          aria-label="Masthead"
+        >
           {/* Mobile brand — single-row masthead collapse */}
           <Link
             href="/"

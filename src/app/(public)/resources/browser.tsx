@@ -229,7 +229,7 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
                 <button
                   type="button"
                   onClick={() => setQuery("")}
-                  className="absolute right-2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-0 flex h-11 w-11 items-center justify-center text-muted-foreground hover:text-foreground"
                   aria-label="Clear"
                 >
                   <Icon name="close" size={14} />
@@ -505,7 +505,7 @@ function MobileFilterSheet({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 border border-foreground/15 bg-foreground/[0.04] px-3 py-2 text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:border-brass hover:text-brass"
+        className="flex w-full min-h-[44px] items-center justify-between gap-3 border border-foreground/15 bg-foreground/[0.04] px-3 py-2 text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:border-brass hover:text-brass"
         aria-expanded={open}
       >
         <span className="flex items-center gap-2">
