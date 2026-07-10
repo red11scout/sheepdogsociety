@@ -24,9 +24,8 @@ export function selectDraftingInput(row: {
   description: string | null;
   summary: string | null;
 }): FieldNotesInput {
-  const meta = [row.author ?? "", row.description ?? "", row.summary ?? ""]
-    .filter(Boolean)
-    .join("\n");
+  const metaChars = [row.author ?? "", row.description ?? "", row.summary ?? ""]
+    .join("").trim().length;
 
   const isExternal =
     row.provider === "amazon" || row.provider === "web" || row.provider === "youtube";
@@ -38,8 +37,9 @@ export function selectDraftingInput(row: {
     };
   }
 
-  if (row.title.trim() && meta.trim().length >= FRAMING_META_MIN) {
-    const authorLine = row.author ? `Author/creator: ${row.author}\n` : "";
+  if (row.title.trim() && metaChars >= FRAMING_META_MIN) {
+    const authorLine =
+      row.author && row.provider !== "youtube" ? `Author/creator: ${row.author}\n` : "";
     return {
       mode: "framing",
       content: `Title: ${row.title}\n${authorLine}About it: ${[row.description, row.summary].filter(Boolean).join("\n")}`,

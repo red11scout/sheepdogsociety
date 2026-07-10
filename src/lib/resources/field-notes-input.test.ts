@@ -30,4 +30,13 @@ describe("selectDraftingInput", () => {
   it("bare title with no metadata is insufficient", () => {
     expect(selectDraftingInput(base).mode).toBe("insufficient");
   });
+  it("youtube framing never includes the author line even when author is set", () => {
+    const r = selectDraftingInput({ ...base, provider: "youtube", author: "Some Channel", description: "Sermon on Acts 20:28 and the shepherd's charge to the church." });
+    expect(r.mode).toBe("framing");
+    expect(r.content).not.toContain("Author/creator");
+  });
+  it("full-mode floor is exact: 400 chars in, 399 out", () => {
+    expect(selectDraftingInput({ ...base, bodyText: "x".repeat(400) }).mode).toBe("full");
+    expect(selectDraftingInput({ ...base, bodyText: "x".repeat(399) }).mode).toBe("insufficient");
+  });
 });
