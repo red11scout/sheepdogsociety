@@ -2,8 +2,8 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { db } from "@/db";
-import { events, eventSeries, testimonies, users } from "@/db/schema";
-import { and, asc, desc, eq, gte, isNull, lt, or, sql } from "drizzle-orm";
+import { events, eventSeries, locations, testimonies, users } from "@/db/schema";
+import { and, asc, desc, eq, gte, ne } from "drizzle-orm";
 import { format } from "date-fns";
 import { Icon } from "@/components/icons/Icon";
 import { Kicker } from "@/components/public/kicker";
@@ -19,10 +19,11 @@ export const revalidate = 300;
 export const metadata: Metadata = {
   title: "Sheepdog Society — Acts 20:28",
   description:
-    "Find your brothers. A brotherhood of men anchored in Acts 20:28, who tell the truth and grow stronger in Christ together.",
+    "A brotherhood of Christian men anchored in Acts 20:28. Weekly tables around Scripture. Find your group, read the Letter, take a seat.",
   openGraph: {
     title: "Sheepdog Society — Find your brothers.",
-    description: "Brothers who tell the truth and hear yours. Acts 20:28.",
+    description:
+      "A brotherhood of Christian men anchored in Acts 20:28. Weekly tables around Scripture.",
     images: [{ url: "/api/og/verse", width: 1200, height: 630 }],
   },
   twitter: {
@@ -30,8 +31,6 @@ export const metadata: Metadata = {
     images: ["/api/og/verse"],
   },
 };
-
-type Photo = { url: string; alt?: string; caption?: string };
 
 /** Next gatherings: one row per series (its next date), one-offs as-is,
  *  first four overall. Same filters as /events (Phase 1 semantics). */
@@ -95,35 +94,6 @@ async function getLatestLetter() {
   }
 }
 
-/** Three most recent past gatherings that have photos (Phase 1 predicate). */
-async function getPhotoStrip() {
-  try {
-    return await db
-      .select({
-        id: events.id,
-        title: events.title,
-        startTime: events.startTime,
-        photos: events.photos,
-      })
-      .from(events)
-      .where(
-        and(
-          eq(events.isCancelled, false),
-          or(
-            eq(events.isPast, true),
-            lt(events.endTime, new Date()),
-            and(isNull(events.endTime), lt(events.startTime, new Date()))
-          ),
-          sql`jsonb_array_length(coalesce(${events.photos}, '[]'::jsonb)) > 0`
-        )
-      )
-      .orderBy(desc(events.startTime))
-      .limit(3);
-  } catch {
-    return [];
-  }
-}
-
 async function getStory() {
   try {
     const [story] = await db
@@ -144,36 +114,40 @@ async function getStory() {
   }
 }
 
+/** When & where, live: distinct meeting day + city pairs from the public
+ *  locator's exact visibility gate (spec §A.2 — the status enum has no
+ *  "approved" value; /groups gates on displayedOnMap AND isActive). */
+async function getMeetingRhythms() {
+  try {
+    const rows = await db
+      .selectDistinct({ day: locations.meetingDay, city: locations.city })
+      .from(locations)
+      .where(
+        and(
+          eq(locations.displayedOnMap, true),
+          eq(locations.isActive, true),
+          ne(locations.meetingDay, "")
+        )
+      )
+      .limit(4);
+    return rows.filter((r) => r.day && r.city);
+  } catch {
+    return [];
+  }
+}
+
 const standingOrders = [
   { roman: "I", text: "Show up." },
   { roman: "II", text: "Tell the truth." },
   { roman: "III", text: "Stand watch." },
 ];
 
-const howItWorks = [
-  {
-    roman: "I",
-    title: "Find a table",
-    copy: "Pick a group near you. Diners, garages, church basements.",
-  },
-  {
-    roman: "II",
-    title: "Show up as you are",
-    copy: "No application. No interview. Sit down, read the Word, be honest.",
-  },
-  {
-    roman: "III",
-    title: "Keep showing up",
-    copy: "The work is weekly. Scripture, straight talk, prayer. Steadier every week.",
-  },
-];
-
 export default async function HomePage() {
-  const [gatherings, letter, photoEvents, story] = await Promise.all([
+  const [gatherings, letter, story, rhythms] = await Promise.all([
     getNextGatherings(),
     getLatestLetter(),
-    getPhotoStrip(),
     getStory(),
+    getMeetingRhythms(),
   ]);
 
   return (
@@ -193,10 +167,9 @@ export default async function HomePage() {
                 <em>brothers.</em>
               </h1>
               <p className="dropcap mt-10 max-w-2xl font-scripture text-lg text-foreground/85">
-                You have walked alone a long time. There is honor in that, and
-                a limit to it. Find brothers who will tell you the truth and
-                hear yours, men who know the Word, who will stand watch beside
-                you and grow stronger in Christ. That is the work. That is
+                A brotherhood of Christian men, anchored in Acts 20:28. We
+                meet weekly around Scripture, tell each other the truth, and
+                stand watch over one another. You have walked alone long
                 enough.
               </p>
               <div className="mt-10 flex flex-wrap items-center gap-6">
@@ -205,7 +178,7 @@ export default async function HomePage() {
                   className="lift group inline-flex h-12 items-center gap-3 bg-foreground px-7 text-base font-medium text-background"
                 >
                   <Icon name="map-pin" size={18} />
-                  Find a group near you
+                  Find your group
                   <Icon
                     name="arrow-right"
                     size={16}
@@ -216,11 +189,6 @@ export default async function HomePage() {
                   Read this week&rsquo;s Letter
                 </Link>
               </div>
-              <p className="mt-10 max-w-xl text-sm leading-relaxed text-muted-foreground">
-                We do not meet to perform. We do not meet to debate. We meet to
-                be honest with each other, anchored in Scripture, and to send
-                each other back into the week steadier than we came.
-              </p>
             </div>
 
             {/* Right rail — standing orders */}
@@ -260,20 +228,62 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 3 — How it works */}
+      {/* 3 — What this is: the 5W1H band (spec §A.2) */}
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-20 md:px-10 md:py-28">
-          <Kicker left="How it works" right="Three steps, no hoops" />
-          <StaggerReveal className="mt-10 grid gap-10 md:grid-cols-3">
-            {howItWorks.map((s) => (
-              <div key={s.roman}>
-                <span className="section-mark">{s.roman}</span>
-                <h3 className="display-soft mt-4 text-display-md">{s.title}</h3>
-                <p className="mt-3 max-w-prose text-sm leading-relaxed text-muted-foreground">
-                  {s.copy}
+          <Kicker left="What this is" right="Plain answers" />
+          <StaggerReveal className="mt-10 grid gap-10 md:grid-cols-2 lg:grid-cols-5 lg:gap-8">
+            <div>
+              <p className="folio">Who it&rsquo;s for</p>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                Men. Fathers, sons, new believers, worn-out saints. If you
+                are a man, there is a seat.
+              </p>
+            </div>
+            <div>
+              <p className="folio">What happens</p>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                A weekly table. Scripture read plain. Straight talk. Prayer.
+                One hour that orders the rest of the week.
+              </p>
+            </div>
+            <div>
+              <p className="folio">Why it exists</p>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                God did not build men to walk alone. Acts 20:28 says keep
+                watch. We keep it together.
+              </p>
+            </div>
+            <div>
+              <p className="folio">When &amp; where</p>
+              {rhythms.length > 0 ? (
+                <ul className="mt-3 space-y-1 text-sm leading-relaxed text-muted-foreground">
+                  {rhythms.map((r) => (
+                    <li key={`${r.day}-${r.city}`}>
+                      <span className="text-foreground">{r.day}s</span> · {r.city}
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                  Tables gather weekly across Georgia. New ones are forming
+                  now.
                 </p>
-              </div>
-            ))}
+              )}
+            </div>
+            <div>
+              <p className="folio">How to start</p>
+              <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                Pick a group. Show up once. Keep showing up. That is the
+                whole program.
+              </p>
+              <Link
+                href="/join"
+                className="link-editorial mt-3 inline-block text-sm"
+              >
+                Start here
+              </Link>
+            </div>
           </StaggerReveal>
         </div>
       </section>
@@ -312,8 +322,9 @@ export default async function HomePage() {
                           {g.location ? ` · ${g.location}` : ""}
                         </span>
                       </span>
-                      <span className="section-mark text-muted-foreground transition-colors group-hover:text-brass">
-                        Details →
+                      <span className="section-mark inline-flex items-center gap-1 text-muted-foreground transition-colors group-hover:text-brass">
+                        Details
+                        <Icon name="chevron-right" size={12} />
                       </span>
                     </Link>
                   </li>
@@ -409,61 +420,6 @@ export default async function HomePage() {
           </Reveal>
         </div>
       </section>
-
-      {/* 6 — Past gatherings photo strip */}
-      {photoEvents.length > 0 && (
-        <section className="bg-background text-foreground">
-          <div className="mx-auto max-w-7xl px-6 pb-20 md:px-10 md:pb-28">
-            <Kicker left="Past gatherings" right="What we came home with" />
-            <StaggerReveal className="mt-10 grid gap-6 md:grid-cols-3" selector=":scope > a">
-              {photoEvents.map((ev) => {
-                const photos = (ev.photos as Photo[] | null) ?? [];
-                const cover = photos[0];
-                return (
-                  <Link
-                    key={ev.id}
-                    href={`/events/${ev.id}`}
-                    className="paper-card lift group/past block overflow-hidden"
-                  >
-                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-foreground/5">
-                      {cover && (
-                        <Image
-                          src={cover.url}
-                          alt={cover.alt ?? ev.title}
-                          fill
-                          sizes="(max-width: 768px) 100vw, 33vw"
-                          unoptimized
-                          className="object-cover transition-transform duration-500 group-hover/past:scale-[1.03]"
-                        />
-                      )}
-                      {photos.length > 0 && (
-                        <span className="pointer-events-none absolute bottom-3 right-3 inline-flex h-6 items-center gap-1 bg-foreground/85 px-2 text-[0.625rem] uppercase tracking-[0.14em] text-background">
-                          <Icon name="image" size={10} />
-                          {photos.length} photo{photos.length === 1 ? "" : "s"}
-                        </span>
-                      )}
-                    </div>
-                    <div className="p-5">
-                      <p className="folio">
-                        {format(new Date(ev.startTime), "MMMM d, yyyy")}
-                      </p>
-                      <h3 className="mt-2 font-display text-xl">{ev.title}</h3>
-                      <p className="section-mark mt-3 inline-flex items-center gap-2">
-                        See the night
-                        <Icon
-                          name="arrow-right"
-                          size={12}
-                          className="transition-transform group-hover/past:translate-x-1"
-                        />
-                      </p>
-                    </div>
-                  </Link>
-                );
-              })}
-            </StaggerReveal>
-          </div>
-        </section>
-      )}
 
       {/* 7 — One story */}
       {story && (
