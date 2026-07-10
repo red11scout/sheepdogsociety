@@ -29,6 +29,8 @@ Users and admins report the site is hard to use. 99% of users are on phones. Spe
 
 ## Phase A — Public Mobile Experience
 
+**Shipped in PR #40, squash-merged and verified live on production 2026-07-09.**
+
 ### A.1 Bottom tab bar
 
 - New client component `MobileTabBar` in the public layout, `lg:hidden`, fixed bottom, `env(safe-area-inset-bottom)` padding, `z-40` (below the sticky nav's `z-50`, above content).
