@@ -14,8 +14,9 @@ describe("findBannedLanguage", () => {
     ).toEqual(["do life together", "level up", "at the end of the day"]);
   });
   it("matches whole words only, not substrings", () => {
-    // "navigate" banned; "navigator" fine. "based" banned; "database" fine.
-    expect(findBannedLanguage("The navigator opened the database.")).toEqual([]);
+    // "alpha" is banned; "alphabet" must pass. "rise" banned; "arise"/"surprise" must pass.
+    expect(findBannedLanguage("The alphabet chart caused no surprise when they would arise.")).toEqual([]);
+    expect(findBannedLanguage("He is the alpha here.")).toEqual(["alpha"]);
   });
   it("dedupes repeats", () => {
     expect(findBannedLanguage("Unpack it. Then unpack it again.")).toEqual(["unpack"]);

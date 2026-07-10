@@ -5,7 +5,7 @@
  * Letter autopilot (Phase C). "journey" is banned only as a noun — too
  * ambiguous to machine-check, left to the prompt.
  */
-export const BANNED_WORDS = [
+export const BANNED_WORDS: string[] = Object.freeze([
   "delve",
   "leverage",
   "navigate",
@@ -16,9 +16,9 @@ export const BANNED_WORDS = [
   "unpack",
   "based",
   "alpha",
-];
+]) as string[];
 
-export const BANNED_PHRASES = [
+export const BANNED_PHRASES: string[] = Object.freeze([
   "fight back",
   "real men",
   "toxic masculinity",
@@ -30,7 +30,11 @@ export const BANNED_PHRASES = [
   "at the end of the day",
   "speak life",
   "season of life",
-];
+]) as string[];
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 export function findBannedLanguage(text: string): string[] {
   const lower = text.toLowerCase();
@@ -39,7 +43,7 @@ export function findBannedLanguage(text: string): string[] {
     if (lower.includes(phrase)) hits.push(phrase);
   }
   for (const word of BANNED_WORDS) {
-    if (new RegExp(`\\b${word}\\b`).test(lower)) hits.push(word);
+    if (new RegExp(`\\b${escapeRegExp(word)}\\b`).test(lower)) hits.push(word);
   }
   // Preserve first-appearance order within the text itself.
   const seen = new Set<string>();
