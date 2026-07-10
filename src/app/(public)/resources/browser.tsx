@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Icon, type IconName } from "@/components/icons/Icon";
+import { Icon } from "@/components/icons/Icon";
 import { ResourceCover } from "@/components/resources/ResourceCover";
 import { BOOKS, parseReference } from "@/lib/bible/books";
 
@@ -26,6 +26,7 @@ interface ItemLite {
   type: string;
   /** youtube / amazon / web / file (or null for legacy rows) */
   provider: "youtube" | "amazon" | "web" | "file" | null;
+  sourceMime: string | null;
   thumbnailUrl: string | null;
   /** Channel name (YouTube), author (Amazon), site name (web), or null. */
   author: string | null;
@@ -216,22 +217,19 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
         <div className="mx-auto max-w-7xl px-6 py-3 md:px-12 md:py-4">
           <div className="flex items-center gap-3">
             <label className="relative flex flex-1 items-center">
-              <Icon
-                name="search"
-                size={16}
-                className="absolute left-3 text-muted-foreground"
-              />
+              {/* Placeholder text carries the affordance; no magnifier
+                  glyph (Drew, 2026-07-09: icons in resources distract). */}
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search resources..."
-                className="block h-11 w-full border border-foreground/15 bg-foreground/[0.04] pl-10 pr-9 text-sm text-foreground placeholder:text-foreground/50 focus:border-brass focus:outline-none"
+                className="block h-11 w-full border border-foreground/15 bg-foreground/[0.04] pl-4 pr-9 text-sm text-foreground placeholder:text-foreground/50 focus:border-brass focus:outline-none"
               />
               {query && (
                 <button
                   type="button"
                   onClick={() => setQuery("")}
-                  className="absolute right-2 text-muted-foreground hover:text-foreground"
+                  className="absolute right-0 flex h-11 w-11 items-center justify-center text-muted-foreground hover:text-foreground"
                   aria-label="Clear"
                 >
                   <Icon name="close" size={14} />
@@ -341,8 +339,7 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
           <div className="min-w-0">
             {filtered.length === 0 ? (
               <div className="border border-dashed border-foreground/15 p-16 text-center">
-                <Icon name="search" size={36} className="mx-auto text-brass" />
-                <h2 className="display-xl mt-6 text-2xl text-foreground">
+                <h2 className="display-xl text-2xl text-foreground">
                   Nothing matches that yet.
                 </h2>
                 <p className="mx-auto mt-3 max-w-md font-pullquote text-base italic text-muted-foreground">
@@ -376,16 +373,9 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
                 return (
                   <div key={section.id} className="mb-16 last:mb-0">
                     <div className="flex flex-wrap items-end justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <Icon
-                          name={(section.icon as IconName) || "scroll"}
-                          size={24}
-                          className="text-brass"
-                        />
-                        <h2 className="display-xl text-2xl text-foreground md:text-3xl">
-                          {section.name}
-                        </h2>
-                      </div>
+                      <h2 className="display-xl text-2xl text-foreground md:text-3xl">
+                        {section.name}
+                      </h2>
                       <span className="section-mark text-muted-foreground">
                         {sectionItems.length}{" "}
                         {sectionItems.length === 1 ? "item" : "items"}
@@ -464,7 +454,7 @@ function SectionPill({
       type="button"
       onClick={onClick}
       className={
-        "shrink-0 whitespace-nowrap border px-3 py-1.5 text-xs uppercase tracking-wider transition-colors " +
+        "shrink-0 whitespace-nowrap border min-h-[44px] px-4 text-xs uppercase tracking-wider transition-colors " +
         (active
           ? "border-brass bg-brass text-iron"
           : "border-foreground/15 bg-card text-muted-foreground hover:border-brass hover:text-brass")
@@ -515,11 +505,10 @@ function MobileFilterSheet({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 border border-foreground/15 bg-foreground/[0.04] px-3 py-2 text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:border-brass hover:text-brass"
+        className="flex w-full min-h-[44px] items-center justify-between gap-3 border border-foreground/15 bg-foreground/[0.04] px-3 py-2 text-xs uppercase tracking-wider text-muted-foreground transition-colors hover:border-brass hover:text-brass"
         aria-expanded={open}
       >
         <span className="flex items-center gap-2">
-          <Icon name="search" size={12} />
           More filters
           {activeCount > 0 && (
             <span className="inline-flex h-4 min-w-[16px] items-center justify-center bg-brass px-1 text-[0.5625rem] font-semibold text-iron">
@@ -527,9 +516,10 @@ function MobileFilterSheet({
             </span>
           )}
         </span>
-        <span className="flex items-center gap-3 text-muted-foreground">
-          <span className="normal-case tracking-normal">{count} items</span>
-          <Icon name={open ? "chevron-down" : "chevron-right"} size={12} />
+        {/* No glyphs here (Drew, 2026-07-09): the count + tap-to-toggle
+            row reads cleaner without a magnifier or chevron. */}
+        <span className="normal-case tracking-normal text-muted-foreground">
+          {count} items
         </span>
       </button>
       {open && (
@@ -596,7 +586,7 @@ function ChipFacet({
               type="button"
               onClick={() => onChange(active ? "" : opt)}
               className={
-                "border px-2 py-1 text-[0.6875rem] uppercase tracking-wider transition-colors " +
+                "border min-h-[36px] px-3 text-[0.6875rem] uppercase tracking-wider transition-colors " +
                 (active
                   ? "border-brass bg-brass text-iron"
                   : "border-foreground/15 bg-card text-muted-foreground hover:border-brass hover:text-brass")
@@ -643,11 +633,10 @@ function ClusterDisclosure({
           <h3 className="display-xl text-base text-foreground md:text-lg">{label}</h3>
           <span className="section-mark text-muted-foreground">{count}</span>
         </div>
-        <Icon
-          name={isOpen ? "chevron-down" : "chevron-right"}
-          size={14}
-          className="text-muted-foreground"
-        />
+        {/* Plain word instead of a chevron glyph (Drew, 2026-07-09). */}
+        <span className="section-mark text-muted-foreground">
+          {isOpen ? "Hide" : "Show"}
+        </span>
       </button>
       {isOpen && <div className="border-t border-foreground/10 px-4 pb-5 pt-2 md:px-5">{children}</div>}
     </div>
@@ -685,11 +674,6 @@ function Facet({
           aria-expanded={open}
           className="flex flex-1 items-center gap-2 py-1 text-left"
         >
-          <Icon
-            name="chevron-right"
-            size={12}
-            className={`shrink-0 text-muted-foreground transition-transform ${open ? "rotate-90" : ""}`}
-          />
           <span className="section-mark text-muted-foreground">{title}</span>
           <span className="text-[0.625rem] tabular-nums text-muted-foreground/60">
             {count}
@@ -697,6 +681,10 @@ function Facet({
           {value && !open && (
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brass" aria-hidden />
           )}
+          {/* Plain word instead of a chevron glyph (Drew, 2026-07-09). */}
+          <span className="ml-auto text-[0.625rem] uppercase tracking-wider text-muted-foreground/60">
+            {open ? "Hide" : "Show"}
+          </span>
         </button>
         {value && (
           <button
@@ -744,17 +732,6 @@ function Facet({
   );
 }
 
-function formatDuration(seconds: number | null): string | null {
-  if (!seconds || seconds <= 0) return null;
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  if (m >= 60) {
-    const h = Math.floor(m / 60);
-    return `${h}:${String(m % 60).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  }
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
-
 function ResourceCard({ item }: { item: ItemLite }) {
   // Always navigate to the public detail page so we get the embed/book/link
   // card layout, then admin/companion section. The legacy "open file
@@ -770,14 +747,6 @@ function ResourceCard({ item }: { item: ItemLite }) {
     !item.thumbnailUrl ||
     (item.provider !== "youtube" && item.provider !== "amazon");
 
-  // Provider label shown over the thumbnail; drives a small badge style.
-  const providerBadge = (() => {
-    if (item.provider === "youtube") return { label: "YouTube", icon: "play" as const };
-    if (item.provider === "amazon") return { label: "Amazon", icon: "scroll" as const };
-    if (item.provider === "web") return { label: "Link", icon: "arrow-up-right" as const };
-    return null;
-  })();
-
   // Primary action label depends on what's behind the card.
   const ctaLabel =
     item.provider === "youtube"
@@ -792,7 +761,6 @@ function ResourceCard({ item }: { item: ItemLite }) {
       ? "Download"
       : "Open";
 
-  const duration = formatDuration(item.durationSeconds);
   const hasThumbnail = !!item.thumbnailUrl;
 
   // For Amazon books we use a 2:3 aspect ratio (book covers); everything
@@ -834,28 +802,9 @@ function ResourceCard({ item }: { item: ItemLite }) {
               </div>
             </div>
           )}
-          {/* Provider + audience badges */}
-          <div className="pointer-events-none absolute inset-x-3 top-3 flex items-start justify-between gap-2">
-            {providerBadge ? (
-              <span className="inline-flex h-6 items-center gap-1 border border-foreground/15 bg-card/95 px-2 text-[0.5625rem] font-medium uppercase tracking-wider text-foreground backdrop-blur-sm">
-                <Icon name={providerBadge.icon} size={10} />
-                {providerBadge.label}
-              </span>
-            ) : (
-              <span />
-            )}
-            {item.audience !== "all" && (
-              <span className="inline-flex h-6 items-center border border-foreground/15 bg-card/95 px-2 text-[0.5625rem] uppercase tracking-wider text-muted-foreground backdrop-blur-sm">
-                {item.audience === "leader" ? "Leader" : "Newcomer"}
-              </span>
-            )}
-          </div>
-          {/* Duration / minutes */}
-          {(duration || item.estimatedMinutes != null) && (
-            <span className="pointer-events-none absolute bottom-3 right-3 inline-flex h-6 items-center bg-foreground/85 px-2 text-[0.625rem] font-medium text-background backdrop-blur-sm">
-              {duration ?? `${item.estimatedMinutes} min read`}
-            </span>
-          )}
+          {/* No badges over the artwork (Drew, 2026-07-09 live review):
+              overlays read as clutter. The CTA verb below carries the
+              type — Watch / Read / View book / Open / Download. */}
         </div>
 
         {/* Body */}
@@ -873,7 +822,7 @@ function ResourceCard({ item }: { item: ItemLite }) {
           )}
           {(item.booksOfBible.length > 0 || item.topics.length > 0) && (
             <div className="mt-4 flex flex-wrap gap-1">
-              {item.booksOfBible.slice(0, 3).map((b) => (
+              {item.booksOfBible.slice(0, 1).map((b) => (
                 <span
                   key={`b-${b}`}
                   className="inline-flex h-5 items-center border border-brass/40 bg-brass/10 px-1.5 text-[0.5625rem] uppercase tracking-wider text-brass"
@@ -881,7 +830,7 @@ function ResourceCard({ item }: { item: ItemLite }) {
                   {b}
                 </span>
               ))}
-              {item.topics.slice(0, 4).map((t) => (
+              {item.topics.slice(0, 1).map((t) => (
                 <span
                   key={`t-${t}`}
                   className="inline-flex h-5 items-center border border-foreground/15 bg-card px-1.5 text-[0.5625rem] text-muted-foreground"
@@ -892,14 +841,7 @@ function ResourceCard({ item }: { item: ItemLite }) {
             </div>
           )}
           <div className="mt-6 flex items-center justify-between">
-            <span className="inline-flex items-center gap-2 section-mark text-brass">
-              {ctaLabel}
-              <Icon
-                name="arrow-right"
-                size={12}
-                className="transition-transform group-hover/card:translate-x-1"
-              />
-            </span>
+            <span className="section-mark text-brass">{ctaLabel}</span>
           </div>
         </div>
       </Link>

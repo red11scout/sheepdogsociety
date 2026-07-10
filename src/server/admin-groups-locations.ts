@@ -281,6 +281,8 @@ export async function upsertGroupLocation(input: UpsertGroupLocationInput) {
   revalidatePath("/admin/groups");
   revalidatePath("/admin/members");
   revalidatePath("/groups");
+  // Homepage "When & where" band reads locations live (spec §A.2).
+  revalidatePath("/");
   return { groupId };
 }
 
@@ -320,6 +322,7 @@ export async function bulkUpdateGroupsLocations(
 
   revalidatePath("/admin/groups");
   revalidatePath("/groups");
+  revalidatePath("/");
 }
 
 export async function deleteGroupLocation(groupId: string) {
@@ -331,4 +334,5 @@ export async function deleteGroupLocation(groupId: string) {
   revalidatePath("/admin/groups");
   revalidatePath("/admin/members");
   revalidatePath("/groups");
+  revalidatePath("/");
 }

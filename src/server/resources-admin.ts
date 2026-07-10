@@ -286,6 +286,7 @@ export async function listSectionsAndResourcesForPublic() {
       fileKey: resources.fileKey,
       type: resources.type,
       provider: resources.provider,
+      sourceMime: resources.sourceMime,
       thumbnailUrl: resources.thumbnailUrl,
       author: resources.author,
       durationSeconds: resources.durationSeconds,
