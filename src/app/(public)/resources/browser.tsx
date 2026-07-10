@@ -6,7 +6,6 @@ import Image from "next/image";
 import { Icon } from "@/components/icons/Icon";
 import { ResourceCover } from "@/components/resources/ResourceCover";
 import { BOOKS, parseReference } from "@/lib/bible/books";
-import { typeLabel } from "@/lib/resources/type-label";
 
 interface SectionLite {
   id: string;
@@ -218,16 +217,13 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
         <div className="mx-auto max-w-7xl px-6 py-3 md:px-12 md:py-4">
           <div className="flex items-center gap-3">
             <label className="relative flex flex-1 items-center">
-              <Icon
-                name="search"
-                size={16}
-                className="absolute left-3 text-muted-foreground"
-              />
+              {/* Placeholder text carries the affordance; no magnifier
+                  glyph (Drew, 2026-07-09: icons in resources distract). */}
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search resources..."
-                className="block h-11 w-full border border-foreground/15 bg-foreground/[0.04] pl-10 pr-9 text-sm text-foreground placeholder:text-foreground/50 focus:border-brass focus:outline-none"
+                className="block h-11 w-full border border-foreground/15 bg-foreground/[0.04] pl-4 pr-9 text-sm text-foreground placeholder:text-foreground/50 focus:border-brass focus:outline-none"
               />
               {query && (
                 <button
@@ -343,8 +339,7 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
           <div className="min-w-0">
             {filtered.length === 0 ? (
               <div className="border border-dashed border-foreground/15 p-16 text-center">
-                <Icon name="search" size={36} className="mx-auto text-brass" />
-                <h2 className="display-xl mt-6 text-2xl text-foreground">
+                <h2 className="display-xl text-2xl text-foreground">
                   Nothing matches that yet.
                 </h2>
                 <p className="mx-auto mt-3 max-w-md font-pullquote text-base italic text-muted-foreground">
@@ -514,7 +509,6 @@ function MobileFilterSheet({
         aria-expanded={open}
       >
         <span className="flex items-center gap-2">
-          <Icon name="search" size={12} />
           More filters
           {activeCount > 0 && (
             <span className="inline-flex h-4 min-w-[16px] items-center justify-center bg-brass px-1 text-[0.5625rem] font-semibold text-iron">
@@ -522,9 +516,10 @@ function MobileFilterSheet({
             </span>
           )}
         </span>
-        <span className="flex items-center gap-3 text-muted-foreground">
-          <span className="normal-case tracking-normal">{count} items</span>
-          <Icon name={open ? "chevron-down" : "chevron-right"} size={12} />
+        {/* No glyphs here (Drew, 2026-07-09): the count + tap-to-toggle
+            row reads cleaner without a magnifier or chevron. */}
+        <span className="normal-case tracking-normal text-muted-foreground">
+          {count} items
         </span>
       </button>
       {open && (
@@ -638,11 +633,10 @@ function ClusterDisclosure({
           <h3 className="display-xl text-base text-foreground md:text-lg">{label}</h3>
           <span className="section-mark text-muted-foreground">{count}</span>
         </div>
-        <Icon
-          name={isOpen ? "chevron-down" : "chevron-right"}
-          size={14}
-          className="text-muted-foreground"
-        />
+        {/* Plain word instead of a chevron glyph (Drew, 2026-07-09). */}
+        <span className="section-mark text-muted-foreground">
+          {isOpen ? "Hide" : "Show"}
+        </span>
       </button>
       {isOpen && <div className="border-t border-foreground/10 px-4 pb-5 pt-2 md:px-5">{children}</div>}
     </div>
@@ -680,11 +674,6 @@ function Facet({
           aria-expanded={open}
           className="flex flex-1 items-center gap-2 py-1 text-left"
         >
-          <Icon
-            name="chevron-right"
-            size={12}
-            className={`shrink-0 text-muted-foreground transition-transform ${open ? "rotate-90" : ""}`}
-          />
           <span className="section-mark text-muted-foreground">{title}</span>
           <span className="text-[0.625rem] tabular-nums text-muted-foreground/60">
             {count}
@@ -692,6 +681,10 @@ function Facet({
           {value && !open && (
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brass" aria-hidden />
           )}
+          {/* Plain word instead of a chevron glyph (Drew, 2026-07-09). */}
+          <span className="ml-auto text-[0.625rem] uppercase tracking-wider text-muted-foreground/60">
+            {open ? "Hide" : "Show"}
+          </span>
         </button>
         {value && (
           <button
@@ -744,13 +737,6 @@ function ResourceCard({ item }: { item: ItemLite }) {
   // card layout, then admin/companion section. The legacy "open file
   // directly" behavior happens on the detail page via the action bar.
   const href = `/resources/${item.slug}`;
-
-  const label = typeLabel({
-    provider: item.provider,
-    sourceMime: item.sourceMime,
-    hasBody: item.hasBody,
-    fileKey: item.fileKey,
-  });
 
   // For file-backed rows (uploaded studies/guides) we render a
   // deterministic SVG cover instead of a real thumbnail. AI photos
@@ -816,12 +802,9 @@ function ResourceCard({ item }: { item: ItemLite }) {
               </div>
             </div>
           )}
-          {/* Type label — plain English, no icons (spec §A.3) */}
-          <div className="pointer-events-none absolute left-3 top-3">
-            <span className="inline-flex h-6 items-center border border-foreground/15 bg-card/95 px-2 text-[0.5625rem] font-medium uppercase tracking-wider text-foreground backdrop-blur-sm">
-              {label}
-            </span>
-          </div>
+          {/* No badges over the artwork (Drew, 2026-07-09 live review):
+              overlays read as clutter. The CTA verb below carries the
+              type — Watch / Read / View book / Open / Download. */}
         </div>
 
         {/* Body */}
@@ -858,14 +841,7 @@ function ResourceCard({ item }: { item: ItemLite }) {
             </div>
           )}
           <div className="mt-6 flex items-center justify-between">
-            <span className="inline-flex items-center gap-2 section-mark text-brass">
-              {ctaLabel}
-              <Icon
-                name="arrow-right"
-                size={12}
-                className="transition-transform group-hover/card:translate-x-1"
-              />
-            </span>
+            <span className="section-mark text-brass">{ctaLabel}</span>
           </div>
         </div>
       </Link>

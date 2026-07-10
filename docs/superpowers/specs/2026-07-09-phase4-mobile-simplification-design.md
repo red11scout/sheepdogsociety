@@ -56,7 +56,7 @@ Also in scope: **update the homepage `metadata` title/description/openGraph** to
 
 ### A.3 Resources wayfinding
 
-- **Icons die.** One plain-English type label per resource — Book / Video / Article / Guide / Download — as a small text badge. Derivation precedence: **provider domain wins (Amazon→Book, YouTube→Video), then mime (`video/*`→Video, `application/pdf`→Guide, other files→Download), then section-based fallback; anything unclassifiable → Download.** Full mapping table in the implementation plan.
+- **Icons die.** REVISED per Drew's live review during Phase A execution (2026-07-09): no badges or glyphs on cards at all — no type badge over the artwork, no CTA arrows, no chevrons or magnifier glyphs anywhere in the resources browser. The CTA verb (Watch / Read / View book / Open / Download) is the sole type wayfinding; disclosures use the plain words Show/Hide. Only the search-clear ✕ and the YouTube play overlay (universal video convention) remain. The `typeLabel` module ships unused by the browser (retained for the A-FN detail-page work).
 - **Cards shrink to:** thumbnail, type label, title, one-line summary, ≤ 2 pills (book of Bible, topic). Duration/audience move to the detail page.
 - **Mobile order:** search pinned top → section pill rail → cards. Nothing pushes cards below the fold.
 - **Detail page content-first:** readable/watchable content at top when it exists; external links become clearly-labeled secondary buttons ("Get the book on Amazon").
