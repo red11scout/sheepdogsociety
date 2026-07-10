@@ -3,9 +3,10 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Icon, type IconName } from "@/components/icons/Icon";
+import { Icon } from "@/components/icons/Icon";
 import { ResourceCover } from "@/components/resources/ResourceCover";
 import { BOOKS, parseReference } from "@/lib/bible/books";
+import { typeLabel } from "@/lib/resources/type-label";
 
 interface SectionLite {
   id: string;
@@ -26,6 +27,7 @@ interface ItemLite {
   type: string;
   /** youtube / amazon / web / file (or null for legacy rows) */
   provider: "youtube" | "amazon" | "web" | "file" | null;
+  sourceMime: string | null;
   thumbnailUrl: string | null;
   /** Channel name (YouTube), author (Amazon), site name (web), or null. */
   author: string | null;
@@ -376,16 +378,9 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
                 return (
                   <div key={section.id} className="mb-16 last:mb-0">
                     <div className="flex flex-wrap items-end justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <Icon
-                          name={(section.icon as IconName) || "scroll"}
-                          size={24}
-                          className="text-brass"
-                        />
-                        <h2 className="display-xl text-2xl text-foreground md:text-3xl">
-                          {section.name}
-                        </h2>
-                      </div>
+                      <h2 className="display-xl text-2xl text-foreground md:text-3xl">
+                        {section.name}
+                      </h2>
                       <span className="section-mark text-muted-foreground">
                         {sectionItems.length}{" "}
                         {sectionItems.length === 1 ? "item" : "items"}
@@ -464,7 +459,7 @@ function SectionPill({
       type="button"
       onClick={onClick}
       className={
-        "shrink-0 whitespace-nowrap border px-3 py-1.5 text-xs uppercase tracking-wider transition-colors " +
+        "shrink-0 whitespace-nowrap border min-h-[44px] px-4 text-xs uppercase tracking-wider transition-colors " +
         (active
           ? "border-brass bg-brass text-iron"
           : "border-foreground/15 bg-card text-muted-foreground hover:border-brass hover:text-brass")
@@ -596,7 +591,7 @@ function ChipFacet({
               type="button"
               onClick={() => onChange(active ? "" : opt)}
               className={
-                "border px-2 py-1 text-[0.6875rem] uppercase tracking-wider transition-colors " +
+                "border min-h-[36px] px-3 text-[0.6875rem] uppercase tracking-wider transition-colors " +
                 (active
                   ? "border-brass bg-brass text-iron"
                   : "border-foreground/15 bg-card text-muted-foreground hover:border-brass hover:text-brass")
@@ -744,22 +739,18 @@ function Facet({
   );
 }
 
-function formatDuration(seconds: number | null): string | null {
-  if (!seconds || seconds <= 0) return null;
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  if (m >= 60) {
-    const h = Math.floor(m / 60);
-    return `${h}:${String(m % 60).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  }
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
-
 function ResourceCard({ item }: { item: ItemLite }) {
   // Always navigate to the public detail page so we get the embed/book/link
   // card layout, then admin/companion section. The legacy "open file
   // directly" behavior happens on the detail page via the action bar.
   const href = `/resources/${item.slug}`;
+
+  const label = typeLabel({
+    provider: item.provider,
+    sourceMime: item.sourceMime,
+    hasBody: item.hasBody,
+    fileKey: item.fileKey,
+  });
 
   // For file-backed rows (uploaded studies/guides) we render a
   // deterministic SVG cover instead of a real thumbnail. AI photos
@@ -769,14 +760,6 @@ function ResourceCard({ item }: { item: ItemLite }) {
   const useGeneratedCover =
     !item.thumbnailUrl ||
     (item.provider !== "youtube" && item.provider !== "amazon");
-
-  // Provider label shown over the thumbnail; drives a small badge style.
-  const providerBadge = (() => {
-    if (item.provider === "youtube") return { label: "YouTube", icon: "play" as const };
-    if (item.provider === "amazon") return { label: "Amazon", icon: "scroll" as const };
-    if (item.provider === "web") return { label: "Link", icon: "arrow-up-right" as const };
-    return null;
-  })();
 
   // Primary action label depends on what's behind the card.
   const ctaLabel =
@@ -792,7 +775,6 @@ function ResourceCard({ item }: { item: ItemLite }) {
       ? "Download"
       : "Open";
 
-  const duration = formatDuration(item.durationSeconds);
   const hasThumbnail = !!item.thumbnailUrl;
 
   // For Amazon books we use a 2:3 aspect ratio (book covers); everything
@@ -834,28 +816,12 @@ function ResourceCard({ item }: { item: ItemLite }) {
               </div>
             </div>
           )}
-          {/* Provider + audience badges */}
-          <div className="pointer-events-none absolute inset-x-3 top-3 flex items-start justify-between gap-2">
-            {providerBadge ? (
-              <span className="inline-flex h-6 items-center gap-1 border border-foreground/15 bg-card/95 px-2 text-[0.5625rem] font-medium uppercase tracking-wider text-foreground backdrop-blur-sm">
-                <Icon name={providerBadge.icon} size={10} />
-                {providerBadge.label}
-              </span>
-            ) : (
-              <span />
-            )}
-            {item.audience !== "all" && (
-              <span className="inline-flex h-6 items-center border border-foreground/15 bg-card/95 px-2 text-[0.5625rem] uppercase tracking-wider text-muted-foreground backdrop-blur-sm">
-                {item.audience === "leader" ? "Leader" : "Newcomer"}
-              </span>
-            )}
-          </div>
-          {/* Duration / minutes */}
-          {(duration || item.estimatedMinutes != null) && (
-            <span className="pointer-events-none absolute bottom-3 right-3 inline-flex h-6 items-center bg-foreground/85 px-2 text-[0.625rem] font-medium text-background backdrop-blur-sm">
-              {duration ?? `${item.estimatedMinutes} min read`}
+          {/* Type label — plain English, no icons (spec §A.3) */}
+          <div className="pointer-events-none absolute left-3 top-3">
+            <span className="inline-flex h-6 items-center border border-foreground/15 bg-card/95 px-2 text-[0.5625rem] font-medium uppercase tracking-wider text-foreground backdrop-blur-sm">
+              {label}
             </span>
-          )}
+          </div>
         </div>
 
         {/* Body */}
@@ -873,7 +839,7 @@ function ResourceCard({ item }: { item: ItemLite }) {
           )}
           {(item.booksOfBible.length > 0 || item.topics.length > 0) && (
             <div className="mt-4 flex flex-wrap gap-1">
-              {item.booksOfBible.slice(0, 3).map((b) => (
+              {item.booksOfBible.slice(0, 1).map((b) => (
                 <span
                   key={`b-${b}`}
                   className="inline-flex h-5 items-center border border-brass/40 bg-brass/10 px-1.5 text-[0.5625rem] uppercase tracking-wider text-brass"
@@ -881,7 +847,7 @@ function ResourceCard({ item }: { item: ItemLite }) {
                   {b}
                 </span>
               ))}
-              {item.topics.slice(0, 4).map((t) => (
+              {item.topics.slice(0, 1).map((t) => (
                 <span
                   key={`t-${t}`}
                   className="inline-flex h-5 items-center border border-foreground/15 bg-card px-1.5 text-[0.5625rem] text-muted-foreground"

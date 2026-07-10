@@ -58,6 +58,7 @@ export default async function ResourcesPage() {
         fileKey: i.fileKey ?? "",
         type: i.type,
         provider,
+        sourceMime: i.sourceMime ?? null,
         thumbnailUrl,
         author: i.author ?? null,
         durationSeconds: i.durationSeconds ?? null,
