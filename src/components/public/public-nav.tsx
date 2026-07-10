@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Icon } from "@/components/icons/Icon";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -37,6 +38,23 @@ const navLinks: NavLink[] = [
   // { href: "/giving", label: "Give" }, // hidden — uncomment to restore
 ];
 
+/** Mobile panel links (spec §A.1). The five primary destinations live in
+ *  the bottom tab bar; the hamburger holds everything else, Join first. */
+const mobileSecondaryLinks: { href: string; label: string }[] = [
+  { href: "/join", label: "Join" },
+  { href: "/events", label: "Events" },
+  { href: "/stories", label: "Stories" },
+  { href: "/about", label: "About us" },
+  { href: "/what-to-expect", label: "What to expect" },
+  { href: "/how-we-gather", label: "How we gather" },
+  { href: "/faq", label: "FAQ" },
+  { href: "/contact", label: "Contact" },
+  { href: "/giving", label: "Giving" },
+  { href: "/acts-20-28", label: "Acts 20:28" },
+  { href: "/sms-terms", label: "SMS terms" },
+  { href: "/privacy", label: "Privacy" },
+];
+
 /**
  * Broadsheet masthead (Phase 2). Three stacked rows on desktop:
  *   1. folio topbar (strapline + utility links + theme toggle)
@@ -53,6 +71,14 @@ export function PublicNav() {
   // only for a signed-in admin, so visitors never land on a sign-in wall.
   // Client-side session probe keeps every public page statically renderable.
   const [isAdmin, setIsAdmin] = useState(false);
+
+  const pathname = usePathname();
+
+  // A tab-bar tap navigates without touching this component's state; close
+  // the slide-down panel so it never covers the new page (spec §A.1).
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     let alive = true;
@@ -254,46 +280,23 @@ export function PublicNav() {
           </div>
         </nav>
 
-        {/* Mobile slide-down panel */}
+        {/* Mobile slide-down panel — secondary destinations only; the
+            primary five are one thumb-tap away in the bottom tab bar. */}
         {mobileOpen && (
           <div className="border-t border-foreground/10 bg-background px-6 pb-6 pt-2 lg:hidden">
-            {links.map((link) => (
-              <div key={link.href}>
-                <Link
-                  href={link.href}
-                  className="block py-3 text-sm font-medium text-foreground/80"
-                  onClick={() => setMobileOpen(false)}
-                >
-                  {link.label}
-                </Link>
-                {link.children && (
-                  <div className="ml-4 border-l border-foreground/10 pl-4">
-                    {link.children
-                      .filter((c) => c.href !== link.href)
-                      .map((child) => (
-                        <Link
-                          key={child.href}
-                          href={child.href}
-                          className="block py-2 text-sm text-foreground/65"
-                          onClick={() => setMobileOpen(false)}
-                        >
-                          {child.label}
-                        </Link>
-                      ))}
-                  </div>
-                )}
-              </div>
-            ))}
-            <div className="mt-4 border-t border-foreground/10 pt-4">
+            {(isAdmin
+              ? [...mobileSecondaryLinks, { href: "/gallery", label: "Gallery" }]
+              : mobileSecondaryLinks
+            ).map((link) => (
               <Link
-                href="/join"
+                key={link.href}
+                href={link.href}
+                className="block py-3 text-sm font-medium text-foreground/80"
                 onClick={() => setMobileOpen(false)}
-                className="lift inline-flex h-12 w-full items-center justify-center gap-2 bg-foreground px-5 text-sm font-medium text-background"
               >
-                Join
-                <Icon name="arrow-right" size={16} />
+                {link.label}
               </Link>
-            </div>
+            ))}
           </div>
         )}
       </div>
