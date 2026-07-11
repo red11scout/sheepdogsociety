@@ -1,13 +1,12 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Icon } from "@/components/icons/Icon";
-import { NewsletterForm } from "./newsletter-form";
 import { ScriptureMarquee } from "@/components/motion/ScriptureMarquee";
 
 /**
  * Broadsheet footer. The crest bookends the page (single, centered,
- * ~40px, opacity-80 — MASTER.md), then three link columns + the Letter
- * signup, then the colophon line.
+ * ~40px, opacity-80 — MASTER.md), then three link columns, then the
+ * colophon line.
  */
 export function PublicFooter() {
   return (
@@ -35,7 +34,7 @@ export function PublicFooter() {
         </div>
 
         <div className="mt-14 grid gap-12 md:grid-cols-12">
-          <div className="md:col-span-3">
+          <div className="md:col-span-4">
             <h3 className="folio">Get involved</h3>
             <ul className="mt-5 space-y-3 text-sm">
               <li>
@@ -66,7 +65,7 @@ export function PublicFooter() {
             </ul>
           </div>
 
-          <div className="md:col-span-3">
+          <div className="md:col-span-4">
             <h3 className="folio">On the record</h3>
             <ul className="mt-5 space-y-3 text-sm">
               <li>
@@ -92,7 +91,7 @@ export function PublicFooter() {
             </ul>
           </div>
 
-          <div className="md:col-span-2">
+          <div className="md:col-span-4">
             <h3 className="folio">The society</h3>
             <ul className="mt-5 space-y-3 text-sm">
               <li>
@@ -134,17 +133,6 @@ export function PublicFooter() {
                 </a>
               </li>
             </ul>
-          </div>
-
-          <div className="md:col-span-4">
-            <h3 className="folio">The Letter</h3>
-            <p className="mt-5 max-w-sm text-sm leading-relaxed text-muted-foreground">
-              A weekly word for men of faith. Delivered Sunday mornings before
-              the day starts.
-            </p>
-            <div className="mt-5">
-              <NewsletterForm />
-            </div>
           </div>
         </div>
 

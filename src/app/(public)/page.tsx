@@ -10,7 +10,6 @@ import { Icon } from "@/components/icons/Icon";
 import { Kicker } from "@/components/public/kicker";
 import { Reveal } from "@/components/motion/Reveal";
 import { StaggerReveal } from "@/components/motion/StaggerReveal";
-import { NewsletterForm } from "@/components/public/newsletter-form";
 import { LetterCover } from "@/components/letters/LetterCover";
 import { listPublishedEncouragements } from "@/server/encouragements";
 import { cadenceLabel, type SeriesCadence } from "@/lib/events/series";
@@ -411,9 +410,6 @@ export default async function HomePage() {
                   One letter a week. A scripture. A practice. Sent at sunrise.
                   Read in five minutes. Carry it the rest of the week.
                 </p>
-                <div className="mt-5 max-w-xl">
-                  <NewsletterForm />
-                </div>
               </div>
             </div>
           </Reveal>

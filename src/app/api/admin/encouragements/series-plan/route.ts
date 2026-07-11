@@ -8,6 +8,7 @@ import {
   generateLetterSeries,
   SERIES_PLAN_PROMPT_VERSION,
 } from "@/lib/ai/letter-series";
+import { friendlyZodError } from "@/lib/api/zod-error";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -33,7 +34,7 @@ export async function POST(req: Request) {
     body = bodySchema.parse(await req.json());
   } catch (err) {
     return NextResponse.json(
-      { error: "Bad request", detail: err instanceof Error ? err.message : "" },
+      { error: "Bad request", detail: friendlyZodError(err) },
       { status: 400 }
     );
   }

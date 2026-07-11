@@ -320,6 +320,7 @@ export function SeriesComposer({ voices }: ComposerProps) {
               }}
               placeholder="e.g. The cadence of an old country pastor who loves Edwards. Plain words, weighty pauses."
               rows={3}
+              maxLength={2000}
               className="mt-3 block w-full border border-stone/15 bg-transparent px-3 py-2 text-sm text-bone placeholder:text-stone/40 focus:border-brass focus:outline-none"
             />
           </div>
