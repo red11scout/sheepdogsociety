@@ -43,6 +43,18 @@ describe("renderMerge", () => {
   it("unknown pageId returns empty array", () => {
     expect(renderMerge("nope", DEFAULT_CONFIG)).toEqual([]);
   });
+  it.each([
+    ["contact", "form"],
+    ["letter", "issue-grid"],
+    ["events", "upcoming"],
+  ])("locked sections stay forced-visible on other pages too (%s/%s)", (pageId, sectionId) => {
+    const cfg: StudioConfig = { themeId: "pasture-iron", pages: { [pageId]: { sections: [
+      { id: sectionId, visible: false },
+    ] } } };
+    const section = renderMerge(pageId, cfg).find((s) => s.id === sectionId)!;
+    expect(section.visible).toBe(true);
+    expect(section.locked).toBe(true);
+  });
 });
 
 describe("resolveThemeId", () => {
