@@ -7,7 +7,9 @@ import { Icon, type IconName } from "@/components/icons/Icon";
 const TABS: { href: string; label: string; icon: IconName; exact?: boolean }[] = [
   { href: "/", label: "Home", icon: "shield", exact: true },
   { href: "/groups", label: "Groups", icon: "map-pin" },
-  { href: "/letter", label: "Letter", icon: "mail" },
+  // Events replaced Letter per Drew 2026-07-11; The Letter moved to the
+  // hamburger panel (public-nav mobileSecondaryLinks) so it stays reachable.
+  { href: "/events", label: "Events", icon: "calendar" },
   { href: "/bible", label: "Bible", icon: "scroll" },
   { href: "/resources", label: "Resources", icon: "clipboard" },
 ];
