@@ -110,8 +110,8 @@ const THEME_PALETTES: Array<{ keywords: string[]; theme: CoverTheme }> = [
       bgEnd: "#3F4A2C",
       accent: "#F2EBDD",
       ink: "#F2EBDD",
-      icon: "hands",
-      alt: "Open hands — service",
+      icon: "heart",
+      alt: "Heart — service",
     },
   },
   {

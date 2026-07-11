@@ -103,7 +103,7 @@ export function AdminSidebar({
         {
           href: "/admin/prayer",
           label: "Prayer",
-          icon: "hands",
+          icon: "heart",
           hint: "Prayer requests from the brotherhood. Review, mark answered, and keep watch.",
         },
         {

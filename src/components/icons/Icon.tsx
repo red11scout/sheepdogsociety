@@ -30,7 +30,6 @@ export type IconName =
   | "download"
   | "heart"
   | "cross"
-  | "hands"
   | "message"
   | "info"
   | "help"
@@ -183,14 +182,6 @@ const PATHS: Record<IconName, React.ReactElement> = {
     />
   ),
   cross: <path fill={FILL} d="M10 2V8H4V14H10V22H14V14H20V8H14V2H10Z" />,
-  hands: (
-    <path
-      fill={FILL}
-      fillRule="evenodd"
-      clipRule="evenodd"
-      d="M9 5C9 3.9 9.9 3 11 3C12.1 3 13 3.9 13 5V13H9V5ZM15 5C15 3.9 14.1 3 13 3C12.7 3 12.4 3.1 12.1 3.2C12.7 3.7 13 4.3 13 5V13H15V5ZM3 11C3 9.9 3.9 9 5 9H9V13H3V11ZM21 11C21 9.9 20.1 9 19 9H15V13H21V11ZM3 14C3 18.4 7 22 12 22C17 22 21 18.4 21 14H3Z"
-    />
-  ),
   message: (
     <path
       fill={FILL}

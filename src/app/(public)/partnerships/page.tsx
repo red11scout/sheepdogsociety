@@ -104,7 +104,7 @@ export default function PartnershipsPage() {
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-5xl px-6 py-28 text-center md:px-12 md:py-40">
           <Icon
-            name="hands"
+            name="brothers"
             size={64}
             strokeWidth={2}
             className="mx-auto text-brass"
