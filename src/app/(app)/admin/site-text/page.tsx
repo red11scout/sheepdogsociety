@@ -7,11 +7,11 @@ import { SiteTextEditor } from "./editor";
 export const dynamic = "force-dynamic";
 
 export default async function SiteTextPage() {
-  let rows: { key: string; value: string; updatedAt: Date }[] = [];
+  let rows: { key: string; value: string }[] = [];
   let dbError = false;
   try {
     rows = await db
-      .select({ key: siteText.key, value: siteText.value, updatedAt: siteText.updatedAt })
+      .select({ key: siteText.key, value: siteText.value })
       .from(siteText);
   } catch {
     dbError = true;

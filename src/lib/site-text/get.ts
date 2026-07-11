@@ -5,7 +5,7 @@ import type { SiteTextKey } from "./registry";
 import { mergeSiteText } from "./resolve";
 
 /** One query for the whole table, cached under the "site-text" tag.
- *  Saves call revalidateTag("site-text") so edits are live immediately;
+ *  Saves call updateTag("site-text") so edits are live immediately;
  *  the tiny table (≤ ~40 rows) makes fetch-all the right shape. */
 const getStoredRows = unstable_cache(
   async () => {

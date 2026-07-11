@@ -140,7 +140,7 @@ export default async function EncouragementsAdminPage() {
                   )}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate display-xl text-base font-medium text-bone group-hover/row:text-brass md:text-lg">
+                  <p className="truncate display-xl text-base text-bone group-hover/row:text-brass md:text-lg">
                     {row.title || "Untitled"}
                   </p>
                   {(row as { theme?: string | null }).theme ? (
@@ -172,7 +172,7 @@ export default async function EncouragementsAdminPage() {
                   </span>
                 </div>
                 {/* Desktop-only: status pill (grid col 3) */}
-                <div className="hidden md:block">
+                <div className="hidden md:contents">
                   <StatusPill status={row.status} />
                 </div>
                 {/* Desktop-only: publish date (grid col 4) */}

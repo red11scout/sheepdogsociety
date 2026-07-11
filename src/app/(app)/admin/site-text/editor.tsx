@@ -76,12 +76,14 @@ export function SiteTextEditor({ entries }: { entries: EditorEntry[] }) {
                           className="mt-2 w-full border border-stone/25 bg-transparent p-3 text-sm leading-relaxed"
                           rows={4}
                           value={draft}
+                          maxLength={2000}
                           onChange={(ev) => setDraft(ev.target.value)}
                         />
                       ) : (
                         <input
                           className="mt-2 h-11 w-full border border-stone/25 bg-transparent px-3 text-sm"
                           value={draft}
+                          maxLength={2000}
                           onChange={(ev) => setDraft(ev.target.value)}
                         />
                       )}
@@ -105,7 +107,7 @@ export function SiteTextEditor({ entries }: { entries: EditorEntry[] }) {
                     </div>
                   ) : (
                     <button type="button" onClick={() => open(e)}
-                      className="flex w-full items-start justify-between gap-4 px-2 py-3 text-left transition-colors hover:bg-iron/40">
+                      className="flex min-h-11 w-full items-start justify-between gap-4 px-2 py-3 text-left transition-colors hover:bg-iron/40">
                       <span className="min-w-0">
                         <span className="block text-sm font-medium">{e.label}</span>
                         <span className="mt-1 line-clamp-2 block text-xs leading-relaxed text-stone/70">{current}</span>

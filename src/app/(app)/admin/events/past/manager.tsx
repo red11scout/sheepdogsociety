@@ -275,7 +275,7 @@ function RecapEditor({
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            className="inline-flex h-8 min-h-11 items-center gap-1.5 border border-brass/40 bg-brass/10 px-3 text-[0.6875rem] uppercase tracking-wider text-brass transition-colors hover:bg-brass/20 disabled:opacity-60"
+            className="inline-flex min-h-11 items-center gap-1.5 border border-brass/40 bg-brass/10 px-3 text-[0.6875rem] uppercase tracking-wider text-brass transition-colors hover:bg-brass/20 disabled:opacity-60"
           >
             <Icon name="plus" size={11} />
             {uploading ? "Uploading..." : "Add photos"}

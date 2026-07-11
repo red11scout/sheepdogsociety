@@ -44,6 +44,11 @@ export async function saveSiteText(
     if (typeof value !== "string" || value.length > MAX_VALUE_LENGTH) {
       return { ok: false, error: "That text is too long. Keep it under 2,000 characters." };
     }
+    if (!value.trim()) {
+      await db.delete(siteText).where(eq(siteText.key, key));
+      revalidateSiteText(key);
+      return { ok: true };
+    }
     await db
       .insert(siteText)
       .values({

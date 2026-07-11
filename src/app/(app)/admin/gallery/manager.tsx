@@ -277,10 +277,10 @@ export function GalleryManager({ initial }: ManagerProps) {
         <button
           type="button"
           onClick={() => setCreating((v) => !v)}
-          className="lift inline-flex h-10 min-h-11 items-center gap-2 border border-bone bg-bone px-4 text-xs font-medium uppercase tracking-wider text-iron transition-colors hover:bg-stone"
+          className="lift inline-flex min-h-11 items-center gap-2 border border-bone bg-bone px-4 text-xs font-medium uppercase tracking-wider text-iron transition-colors hover:bg-stone"
         >
           <Icon name="plus" size={12} />
-          {creating ? "Cancel" : "New event"}
+          {creating ? "Cancel" : "Add event"}
         </button>
       </div>
 
@@ -890,7 +890,7 @@ function EventEditor({
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={uploading || loading}
-            className="inline-flex h-8 min-h-11 items-center gap-1.5 border border-brass/40 bg-brass/10 px-3 text-[0.6875rem] uppercase tracking-wider text-brass transition-colors hover:bg-brass/20 disabled:opacity-60"
+            className="inline-flex min-h-11 items-center gap-1.5 border border-brass/40 bg-brass/10 px-3 text-[0.6875rem] uppercase tracking-wider text-brass transition-colors hover:bg-brass/20 disabled:opacity-60"
           >
             <Icon name="plus" size={11} />
             {uploading ? "Uploading..." : "Add photos"}

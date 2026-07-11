@@ -284,7 +284,7 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
             type="button"
             onClick={unpublish}
             disabled={pending}
-            className="inline-flex h-9 min-h-11 items-center gap-2 border border-stone/30 bg-transparent px-4 text-xs font-medium uppercase tracking-wider text-stone transition-colors hover:border-brass hover:text-brass disabled:opacity-60"
+            className="inline-flex min-h-11 items-center gap-2 border border-stone/30 bg-transparent px-4 text-xs font-medium uppercase tracking-wider text-stone transition-colors hover:border-brass hover:text-brass disabled:opacity-60"
           >
             Unpublish
           </button>
@@ -294,7 +294,7 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
               type="button"
               onClick={publishNow}
               disabled={pending}
-              className="lift inline-flex h-9 min-h-11 items-center gap-2 bg-brass px-4 text-xs font-medium uppercase tracking-wider text-ink transition-colors hover:bg-gold disabled:opacity-60"
+              className="lift inline-flex min-h-11 items-center gap-2 bg-brass px-4 text-xs font-medium uppercase tracking-wider text-ink transition-colors hover:bg-gold disabled:opacity-60"
             >
               {pending ? "Publishing..." : "Publish now"}
               <Icon name="send" size={12} />
