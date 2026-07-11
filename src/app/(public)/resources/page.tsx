@@ -58,10 +58,8 @@ export default async function ResourcesPage() {
         fileKey: i.fileKey ?? "",
         type: i.type,
         provider,
-        sourceMime: i.sourceMime ?? null,
         thumbnailUrl,
         author: i.author ?? null,
-        durationSeconds: i.durationSeconds ?? null,
         category: i.category ?? "",
         sectionId: i.sectionId ?? "",
         audience: (i.audience as "all" | "newcomer" | "leader") ?? "all",
@@ -69,7 +67,6 @@ export default async function ResourcesPage() {
         themes: (i.themes ?? []) as string[],
         booksOfBible: (i.booksOfBible ?? []) as string[],
         cluster: (i.cluster ?? "") as string,
-        estimatedMinutes: i.estimatedMinutes ?? null,
         hasBody: i.hasBody,
         };
       })}

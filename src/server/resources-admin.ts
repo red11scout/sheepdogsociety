@@ -292,10 +292,8 @@ export async function listSectionsAndResourcesForPublic() {
       fileKey: resources.fileKey,
       type: resources.type,
       provider: resources.provider,
-      sourceMime: resources.sourceMime,
       thumbnailUrl: resources.thumbnailUrl,
       author: resources.author,
-      durationSeconds: resources.durationSeconds,
       category: resources.category,
       sectionId: resources.sectionId,
       level: resources.level,
@@ -305,7 +303,6 @@ export async function listSectionsAndResourcesForPublic() {
       topics: resources.topics,
       themes: resources.themes,
       booksOfBible: resources.booksOfBible,
-      estimatedMinutes: resources.estimatedMinutes,
       hasBody: resources.bodyHtml,
       createdAt: resources.createdAt,
     })

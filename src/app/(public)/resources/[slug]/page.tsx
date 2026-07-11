@@ -247,6 +247,22 @@ export default async function ResourceDetailPage({
         <div className="mx-auto max-w-3xl px-6 pb-24 md:px-12 md:pb-32">
           <div className="hairline mb-10" />
 
+          {/* Field notes — the two-tap answer (spec §A-FN). Approved only;
+              drafts never render publicly. Sits above the provider branch
+              so a man reads the notes before being offered the exit link. */}
+          {row.fieldNotesStatus === "approved" && row.fieldNotesHtml && (
+            <section className="mb-12">
+              <div className="flex items-center gap-3">
+                <span className="section-mark text-brass">§ Field notes</span>
+                <div className="hairline flex-1" />
+              </div>
+              <div
+                className="resource-prose mt-6"
+                dangerouslySetInnerHTML={{ __html: row.fieldNotesHtml }}
+              />
+            </section>
+          )}
+
           {/* Render body OR provider-shaped card. Order matters:
            *   1. YouTube → embedded player (most engaging)
            *   2. Amazon book → cover + buy button + companion section

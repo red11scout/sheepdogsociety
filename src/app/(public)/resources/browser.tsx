@@ -26,11 +26,9 @@ interface ItemLite {
   type: string;
   /** youtube / amazon / web / file (or null for legacy rows) */
   provider: "youtube" | "amazon" | "web" | "file" | null;
-  sourceMime: string | null;
   thumbnailUrl: string | null;
   /** Channel name (YouTube), author (Amazon), site name (web), or null. */
   author: string | null;
-  durationSeconds: number | null;
   category: string;
   sectionId: string;
   audience: "all" | "newcomer" | "leader";
@@ -40,7 +38,6 @@ interface ItemLite {
   /** AI-assigned sub-group label within the section. Empty string =
    *  no cluster (renders as a single ungrouped grid). */
   cluster: string;
-  estimatedMinutes: number | null;
   hasBody: boolean;
 }
 
