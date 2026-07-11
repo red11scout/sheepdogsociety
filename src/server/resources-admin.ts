@@ -128,6 +128,8 @@ export async function listResourcesForAdmin() {
       booksOfBible: resources.booksOfBible,
       estimatedMinutes: resources.estimatedMinutes,
       aiCategorizedAt: resources.aiCategorizedAt,
+      fieldNotesHtml: resources.fieldNotesHtml,
+      fieldNotesStatus: resources.fieldNotesStatus,
       createdAt: resources.createdAt,
     })
     .from(resources)

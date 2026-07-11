@@ -1,19 +1,23 @@
 "use client";
 
 /**
- * Three bulk-AI actions scoped to a single section:
- *   1. Re-tag all      — runs categorizeResource for every row with body
- *                        text. Populates summary/topics/themes/books, which
- *                        is what the public search filters on. Without this
- *                        a 56-row Bible Studies section is a black hole to
- *                        anyone typing in the search bar.
- *   2. Auto-cluster    — single Claude call buckets every row into 4-7
- *                        labelled clusters (e.g. "Marriage & Family"). The
- *                        public browser groups cards under those headings
- *                        instead of dumping them into one giant grid.
- *   3. Generate covers — gpt-image-1 cover per row, saved to Vercel Blob,
- *                        wired into thumbnail_url. Slow + costs money;
- *                        triggered only on demand.
+ * Four bulk-AI actions scoped to a single section:
+ *   1. Re-tag all       — runs categorizeResource for every row with body
+ *                         text. Populates summary/topics/themes/books, which
+ *                         is what the public search filters on. Without this
+ *                         a 56-row Bible Studies section is a black hole to
+ *                         anyone typing in the search bar.
+ *   2. Auto-cluster     — single Claude call buckets every row into 4-7
+ *                         labelled clusters (e.g. "Marriage & Family"). The
+ *                         public browser groups cards under those headings
+ *                         instead of dumping them into one giant grid.
+ *   3. Generate covers  — gpt-image-1 cover per row, saved to Vercel Blob,
+ *                         wired into thumbnail_url. Slow + costs money;
+ *                         triggered only on demand.
+ *   4. Draft field notes — batch-drafts field notes (spec §A-FN) for up to
+ *                         15 rows per run still missing them. Drafts land
+ *                         as status "draft" — an admin still approves each
+ *                         one before it renders publicly.
  *
  * Each action is best-effort — partial failures are surfaced in the
  * status panel so the admin can re-run for the rows that didn't take.
@@ -27,9 +31,13 @@ import { cn } from "@/lib/utils";
 type ActionState = "idle" | "running" | "ok" | "error";
 
 interface Result {
-  kind: "retag" | "cluster" | "covers";
+  kind: "retag" | "cluster" | "covers" | "field-notes";
   message: string;
   detail?: string;
+  // Explicit error flag — the banner used to sniff "failed" out of
+  // `message`, which breaks the moment a message legitimately contains
+  // the word "failed" as a count label (see the field-notes result line).
+  isError?: boolean;
 }
 
 interface Resource {
@@ -53,6 +61,7 @@ export function SectionAutomationBar({
   const [clusterState, setClusterState] = useState<ActionState>("idle");
   const [coversState, setCoversState] = useState<ActionState>("idle");
   const [coversProgress, setCoversProgress] = useState<{ done: number; total: number } | null>(null);
+  const [fieldNotesState, setFieldNotesState] = useState<ActionState>("idle");
   const [result, setResult] = useState<Result | null>(null);
 
   async function handleRetag() {
@@ -90,6 +99,7 @@ export function SectionAutomationBar({
         kind: "retag",
         message: "Re-tag failed.",
         detail: err instanceof Error ? err.message : "unknown",
+        isError: true,
       });
     }
   }
@@ -134,6 +144,7 @@ export function SectionAutomationBar({
         kind: "cluster",
         message: "Cluster failed.",
         detail: err instanceof Error ? err.message : "unknown",
+        isError: true,
       });
     }
   }
@@ -183,11 +194,56 @@ export function SectionAutomationBar({
     onComplete();
   }
 
+  async function handleDraftFieldNotes() {
+    if (
+      !confirm(
+        `Draft field notes for up to 15 resources missing them in "${sectionName}"? Costs AI tokens.`
+      )
+    )
+      return;
+    setFieldNotesState("running");
+    setResult(null);
+    try {
+      const res = await fetch(
+        `/api/admin/resources/sections/${sectionId}/field-notes`,
+        { method: "POST" }
+      );
+      const data = (await res.json()) as {
+        processed?: number;
+        drafted?: number;
+        insufficient?: number;
+        failed?: number;
+        remaining?: number;
+        error?: string;
+        detail?: string;
+      };
+      if (!res.ok) throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+      setFieldNotesState("ok");
+      const remaining = data.remaining ?? 0;
+      setResult({
+        kind: "field-notes",
+        message: `Drafted ${data.drafted ?? 0} · insufficient ${
+          data.insufficient ?? 0
+        } · failed ${data.failed ?? 0} · remaining ${remaining}`,
+        detail: remaining > 0 ? "Run again for the next batch." : undefined,
+      });
+      onComplete();
+    } catch (err) {
+      setFieldNotesState("error");
+      setResult({
+        kind: "field-notes",
+        message: "Draft field notes failed.",
+        detail: err instanceof Error ? err.message : "unknown",
+        isError: true,
+      });
+    }
+  }
+
   return (
     <div className="border border-brass/30 bg-iron/40 p-4">
       <div className="flex flex-wrap items-center gap-2">
         <span className="section-mark text-brass">§ Bulk AI actions</span>
-        <HintTooltip hint="Section-wide AI passes. Re-tag = restore search/filter coverage. Auto-cluster = group cards under sub-headings on the public page. Generate covers = AI cover image per resource (uses OpenAI, costs money)." />
+        <HintTooltip hint="Section-wide AI passes. Re-tag = restore search/filter coverage. Auto-cluster = group cards under sub-headings on the public page. Generate covers = AI cover image per resource (uses OpenAI, costs money). Draft field notes = AI study-notes draft per resource, still needs admin approval before it's public." />
         <div className="flex-1" />
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -213,12 +269,19 @@ export function SectionAutomationBar({
           progress={coversProgress}
           tooltip="OpenAI gpt-image-1, one image per row. Saves to Vercel Blob, wires into thumbnail_url. Slow + costs ~$0.011/image."
         />
+        <ActionButton
+          label="Draft field notes"
+          icon="pen"
+          onClick={handleDraftFieldNotes}
+          state={fieldNotesState}
+          tooltip="Drafts field notes (Claude) for up to 15 rows per run that don't have any yet. Lands as a draft — approve each one on its row before it's public."
+        />
       </div>
       {result && (
         <div
           className={cn(
             "mt-3 border px-3 py-2 text-xs",
-            result.message.toLowerCase().includes("failed")
+            result.isError
               ? "border-oxblood/40 bg-oxblood/10 text-bone"
               : "border-olive/40 bg-olive/10 text-bone"
           )}
@@ -247,7 +310,7 @@ function ActionButton({
   tooltip,
 }: {
   label: string;
-  icon: "sparkles" | "table" | "image";
+  icon: "sparkles" | "table" | "image" | "pen";
   onClick: () => void;
   state: ActionState;
   progress?: { done: number; total: number } | null;

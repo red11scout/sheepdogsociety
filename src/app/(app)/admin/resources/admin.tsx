@@ -49,6 +49,8 @@ interface ResourceRow {
   booksOfBible?: string[] | null;
   estimatedMinutes?: number | null;
   aiCategorizedAt?: Date | string | null;
+  fieldNotesHtml?: string | null;
+  fieldNotesStatus?: string;
   createdAt: Date | string;
 }
 
@@ -453,6 +455,8 @@ NEON_DATABASE_URL='paste-the-prod-url-here' \\
                           category?: string;
                           level?: string;
                           isPublic?: boolean;
+                          fieldNotesHtml?: string;
+                          fieldNotesStatus?: "none" | "draft" | "approved";
                         } = { id: r.id };
                         if (typeof patch.title === "string") cleaned.title = patch.title;
                         if (typeof patch.description === "string")
@@ -465,6 +469,14 @@ NEON_DATABASE_URL='paste-the-prod-url-here' \\
                         if (typeof patch.level === "string") cleaned.level = patch.level;
                         if (typeof patch.isPublic === "boolean")
                           cleaned.isPublic = patch.isPublic;
+                        if (typeof patch.fieldNotesHtml === "string")
+                          cleaned.fieldNotesHtml = patch.fieldNotesHtml;
+                        if (
+                          patch.fieldNotesStatus === "none" ||
+                          patch.fieldNotesStatus === "draft" ||
+                          patch.fieldNotesStatus === "approved"
+                        )
+                          cleaned.fieldNotesStatus = patch.fieldNotesStatus;
                         await updateResource(cleaned);
                         setResources(
                           resources.map((x) =>
@@ -684,6 +696,13 @@ function NewResourceForm({
   );
 }
 
+// Collapsed preview for a draft/approved field-notes row: strip tags,
+// collapse whitespace, cap at ~140 chars so the row stays scannable.
+function fieldNotesPreview(html: string, max = 140): string {
+  const text = html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+  return text.length > max ? `${text.slice(0, max).trimEnd()}…` : text;
+}
+
 function ResourceRow({
   resource,
   onToggleVisibility,
@@ -779,6 +798,71 @@ function ResourceRow({
       setRecat("error");
       setRecatError(e instanceof Error ? e.message : "Failed");
     }
+  }
+
+  // Field notes: AI-drafted study notes, gated behind admin approval
+  // before they render publicly. fnInsufficient is a client-only flag —
+  // the API doesn't persist "insufficient" (status stays "none"), so we
+  // remember the outcome locally until the next draft attempt or reload.
+  const fieldNotesStatus = resource.fieldNotesStatus ?? "none";
+  const [fnState, setFnState] = useState<"idle" | "busy" | "error">("idle");
+  const [fnError, setFnError] = useState("");
+  const [fnInsufficient, setFnInsufficient] = useState(false);
+  const [fnEditing, setFnEditing] = useState(false);
+  const [fnDraftHtml, setFnDraftHtml] = useState(resource.fieldNotesHtml ?? "");
+
+  async function runFieldNotesDraft() {
+    setFnState("busy");
+    setFnError("");
+    setFnInsufficient(false);
+    try {
+      const res = await fetch(`/api/admin/resources/${resource.id}/field-notes`, {
+        method: "POST",
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        status?: string;
+        error?: string;
+      };
+      if (!res.ok) throw new Error(data.error ?? `HTTP ${res.status}`);
+      if (data.status === "insufficient") {
+        setFnState("idle");
+        setFnInsufficient(true);
+        return;
+      }
+      if (data.status === "failed") {
+        setFnState("error");
+        setFnError("Draft failed — try again, or write field notes by hand.");
+        return;
+      }
+      setFnState("idle");
+      window.location.reload();
+    } catch (e) {
+      setFnState("error");
+      setFnError(e instanceof Error ? e.message : "Failed");
+    }
+  }
+
+  function handleRedraftFieldNotes() {
+    if (!confirm("Redraft field notes? This overwrites the current draft.")) return;
+    runFieldNotesDraft();
+  }
+
+  async function handleApproveFieldNotes() {
+    await onUpdate({ fieldNotesStatus: "approved" });
+  }
+
+  async function handleUnpublishFieldNotes() {
+    await onUpdate({ fieldNotesStatus: "draft" });
+  }
+
+  function openFieldNotesEditor() {
+    setFnDraftHtml(resource.fieldNotesHtml ?? "");
+    setFnEditing(true);
+  }
+
+  async function handleSaveFieldNotes() {
+    await onUpdate({ fieldNotesHtml: fnDraftHtml });
+    setFnEditing(false);
   }
 
   // Heuristic: show re-extract on file uploads that don't yet have an
@@ -920,6 +1004,125 @@ function ResourceRow({
                 </>
               )}
             </p>
+
+            {/* Field notes: AI-drafted study notes. "none" prompts a draft,
+             *  "draft" needs an admin's eyes before it goes public,
+             *  "approved" is live on /resources/[slug]. */}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              {fieldNotesStatus === "approved" ? (
+                <span className="inline-flex h-5 items-center border border-olive/40 bg-olive/10 px-1.5 text-[0.5625rem] uppercase tracking-wider text-olive">
+                  Approved · public
+                </span>
+              ) : fieldNotesStatus === "draft" ? (
+                <span className="inline-flex h-5 items-center border border-brass/40 bg-brass/10 px-1.5 text-[0.5625rem] uppercase tracking-wider text-brass">
+                  Draft
+                </span>
+              ) : fnInsufficient ? (
+                <span className="inline-flex h-5 items-center border border-oxblood/40 bg-oxblood/10 px-1.5 text-[0.5625rem] uppercase tracking-wider text-oxblood">
+                  Needs manual notes
+                </span>
+              ) : (
+                <span className="inline-flex h-5 items-center border border-stone/20 px-1.5 text-[0.5625rem] uppercase tracking-wider text-stone/55">
+                  No field notes
+                </span>
+              )}
+
+              {fieldNotesStatus === "none" && (
+                <button
+                  type="button"
+                  onClick={runFieldNotesDraft}
+                  disabled={fnState === "busy"}
+                  className="text-xs font-medium text-brass hover:text-gold disabled:opacity-50"
+                >
+                  {fnState === "busy" ? "Drafting…" : "Draft notes"}
+                </button>
+              )}
+
+              {fieldNotesStatus === "draft" && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleApproveFieldNotes}
+                    className="text-xs font-medium text-brass hover:text-gold"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    type="button"
+                    onClick={fnEditing ? () => setFnEditing(false) : openFieldNotesEditor}
+                    className="text-xs text-stone/65 hover:text-bone"
+                  >
+                    {fnEditing ? "Cancel" : "Edit"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRedraftFieldNotes}
+                    disabled={fnState === "busy"}
+                    className="text-xs text-stone/65 hover:text-oxblood disabled:opacity-50"
+                  >
+                    {fnState === "busy" ? "Redrafting…" : "Redraft"}
+                  </button>
+                </>
+              )}
+
+              {fieldNotesStatus === "approved" && (
+                <>
+                  <button
+                    type="button"
+                    onClick={handleUnpublishFieldNotes}
+                    className="text-xs text-stone/65 hover:text-oxblood"
+                  >
+                    Unpublish
+                  </button>
+                  <button
+                    type="button"
+                    onClick={fnEditing ? () => setFnEditing(false) : openFieldNotesEditor}
+                    className="text-xs text-stone/65 hover:text-bone"
+                  >
+                    {fnEditing ? "Cancel" : "Edit"}
+                  </button>
+                </>
+              )}
+            </div>
+
+            {(fieldNotesStatus === "draft" || fieldNotesStatus === "approved") &&
+              !fnEditing &&
+              resource.fieldNotesHtml && (
+                <p className="mt-1 font-pullquote text-xs italic text-stone/60">
+                  {fieldNotesPreview(resource.fieldNotesHtml)}
+                </p>
+              )}
+
+            {fnEditing && (
+              <div className="mt-2">
+                <textarea
+                  value={fnDraftHtml}
+                  onChange={(e) => setFnDraftHtml(e.target.value)}
+                  rows={6}
+                  className="block w-full resize-none border border-stone/20 bg-transparent px-3 py-2 text-xs text-bone focus:border-brass focus:outline-none"
+                />
+                <div className="mt-2 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={handleSaveFieldNotes}
+                    className="text-xs font-medium text-brass hover:text-gold"
+                  >
+                    Save
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setFnEditing(false)}
+                    className="text-xs text-stone/55 hover:text-bone"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {fnState === "error" && fnError && (
+              <p className="mt-1 text-[0.625rem] text-oxblood">{fnError}</p>
+            )}
           </div>
           <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100">
             {(resource.url || resource.fileKey) && (
