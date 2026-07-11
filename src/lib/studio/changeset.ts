@@ -63,6 +63,13 @@ export function validateChangeset(
       continue;
     }
     if (c.position !== undefined) {
+      if (!Number.isFinite(c.position) || !Number.isInteger(c.position)) {
+        dropped.push({
+          item: c,
+          reason: `Position ${c.position} is not a valid whole number.`,
+        });
+        continue;
+      }
       const materialized = renderMerge(c.pageId, currentConfig);
       if (c.position < 0 || c.position >= materialized.length) {
         dropped.push({
@@ -75,8 +82,21 @@ export function validateChangeset(
     acceptedSectionChanges.push(c);
   }
 
+  const seenTextKeys = new Set<string>();
+  const duplicateTextKeys = new Set<string>();
+
+  // First pass: find every text-edit key that appears more than once.
+  for (const e of changeset.textEdits) {
+    if (seenTextKeys.has(e.key)) duplicateTextKeys.add(e.key);
+    seenTextKeys.add(e.key);
+  }
+
   const acceptedTextEdits: TextEdit[] = [];
   for (const e of changeset.textEdits) {
+    if (duplicateTextKeys.has(e.key)) {
+      dropped.push({ item: e, reason: `Duplicate edit for "${e.key}" — skipped both.` });
+      continue;
+    }
     if (!KNOWN_TEXT_KEYS.has(e.key)) {
       dropped.push({ item: e, reason: `"${e.key}" is not a key this site governs.` });
       continue;
