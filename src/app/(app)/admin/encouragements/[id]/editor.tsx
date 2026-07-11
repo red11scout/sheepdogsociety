@@ -21,6 +21,7 @@ interface EncouragementEditorProps {
     issueNumber: number;
     slug: string;
     publishDate: string;
+    scheduledFor: string | null;
     status: string;
     intro: string;
     updates: string;
@@ -45,9 +46,31 @@ type AiTarget =
   | "notes"
   | null;
 
+// Same fixed America/Chicago offset convention as computeScheduledFor in
+// src/server/letters/series-core.ts (stored UTC = Central local + 6,
+// conservative for CST; CDT publishes ~1h earlier, fine for a send window).
+function chicagoHourFromScheduledFor(iso: string | null): number {
+  if (!iso) return 6;
+  const utcHour = new Date(iso).getUTCHours();
+  return ((utcHour - 6) % 24 + 24) % 24;
+}
+
+function computeScheduledForFromDateAndHour(
+  dateStr: string,
+  chicagoHour: number
+): string | null {
+  if (!dateStr) return null;
+  const d = new Date(`${dateStr}T00:00:00.000Z`);
+  d.setUTCHours(chicagoHour + 6, 0, 0, 0);
+  return d.toISOString();
+}
+
 export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
   const [title, setTitle] = useState(initial.title);
   const [publishDate, setPublishDate] = useState(initial.publishDate);
+  const [publishHour, setPublishHour] = useState(
+    chicagoHourFromScheduledFor(initial.scheduledFor)
+  );
   const [intro, setIntro] = useState(initial.intro);
   const [updates, setUpdates] = useState(initial.updates);
   const [scriptures, setScriptures] = useState(initial.scriptures);
@@ -91,6 +114,10 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
           coverImageUrl,
           coverImageAlt,
           publishDate: publishDate || null,
+          scheduledFor: computeScheduledForFromDateAndHour(
+            publishDate,
+            publishHour
+          ),
           theme,
         });
         setSavedAt(new Date());
@@ -115,6 +142,7 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
     coverImageUrl,
     coverImageAlt,
     publishDate,
+    publishHour,
     theme,
   ]);
 
@@ -342,6 +370,26 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
               onChange={(e) => setPublishDate(e.target.value)}
               className="border border-stone/20 bg-transparent px-2 py-1 text-xs text-bone focus:border-brass focus:outline-none"
             />
+          </label>
+          <label className="flex items-center gap-2 text-xs text-stone/65">
+            <span className="section-mark text-stone/55">Publish hour (Central)</span>
+            <select
+              value={publishHour}
+              onChange={(e) => setPublishHour(Number(e.target.value))}
+              className="border border-stone/20 bg-transparent px-2 py-1 text-xs text-bone focus:border-brass focus:outline-none"
+            >
+              {Array.from({ length: 24 }, (_, h) => (
+                <option key={h} value={h}>
+                  {h === 0
+                    ? "12 AM"
+                    : h < 12
+                    ? `${h} AM`
+                    : h === 12
+                    ? "12 PM"
+                    : `${h - 12} PM`}
+                </option>
+              ))}
+            </select>
           </label>
           <span className="section-mark text-stone/35">
             /{initial.slug}

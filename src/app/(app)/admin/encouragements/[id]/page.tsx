@@ -42,6 +42,7 @@ export default async function EncouragementEditPage({
         issueNumber: row.issueNumber,
         slug: row.slug,
         publishDate: row.publishDate ?? "",
+        scheduledFor: row.scheduledFor ? row.scheduledFor.toISOString() : null,
         status: row.status,
         intro: row.intro ?? "",
         updates: row.updates ?? "",
