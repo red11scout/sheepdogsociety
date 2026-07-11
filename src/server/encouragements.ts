@@ -155,6 +155,7 @@ export async function updateEncouragement(input: {
   coverImageUrl?: string;
   coverImageAlt?: string;
   publishDate?: string | null;
+  scheduledFor?: string | null;
   theme?: string;
   voice?: string;
 }) {
@@ -170,6 +171,13 @@ export async function updateEncouragement(input: {
   if (input.coverImageUrl != null) patch.coverImageUrl = input.coverImageUrl;
   if (input.coverImageAlt != null) patch.coverImageAlt = input.coverImageAlt;
   if (input.publishDate !== undefined) patch.publishDate = input.publishDate;
+  // scheduledFor is the timestamp the publish cron actually gates on
+  // (/api/cron/publish-scheduled-letters); publishDate is display-only.
+  // They must be kept in sync here or the editor's date field becomes
+  // cosmetic and the letter keeps its original auto-publish time.
+  if (input.scheduledFor !== undefined) {
+    patch.scheduledFor = input.scheduledFor ? new Date(input.scheduledFor) : null;
+  }
   if (input.theme != null) patch.theme = input.theme;
   if (input.voice != null) patch.voice = input.voice;
 
