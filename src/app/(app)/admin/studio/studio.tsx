@@ -105,6 +105,13 @@ export function Studio({
   );
   const [versions, setVersions] = useState<Version[]>(initialVersions);
   const [openKey, setOpenKey] = useState<string | null>(null);
+  // Read inside async callbacks after an await, where a closed-over
+  // `openKey` value would be stale — the ref always reflects the latest
+  // open field even if the admin switched fields mid-await.
+  const openKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    openKeyRef.current = openKey;
+  }, [openKey]);
   const [fieldDraft, setFieldDraft] = useState("");
   const [assisting, setAssisting] = useState<string | null>(null);
   const [status, setStatus] = useState<StatusMsg | null>(null);
@@ -579,7 +586,7 @@ export function Studio({
                                 // Guard against the admin switching to a different
                                 // field while this call was in flight — only apply
                                 // the result if e.key is still the open field.
-                                if (openKey !== e.key) return;
+                                if (openKeyRef.current !== e.key) return;
                                 if (res.ok) setFieldDraft(res.draft);
                                 else fail(res.error);
                               }}
