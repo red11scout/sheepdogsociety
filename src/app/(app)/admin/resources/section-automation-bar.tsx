@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Four bulk-AI actions scoped to a single section:
+ * Three bulk-AI actions scoped to a single section:
  *   1. Re-tag all       — runs categorizeResource for every row with body
  *                         text. Populates summary/topics/themes/books, which
  *                         is what the public search filters on. Without this
@@ -11,10 +11,7 @@
  *                         labelled clusters (e.g. "Marriage & Family"). The
  *                         public browser groups cards under those headings
  *                         instead of dumping them into one giant grid.
- *   3. Generate covers  — gpt-image-1 cover per row, saved to Vercel Blob,
- *                         wired into thumbnail_url. Slow + costs money;
- *                         triggered only on demand.
- *   4. Draft field notes — batch-drafts field notes (spec §A-FN) for up to
+ *   3. Draft field notes — batch-drafts field notes (spec §A-FN) for up to
  *                         15 rows per run still missing them. Drafts land
  *                         as status "draft" — an admin still approves each
  *                         one before it renders publicly.
@@ -31,7 +28,7 @@ import { cn } from "@/lib/utils";
 type ActionState = "idle" | "running" | "ok" | "error";
 
 interface Result {
-  kind: "retag" | "cluster" | "covers" | "field-notes";
+  kind: "retag" | "cluster" | "field-notes";
   message: string;
   detail?: string;
   // Explicit error flag — the banner used to sniff "failed" out of
@@ -40,27 +37,17 @@ interface Result {
   isError?: boolean;
 }
 
-interface Resource {
-  id: string;
-  url?: string | null;
-  fileKey?: string | null;
-}
-
 export function SectionAutomationBar({
   sectionId,
   sectionName,
-  resources,
   onComplete,
 }: {
   sectionId: string;
   sectionName: string;
-  resources: Resource[];
   onComplete: () => void;
 }) {
   const [retagState, setRetagState] = useState<ActionState>("idle");
   const [clusterState, setClusterState] = useState<ActionState>("idle");
-  const [coversState, setCoversState] = useState<ActionState>("idle");
-  const [coversProgress, setCoversProgress] = useState<{ done: number; total: number } | null>(null);
   const [fieldNotesState, setFieldNotesState] = useState<ActionState>("idle");
   const [result, setResult] = useState<Result | null>(null);
 
@@ -149,51 +136,6 @@ export function SectionAutomationBar({
     }
   }
 
-  async function handleGenerateCovers() {
-    const targets = resources.filter((r) => true); // every row in the active section
-    if (targets.length === 0) {
-      setResult({ kind: "covers", message: "No resources in this section." });
-      return;
-    }
-    if (
-      !confirm(
-        `Generate AI cover images for ${targets.length} resources in "${sectionName}"?\n\nThis calls OpenAI gpt-image-1 once per row (≈$0.011 per image at low quality). Total ≈ $${(
-          targets.length * 0.011
-        ).toFixed(2)}. Slow — runs ~6-15s per image, so the whole batch can take several minutes. Existing thumbnails get overwritten.`
-      )
-    )
-      return;
-    setCoversState("running");
-    setCoversProgress({ done: 0, total: targets.length });
-    setResult(null);
-    let ok = 0;
-    let failed = 0;
-    for (let i = 0; i < targets.length; i++) {
-      const t = targets[i];
-      try {
-        const res = await fetch(
-          `/api/admin/resources/${t.id}/generate-cover`,
-          { method: "POST" }
-        );
-        if (!res.ok) {
-          const j = (await res.json().catch(() => ({}))) as { detail?: string; error?: string };
-          throw new Error(j.detail || j.error || `HTTP ${res.status}`);
-        }
-        ok++;
-      } catch {
-        failed++;
-      }
-      setCoversProgress({ done: i + 1, total: targets.length });
-    }
-    setCoversState(failed === 0 ? "ok" : "error");
-    setResult({
-      kind: "covers",
-      message: `Generated ${ok} of ${targets.length} covers.`,
-      detail: failed ? `${failed} failed — try the per-row image button to retry.` : undefined,
-    });
-    onComplete();
-  }
-
   async function handleDraftFieldNotes() {
     if (
       !confirm(
@@ -243,7 +185,7 @@ export function SectionAutomationBar({
     <div className="border border-brass/30 bg-iron/40 p-4">
       <div className="flex flex-wrap items-center gap-2">
         <span className="section-mark text-brass">§ Bulk AI actions</span>
-        <HintTooltip hint="Section-wide AI passes. Re-tag = restore search/filter coverage. Auto-cluster = group cards under sub-headings on the public page. Generate covers = AI cover image per resource (uses OpenAI, costs money). Draft field notes = AI study-notes draft per resource, still needs admin approval before it's public." />
+        <HintTooltip hint="Section-wide AI passes. Re-tag = restore search/filter coverage. Auto-cluster = group cards under sub-headings on the public page. Draft field notes = AI study-notes draft per resource, still needs admin approval before it's public." />
         <div className="flex-1" />
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -260,14 +202,6 @@ export function SectionAutomationBar({
           onClick={handleCluster}
           state={clusterState}
           tooltip="One Claude call sorts every row into 4-7 labelled buckets. Public page groups cards under those labels."
-        />
-        <ActionButton
-          label="Generate covers"
-          icon="image"
-          onClick={handleGenerateCovers}
-          state={coversState}
-          progress={coversProgress}
-          tooltip="OpenAI gpt-image-1, one image per row. Saves to Vercel Blob, wires into thumbnail_url. Slow + costs ~$0.011/image."
         />
         <ActionButton
           label="Draft field notes"
@@ -306,14 +240,12 @@ function ActionButton({
   icon,
   onClick,
   state,
-  progress,
   tooltip,
 }: {
   label: string;
-  icon: "sparkles" | "table" | "image" | "pen";
+  icon: "sparkles" | "table" | "pen";
   onClick: () => void;
   state: ActionState;
-  progress?: { done: number; total: number } | null;
   tooltip: string;
 }) {
   const running = state === "running";
@@ -333,11 +265,7 @@ function ActionButton({
       )}
     >
       <Icon name={icon} size={12} />
-      {running && progress
-        ? `${label} · ${progress.done}/${progress.total}`
-        : running
-        ? `${label}...`
-        : label}
+      {running ? `${label}...` : label}
     </button>
   );
 }

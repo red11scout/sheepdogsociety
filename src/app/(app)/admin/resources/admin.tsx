@@ -376,17 +376,12 @@ NEON_DATABASE_URL='paste-the-prod-url-here' \\
               <div className="mt-6 space-y-4">
                 {/* Section-wide AI actions: re-tag (restores public search),
                  *  auto-cluster (groups cards under sub-headings on the
-                 *  public page), generate covers (AI thumbnails). Only
-                 *  shown when there's something to operate on. */}
+                 *  public page), draft field notes. Only shown when
+                 *  there's something to operate on. */}
                 {filteredResources.length > 0 && (
                   <SectionAutomationBar
                     sectionId={activeSection.id}
                     sectionName={activeSection.name}
-                    resources={filteredResources.map((r) => ({
-                      id: r.id,
-                      url: r.url,
-                      fileKey: r.fileKey,
-                    }))}
                     onComplete={refresh}
                   />
                 )}
@@ -776,27 +771,6 @@ function ResourceRow({
       if (!res.ok) {
         const j = (await res.json().catch(() => ({}))) as { error?: string };
         throw new Error(j.error ?? `HTTP ${res.status}`);
-      }
-      setRecat("idle");
-      window.location.reload();
-    } catch (e) {
-      setRecat("error");
-      setRecatError(e instanceof Error ? e.message : "Failed");
-    }
-  }
-
-  async function handleGenerateCover() {
-    if (!confirm("Generate a new AI cover image for this resource? Replaces any existing thumbnail. ~$0.011, takes 6-15s.")) return;
-    setRecat("busy");
-    setRecatError("");
-    try {
-      const res = await fetch(
-        `/api/admin/resources/${resource.id}/generate-cover`,
-        { method: "POST" }
-      );
-      if (!res.ok) {
-        const j = (await res.json().catch(() => ({}))) as { error?: string; detail?: string };
-        throw new Error(j.detail ?? j.error ?? `HTTP ${res.status}`);
       }
       setRecat("idle");
       window.location.reload();
@@ -1223,18 +1197,6 @@ function ResourceRow({
                     className="min-h-11 rounded-none px-3 text-xs text-stone/75 focus:bg-brass/15 focus:text-bone"
                   >
                     Refresh link preview
-                  </DropdownMenuItem>
-                )}
-                {/* Generate AI cover image (gpt-image-1) for any non-URL
-                 *  row. URL rows already get thumbnails from oEmbed/OG;
-                 *  generating one would overwrite the source thumbnail. */}
-                {resource.fileKey && (
-                  <DropdownMenuItem
-                    onClick={handleGenerateCover}
-                    disabled={recat === "busy"}
-                    className="min-h-11 rounded-none px-3 text-xs text-stone/75 focus:bg-brass/15 focus:text-bone"
-                  >
-                    Generate AI cover
                   </DropdownMenuItem>
                 )}
                 {showReextract && (
