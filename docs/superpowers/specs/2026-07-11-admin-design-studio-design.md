@@ -3,6 +3,8 @@
 **Date:** 2026-07-11 · **Approved by Drew** at design level after 4 shaping decisions: curated studio (not block builder) · all public pages · AI = per-field assist + describe-it changesets, draft-only · five hand-designed themes.
 **Rev 2:** folds in the 3-lens adversarial review (27 findings, 4 Blockers) — every mechanism below was verified against the installed next@16.1.6, globals.css, and the real pages.
 
+> **DS-1 SHIPPED 2026-07-11** — PR #48, squash `ab79754`, migration 0020 applied + shape-verified on Neon, live prod verification green (homepage/About render byte-identical parity; `/admin/studio` gates unauthenticated visitors; zero runtime errors). All five DS-1 acceptance checks (PARITY, ISOLATION, LOOP, UNDO, SAFETY) verified against the real running app and the real database. Ships with `pasture-iron` active and an empty config — the site changed nothing until an admin acts. DS-2 (remaining public pages), DS-3 (AI layer), DS-4 (polish/hardening) remain, per the Build Order below.
+
 **Goal:** Jeremy changes the site's text, layout, and look from one Studio page — with AI help, device/mode preview, side-by-side compare against live, and full undo — without being able to break the site, the brand, or Scripture.
 
 ## The loop (the only mental model Jeremy needs)
