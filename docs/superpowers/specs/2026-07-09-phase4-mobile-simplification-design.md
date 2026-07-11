@@ -72,6 +72,8 @@ Also in scope: **update the homepage `metadata` title/description/openGraph** to
 
 ## Phase A-FN — Resources Field Notes
 
+**Shipped in PR #41, squash-merged and verified live on production 2026-07-09.**
+
 - New columns on `resources`: `fieldNotes` (HTML), `fieldNotesStatus` (`draft` | `approved`), `fieldNotesGeneratedAt`.
 - **Drafting inputs are provider-specific, stated in the prompt contract:** file/docx → `bodyText`; YouTube → title + description; Amazon/web → title + author + description only. **Insufficiency rule:** below a content threshold, Claude must draft framing-only notes (why we recommend it, how to use it in a study) with **no claims about the work's specific content**; if even that isn't possible, the resource is flagged "needs manual notes" instead of generated. This is a prompt-contract rule, not just an admin-review hope — one-tap approve is the expected flow, so hallucinated book summaries must be structurally prevented.
 - Structure: what it says / why we recommend it (2–3 short paragraphs) · 3–5 key scripture references (reference-only, never verse text) · how to use it in a study. Output runs through `scrubAiPayload` + the new banned-word gate (see C.4).

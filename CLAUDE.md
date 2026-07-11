@@ -32,7 +32,7 @@ NEVER `drizzle-kit push` to prod. Migrations apply via `scripts/apply-neon-migra
 - Server Components by default; `"use client"` only for interactivity (editor, modals, state)
 - Auth.js `auth()` available at `@/auth` (full Session) or `@/lib/auth-compat` (Clerk-shape `{ userId }` for the 76 legacy call sites still in transition)
 - Admin gating: middleware lets public routes through; admin pages double-check `users.role === "admin"` server-side
-- AI calls: server-only, all log to `ai_generations` with prompt/version/model/tokens. Banned-word list in `src/lib/ai/system-prompt.ts`. Bible verse text NEVER generated — use `{{VERSE: ref}}` placeholders
+- AI calls: server-only, all log to `ai_generations` with prompt/version/model/tokens. Banned-word list in `src/lib/ai/system-prompt.ts`. Programmatic banned-language gate at `src/lib/ai/banned.ts` (used by resources field notes; Phase C autopilot dependency). Resource field notes: AI-drafted + admin-approved via `src/lib/resources/generate-field-notes.ts`; only status `approved` renders publicly; admin hand-edits sanitized by `src/lib/resources/sanitize-field-notes.ts`. Bible verse text NEVER generated — use `{{VERSE: ref}}` placeholders
 - Soft delete: `deletedAt` column + partial unique indexes (`.where(deleted_at IS NULL)`); 30-day cron purge
 - Letter versions: every autosave writes a row to `letter_versions` for restore/diff
 - Resend Broadcasts: created in `publishLetter` server action; failures don't block the website publish
