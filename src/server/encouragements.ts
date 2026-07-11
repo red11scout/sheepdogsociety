@@ -151,6 +151,7 @@ export async function updateEncouragement(input: {
   scriptures?: ScriptureRef[];
   guidance?: string;
   notes?: string;
+  callToAction?: string;
   coverImageUrl?: string;
   coverImageAlt?: string;
   publishDate?: string | null;
@@ -165,6 +166,7 @@ export async function updateEncouragement(input: {
   if (input.scriptures != null) patch.scriptures = input.scriptures;
   if (input.guidance != null) patch.guidance = input.guidance;
   if (input.notes != null) patch.notes = input.notes;
+  if (input.callToAction != null) patch.callToAction = input.callToAction;
   if (input.coverImageUrl != null) patch.coverImageUrl = input.coverImageUrl;
   if (input.coverImageAlt != null) patch.coverImageAlt = input.coverImageAlt;
   if (input.publishDate !== undefined) patch.publishDate = input.publishDate;
@@ -279,6 +281,7 @@ export async function broadcastEncouragement(
         scriptures,
         guidance: row.guidance,
         notes: row.notes,
+        callToAction: row.callToAction ?? "",
         publicUrl,
         unsubscribeUrl: "{{{RESEND_UNSUBSCRIBE_URL}}}",
       })

@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { listEncouragements } from "@/server/encouragements";
+import { getAutopilotStatus } from "@/server/letters/autopilot-admin";
+import { findVoice } from "@/lib/ai/voices";
 import { Icon } from "@/components/icons/Icon";
 import { EmptyState } from "@/components/admin/EmptyState";
 import { Magnetic } from "@/components/motion/Magnetic";
+import { AutopilotCard } from "./autopilot-card";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
@@ -18,6 +21,13 @@ export default async function EncouragementsAdminPage() {
       err instanceof Error
         ? err.message
         : "Could not load. Migration 0002 may not be applied yet.";
+  }
+
+  let autopilot: Awaited<ReturnType<typeof getAutopilotStatus>> | null = null;
+  try {
+    autopilot = await getAutopilotStatus();
+  } catch (err) {
+    console.error("getAutopilotStatus failed:", err);
   }
 
   return (
@@ -61,6 +71,34 @@ export default async function EncouragementsAdminPage() {
           One letter at a time, or schedule a whole series on a theme. Claude drafts. You review. The cron publishes on cadence.
         </p>
       </header>
+
+      {autopilot && (
+        <AutopilotCard
+          enabled={autopilot.pilot.enabled}
+          lastRunAt={
+            autopilot.pilot.lastRunAt
+              ? autopilot.pilot.lastRunAt.toISOString()
+              : null
+          }
+          lastBlockTheme={autopilot.pilot.lastBlockTheme ?? ""}
+          lastBlockVoice={
+            autopilot.pilot.lastBlockVoice
+              ? findVoice(autopilot.pilot.lastBlockVoice)?.name ??
+                autopilot.pilot.lastBlockVoice
+              : ""
+          }
+          lastBlockLetterIds={
+            Array.isArray(autopilot.pilot.lastBlockLetterIds)
+              ? (autopilot.pilot.lastBlockLetterIds as string[])
+              : []
+          }
+          scheduledLetters={autopilot.scheduledLetters.map((l) => ({
+            id: l.id,
+            title: l.title,
+            scheduledFor: l.scheduledFor ? l.scheduledFor.toISOString() : null,
+          }))}
+        />
+      )}
 
       <section className="mt-12">
         {dbError ? (
