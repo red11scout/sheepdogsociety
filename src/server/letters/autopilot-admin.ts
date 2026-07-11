@@ -33,6 +33,7 @@ async function autopilotSeriesIds(): Promise<string[]> {
 }
 
 export async function getAutopilotStatus() {
+  await requireAdmin();
   let [pilot] = await db.select().from(letterAutopilot).limit(1);
   if (!pilot) {
     [pilot] = await db.insert(letterAutopilot).values({ enabled: false }).returning();

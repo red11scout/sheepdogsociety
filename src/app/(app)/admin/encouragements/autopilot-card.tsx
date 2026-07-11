@@ -49,7 +49,9 @@ export function AutopilotCard({
         const result = await setAutopilotEnabled(!enabled);
         setEnabled(result.enabled);
         setRevertedMessage(
-          !result.enabled ? `${result.reverted} letters returned to drafts.` : null
+          !result.enabled
+            ? `${result.reverted} ${result.reverted === 1 ? "letter" : "letters"} returned to drafts.`
+            : null
         );
         router.refresh();
       } catch (err) {
