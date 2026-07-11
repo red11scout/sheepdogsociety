@@ -31,7 +31,7 @@ const ways: { icon: IconName; roman: string; title: string; copy: string; cta: s
     href: "/contact",
   },
   {
-    icon: "hands",
+    icon: "heart",
     roman: "III",
     title: "Partner with us",
     copy: "Become a Sheepdog Partner with ongoing monthly support.",

@@ -67,7 +67,7 @@ const principles: { icon: IconName; roman: string; title: string; copy: string }
     copy: "Every man is welcome regardless of background, denomination, or where he is in his walk.",
   },
   {
-    icon: "hands",
+    icon: "brothers",
     roman: "III",
     title: "Peer led.",
     copy: "No hierarchy. Any man can lead. We sharpen each other as equals before God.",
