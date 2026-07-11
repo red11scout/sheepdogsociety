@@ -9,6 +9,7 @@ import { eq } from "drizzle-orm";
 import { SYSTEM_PROMPT } from "@/lib/ai/system-prompt";
 import { findVoice } from "@/lib/ai/voices";
 import { scrubAiPayload } from "@/lib/ai/scrub";
+import { friendlyZodError } from "@/lib/api/zod-error";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
@@ -69,7 +70,7 @@ export async function POST(req: Request) {
     body = bodySchema.parse(await req.json());
   } catch (err) {
     return NextResponse.json(
-      { error: "Bad request", detail: err instanceof Error ? err.message : "" },
+      { error: "Bad request", detail: friendlyZodError(err) },
       { status: 400 }
     );
   }
