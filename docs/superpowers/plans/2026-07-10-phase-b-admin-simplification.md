@@ -32,9 +32,10 @@ src/lib/site-text/resolve.test.ts
 src/lib/site-text/registry.test.ts   # uniqueness + non-empty invariants
 src/lib/site-text/get.ts             # getSiteTextMap() — unstable_cache tag "site-text" (NOT "use server")
 src/server/site-text-admin.ts        # "use server": saveSiteText, resetSiteText (requireAdmin)
+src/db/schema-site-text.ts           # siteText table (own file per schema.ts directive), re-exported from schema.ts
 src/app/(app)/admin/site-text/page.tsx        # server page: registry + raw rows
 src/app/(app)/admin/site-text/editor.tsx      # client: grouped expandable rows
-src/db/schema.ts                     # + siteText table
+src/db/schema.ts                     # + re-export of schema-site-text
 drizzle/0019_site_text.sql           # hand-written, idempotent
 src/app/(public)/page.tsx            # reads map; metadata → generateMetadata
 src/app/(public)/about/page.tsx      # reads map; metadata → generateMetadata
@@ -48,11 +49,11 @@ src/components/admin/AdminShell.tsx    # drawer badge-prop fix
 ### Task 1: site_text data layer — registry, resolve rule, schema, migration
 
 **Files:**
-- Create: `src/lib/site-text/registry.ts`, `src/lib/site-text/resolve.ts`, `src/lib/site-text/resolve.test.ts`, `src/lib/site-text/registry.test.ts`, `drizzle/0019_site_text.sql`
-- Modify: `src/db/schema.ts` (append table at end)
+- Create: `src/lib/site-text/registry.ts`, `src/lib/site-text/resolve.ts`, `src/lib/site-text/resolve.test.ts`, `src/lib/site-text/registry.test.ts`, `src/db/schema-site-text.ts`, `drizzle/0019_site_text.sql`
+- Modify: `src/db/schema.ts` (re-export line only — new tables live in their own files per schema.ts's own directive; precedent: schema-members.ts, schema-pages.ts, schema-new.ts)
 
 **Interfaces:**
-- Produces: `SITE_TEXT_KEYS: readonly SiteTextEntry[]`, `type SiteTextKey`, `SITE_TEXT_DEFAULTS: Record<SiteTextKey, string>`, `resolveSiteText(stored: string | null | undefined, fallback: string): string`, Drizzle table `siteText` (columns key/label/groupName/value/updatedAt/updatedBy).
+- Produces: `SITE_TEXT_KEYS` (const-asserted registry), `type SiteTextKey` (literal union of every key), `SITE_TEXT_DEFAULTS: Record<SiteTextKey, string>`, `resolveSiteText(stored: string | null | undefined, fallback: string): string`, `mergeSiteText(stored: { key: string; value: string }[]): Record<SiteTextKey, string>`, Drizzle table `siteText` (columns key/label/groupName/value/updatedAt/updatedBy).
 
 - [ ] **Step 1: Write failing tests**
 
@@ -73,7 +74,26 @@ describe("resolveSiteText", () => {
     expect(resolveSiteText("  padded  ", "fallback")).toBe("padded");
   });
 });
+
+describe("mergeSiteText", () => {
+  it("returns pure defaults for an empty table", () => {
+    expect(mergeSiteText([])).toEqual(SITE_TEXT_DEFAULTS);
+  });
+  it("ignores unknown keys", () => {
+    const map = mergeSiteText([{ key: "not.a.real.key", value: "x" }]);
+    expect(map).toEqual(SITE_TEXT_DEFAULTS);
+  });
+  it("whitespace-only override falls back to the default", () => {
+    const map = mergeSiteText([{ key: "home.hero.headline1", value: "   " }]);
+    expect(map["home.hero.headline1"]).toBe(SITE_TEXT_DEFAULTS["home.hero.headline1"]);
+  });
+  it("a real override wins", () => {
+    const map = mergeSiteText([{ key: "home.hero.headline1", value: "Stand with your" }]);
+    expect(map["home.hero.headline1"]).toBe("Stand with your");
+  });
+});
 ```
+(`mergeSiteText` and `SITE_TEXT_DEFAULTS` import from `./resolve` and `./registry` respectively — add them to the test imports.)
 
 `src/lib/site-text/registry.test.ts`:
 ```ts
@@ -111,6 +131,8 @@ describe("SITE_TEXT_KEYS", () => {
 - [ ] **Step 3: Implement `resolve.ts`**
 
 ```ts
+import { SITE_TEXT_DEFAULTS, type SiteTextKey } from "./registry";
+
 /** Spec §B.1 fallback rule: NULL, empty, or whitespace-only stored values
  *  count as missing — the shipped default renders. An admin clearing a
  *  textarea can never blank the site. */
@@ -120,6 +142,21 @@ export function resolveSiteText(
 ): string {
   const trimmed = stored?.trim();
   return trimmed ? trimmed : fallback;
+}
+
+/** Pure merge: defaults overlaid with real (non-blank) stored overrides.
+ *  Unknown keys are ignored — a row for a retired key can never leak. */
+export function mergeSiteText(
+  stored: { key: string; value: string }[]
+): Record<SiteTextKey, string> {
+  const map = { ...SITE_TEXT_DEFAULTS };
+  for (const row of stored) {
+    if (row.key in map) {
+      const k = row.key as SiteTextKey;
+      map[k] = resolveSiteText(row.value, map[k]);
+    }
+  }
+  return map;
 }
 ```
 
@@ -138,8 +175,10 @@ export interface SiteTextEntry {
 
 /** Curated editable copy. Spec §B.1: homepage 5W1H sections + About page
  *  copy ONLY. Scripture quotes are never keys. Structural labels (the
- *  folio "Who it's for" headings, roman numerals, icons) stay in code. */
-export const SITE_TEXT_KEYS: readonly SiteTextEntry[] = [
+ *  folio "Who it's for" headings, roman numerals, icons) stay in code.
+ *  `as const satisfies` keeps SiteTextKey a literal union so a typo'd
+ *  t["home.hero.headlin1"] lookup fails tsc instead of rendering blank. */
+export const SITE_TEXT_KEYS = [
   // ── Homepage ──────────────────────────────────────────────
   { key: "home.hero.headline1", label: "Hero headline — line 1", group: "Homepage", multiline: false,
     defaultValue: "Find your" },
@@ -176,6 +215,9 @@ export const SITE_TEXT_KEYS: readonly SiteTextEntry[] = [
       "A brotherhood of Christian men anchored in Acts 20:28. Weekly tables around Scripture. Find your group, read the Letter, take a seat." },
   { key: "home.meta.social_title", label: "Link preview — title (texts and social shares)", group: "Homepage", multiline: false,
     defaultValue: "Sheepdog Society — Find your brothers." },
+  { key: "home.meta.social_description", label: "Link preview — description (texts and social shares)", group: "Homepage", multiline: true,
+    defaultValue:
+      "A brotherhood of Christian men anchored in Acts 20:28. Weekly tables around Scripture." },
   // ── About ─────────────────────────────────────────────────
   { key: "about.hero.headline1", label: "About hero — headline line 1", group: "About", multiline: false,
     defaultValue: "A brotherhood," },
@@ -236,20 +278,23 @@ export const SITE_TEXT_KEYS: readonly SiteTextEntry[] = [
   { key: "about.meta.description", label: "About — search result description", group: "About", multiline: true,
     defaultValue:
       "A brotherhood of men rooted in honorable Christian values, driven to be prepared in every aspect of life." },
-] as const;
+] as const satisfies readonly SiteTextEntry[];
 
 export type SiteTextKey = (typeof SITE_TEXT_KEYS)[number]["key"];
 
-export const SITE_TEXT_DEFAULTS: Record<string, string> = Object.fromEntries(
+export const SITE_TEXT_DEFAULTS = Object.fromEntries(
   SITE_TEXT_KEYS.map((e) => [e.key, e.defaultValue])
-);
+) as Record<SiteTextKey, string>;
 ```
 
 - [ ] **Step 5: Run tests, verify pass** — `npm test -- site-text` → 6 tests PASS.
 
-- [ ] **Step 6: Schema + migration.** Append to `src/db/schema.ts` (house style: text PK, snake_case, `withTimezone` like `letter_autopilot`):
+- [ ] **Step 6: Schema + migration.** New tables live in their own files (schema.ts's own directive; precedent schema-members.ts / schema-pages.ts / schema-new.ts). Create `src/db/schema-site-text.ts` (house style: text PK, snake_case; `withTimezone` per the newest tables `pages`/`member_signups` in schema-pages.ts/schema-members.ts; `updatedBy` FK per `pages.updatedBy`):
 
 ```ts
+import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { users } from "./schema";
+
 // ── Site text (Phase B) ── curated editable copy; registry in
 // src/lib/site-text/registry.ts is the source of truth for which keys
 // exist. DB stores overrides only; empty/whitespace value = use default.
@@ -262,6 +307,8 @@ export const siteText = pgTable("site_text", {
   updatedBy: text("updated_by").references(() => users.id, { onDelete: "set null" }),
 });
 ```
+
+Then add the re-export to `src/db/schema.ts` beside the existing ones: `export * from "./schema-site-text";` — so `import { siteText } from "@/db/schema"` works everywhere. (Check the exact re-export style schema.ts uses for schema-members/schema-pages and mirror it; if the users import above creates a cycle, import users from the file where it is actually defined, matching how schema-pages.ts references it.)
 
 `drizzle/0019_site_text.sql`:
 ```sql
@@ -276,7 +323,8 @@ CREATE TABLE IF NOT EXISTS "site_text" (
 ```
 
 - [ ] **Step 7: Gates** — `npx tsc --noEmit` clean, `npm test` all green.
-- [ ] **Step 8: Commit** — `git add src/lib/site-text src/db/schema.ts drizzle/0019_site_text.sql && git commit -m "feat(site-text): key registry, fallback rule, schema + migration 0019"`
+- [ ] **Step 8: Apply migration 0019 to prod** (controller does this, Phase C 0018 precedent — additive and idempotent, safe pre-merge; implementer subagents SKIP this and note it in the report): `DATABASE_URL='<unpooled>' node scripts/apply-neon-migration.mjs`, then verify via information_schema that `site_text` exists with the six columns. Without this, Task 5's live verify cannot pass (the dev server hits the prod-ish DB).
+- [ ] **Step 9: Commit** — `git add src/lib/site-text src/db/schema.ts src/db/schema-site-text.ts drizzle/0019_site_text.sql && git commit -m "feat(site-text): key registry, fallback rule, schema + migration 0019"`
 
 ---
 
@@ -295,8 +343,8 @@ CREATE TABLE IF NOT EXISTS "site_text" (
 import { unstable_cache } from "next/cache";
 import { db } from "@/db";
 import { siteText } from "@/db/schema";
-import { SITE_TEXT_DEFAULTS } from "./registry";
-import { resolveSiteText } from "./resolve";
+import type { SiteTextKey } from "./registry";
+import { mergeSiteText } from "./resolve";
 
 /** One query for the whole table, cached under the "site-text" tag.
  *  Saves call revalidateTag("site-text") so edits are live immediately;
@@ -312,7 +360,7 @@ const getStoredRows = unstable_cache(
   { tags: ["site-text"] }
 );
 
-export async function getSiteTextMap(): Promise<Record<string, string>> {
+export async function getSiteTextMap(): Promise<Record<SiteTextKey, string>> {
   let stored: { key: string; value: string }[] = [];
   try {
     stored = await getStoredRows();
@@ -320,13 +368,7 @@ export async function getSiteTextMap(): Promise<Record<string, string>> {
     // DB down → the site still renders every shipped default.
     console.error("getSiteTextMap: falling back to defaults", err);
   }
-  const map = { ...SITE_TEXT_DEFAULTS };
-  for (const row of stored) {
-    if (row.key in map) {
-      map[row.key] = resolveSiteText(row.value, map[row.key]);
-    }
-  }
-  return map;
+  return mergeSiteText(stored);
 }
 ```
 
@@ -434,7 +476,7 @@ export async function generateMetadata(): Promise<Metadata> {
     description: t["home.meta.description"],
     openGraph: {
       title: t["home.meta.social_title"],
-      description: t["home.meta.description"],
+      description: t["home.meta.social_description"],
       images: [{ url: "/api/og/verse", width: 1200, height: 630 }],
     },
     twitter: {
@@ -640,7 +682,7 @@ export function SiteTextEditor({ entries }: { entries: EditorEntry[] }) {
                         </button>
                       </div>
                       {status?.key === e.key && (
-                        <p className={`mt-2 text-xs ${status.ok ? "text-moss" : "text-oxblood"}`}>{status.msg}</p>
+                        <p className={`mt-2 text-xs ${status.ok ? "text-olive" : "text-oxblood"}`}>{status.msg}</p>
                       )}
                     </div>
                   ) : (
@@ -656,7 +698,7 @@ export function SiteTextEditor({ entries }: { entries: EditorEntry[] }) {
                     </button>
                   )}
                   {!isOpen && status?.key === e.key && (
-                    <p className={`px-2 pb-2 text-xs ${status.ok ? "text-moss" : "text-oxblood"}`}>{status.msg}</p>
+                    <p className={`px-2 pb-2 text-xs ${status.ok ? "text-olive" : "text-oxblood"}`}>{status.msg}</p>
                   )}
                 </li>
               );
@@ -668,7 +710,7 @@ export function SiteTextEditor({ entries }: { entries: EditorEntry[] }) {
   );
 }
 ```
-(Adjust palette classes to match neighbors if `text-moss`/`text-oxblood` differ — check how `autopilot-card.tsx` styles success/error text and mirror it.)
+(Palette verified against globals.css @theme: `text-olive` = success, `text-oxblood` = error — the autopilot-card convention.)
 
 - [ ] **Step 3: Verify manually** — dev server: `/admin/site-text` lists 2 groups; edit hero paragraph → homepage `/` shows it; Reset → original back. 375px: rows are full-width taps, buttons ≥ 44px.
 - [ ] **Step 4: Commit** — `feat(admin): site-text editor — tap, edit, save, live`
@@ -696,14 +738,24 @@ Settings     → Admins /admin/users (shield) · Audit log /admin/audit (clipboa
 ```
 (Icon `scroll` exists — the About page uses it. If any icon name fails the `IconName` type, pick the closest existing one; do not add new SVGs.)
 
-- [ ] **Step 2: Fix the active-row border bug** — the brass `absolute left-0 h-6 w-[3px]` marker sits inside a `<Link>` that is not positioned; add `relative` to that Link's className.
+- [ ] **Step 2: Rewrite the active-link logic (best-match).** The current per-item prefix test marks BOTH `/admin/events` and `/admin/events/past` active on the past-events page. Replace with a single best match computed across all items before rendering:
 
-- [ ] **Step 3: Fix the drawer badge bug** — in `AdminShell.tsx`, the mobile-drawer `<AdminSidebar>` instance omits `pendingLocationInterests`; pass it like the desktop instance does.
+```tsx
+const allItems = groups.flatMap((g) => g.items);
+const activeHref = allItems
+  .filter((it) => pathname === it.href || pathname?.startsWith(`${it.href}/`))
+  .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+// per item: const isActive = item.href === activeHref;
+```
 
-- [ ] **Step 4: Tap-budget check** — desktop: every sidebar page is 1 tap (groups always expanded, ≤ 2 ✓). Mobile: hamburger (1) → link (2) ≤ 3 ✓. Confirm nav links are ≥ 44px tall at 375px (current `py` on rows — bump to `min-h-11` if short).
+- [ ] **Step 3: Fix the active-row border bug** — the brass `absolute left-0 h-6 w-[3px]` marker sits inside a `<Link>` that is not positioned; add `relative` to that Link's className.
 
-- [ ] **Step 5: Verify** — dev server: all 17 links land, active state correct on nested routes (`/admin/events/past` must NOT also mark `/admin/events` active — current prefix logic will; use exact-match precedence: an item is active if `pathname === href` OR (`pathname.startsWith(href + "/")` AND no other item's href equals pathname or is a longer matching prefix). Implement the simple version: compute the single best match (longest matching href) across all items and mark only it).
-- [ ] **Step 6: Commit** — `feat(admin): nav regrouped by job — This Week / The Letter / People & Groups / Site Content + fixes`
+- [ ] **Step 4: Fix the drawer badge bug** — in `AdminShell.tsx`, the mobile-drawer `<AdminSidebar>` instance omits `pendingLocationInterests`; pass it like the desktop instance does.
+
+- [ ] **Step 5: Tap-budget check** — desktop: every sidebar page is 1 tap (groups always expanded, ≤ 2 ✓). Mobile: hamburger (1) → link (2) ≤ 3 ✓. Confirm nav links are ≥ 44px tall at 375px (current `py` on rows — bump to `min-h-11` if short).
+
+- [ ] **Step 6: Verify** — dev server: all 17 links land; on `/admin/events/past` ONLY "Past events" is active; on `/admin/encouragements/<some-id>` "The Letter" is active; at 375px with ≥ 1 new group interest, open the drawer and confirm the Group Interest badge shows the same count as the desktop sidebar.
+- [ ] **Step 7: Commit** — `feat(admin): nav regrouped by job — This Week / The Letter / People & Groups / Site Content + fixes`
 
 ---
 
@@ -731,16 +783,19 @@ Pattern for BOTH files: wrap the existing `<div className="overflow-x-auto …">
         {/* status pill — reuse the exact pill markup the table's status cell renders */}
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
-        {/* the same approve / suspend / role actions the table row renders,
-            each ≥ h-11, reusing the existing handlers unchanged */}
+        {/* the same approval select / active toggle / group-assign select /
+            soft-delete the table row renders, each ≥ h-11, reusing the
+            existing handlers unchanged */}
       </div>
     </article>
   ))}
 </div>
 ```
-Use the component's real row variable/field names (read the file; `pageRows`/`displayName` above are stand-ins for whatever the table's `.map` already iterates — the card consumes the identical array). Parity requirement: every action a table row exposes (approval, role change, suspend, select-for-bulk if present) must be reachable from the card. Bulk-select on mobile may collapse to a checkbox in the card corner.
+Use the component's real row variable/field names (read the file; `pageRows`/`displayName` above are stand-ins for whatever the table's `.map` already iterates — the card consumes the identical array). Parity requirement — the ACTUAL MemberRow actions (members-table.tsx:509-585), every one reachable from the card: **approval select, active/inactive toggle, group-assignment select, soft-delete, and the bulk-select checkbox** (put the checkbox in the card corner). There is no role-change or suspend action on this page; do not invent one.
 
-- [ ] **Step 2: Groups card list** (same pattern in `groups-locations-table.tsx`): card shows name, city/state, meeting day, active/on-map pills, and an Edit button that triggers the SAME `setEditing(id)` the table row uses. The inline edit form already renders outside the table? If it renders inside a `<td>`, move the edit form rendering so both views can open it (simplest: when editing on `< md`, render the edit form as a block above the card list).
+- [ ] **Step 2: Groups card list** (same pattern in `groups-locations-table.tsx`). Full triage parity applies here exactly as in Step 1 — the card must carry EVERY handler GroupRow receives (groups-locations-table.tsx:452-456), not a display summary: **bulk-select checkbox (onToggleSelect), approval select (same handleApproval, keeping the approved → displayedOnMap optimistic flip), Active toggle (onActive), On-map toggle (onMap) — these are interactive toggles, not display pills — Edit (setEditing), and Delete (onDelete)**, plus name, city/state, and meeting day as the card's identity block. Approving a pending group is this page's core triage action and it lives only on the row, not in the EditForm.
+
+  **EditForm renders exactly once.** Today it mounts inside `<td colSpan={14}>` (~line 527-531); left there under `hidden md:block` plus a second `< md` copy, a mid-edit viewport change would swap the user between two EditForm instances with divergent draft state (~20 useState fields initialized on mount). Hoist the row edit form OUT of the `<td>` to a single block rendered above the shared table/card container — the same way `editing === "_new"` already renders at ~line 329-334 — keyed by the editing group id and visible at all breakpoints. Table row and card both just call `setEditing(id)`.
 
 - [ ] **Step 3: Verify at 375px** — dev server, resize 375px: no horizontal scroll on either page; every triage action tappable; desktop table unchanged at ≥ 768px.
 - [ ] **Step 4: Gates + commit** — tsc/eslint clean → `feat(admin): members + groups card lists at 375px, tables untouched on desktop`
@@ -786,7 +841,7 @@ On mobile order: title first (font-medium), then a single meta line combining is
 
 - [ ] **Step 2: Migrate the 4 legacy sidebar pages off `AdminPageHeader` onto `AdminPageIntro`** — contacts, events, newsletter, testimonies (prayer is NOT in the sidebar — skip it, spec: orphan routes get no pass). For each: replace the `AdminPageHeader` usage with `AdminPageIntro` carrying kicker/title and a one-sentence plain-English description of what the page is for (hand-written, Jeremy voice, e.g. contacts: "Messages from the website. Read them, answer them, mark them done."). Keep any page-level action buttons: pass the primary one via `primary` if it is a link; otherwise leave the button where it is below the header.
 - [ ] **Step 3: Verb-label sweep** across all Tier 1 pages: every action button starts with a verb ("Approve", "Decline", "Save", "Edit", "Mark resolved", "Reopen") — rename any that don't (e.g. bare "Details" → "Open").
-- [ ] **Step 4: Tier 2 baseline sweep** — visit at 375px: resources, newsletter, testimonies, audit, settings, gallery, site-text: (a) drawer nav opens/closes, (b) zero horizontal scroll (`overflow-x-auto` on any wide table is acceptable containment), (c) primary actions ≥ 44px. Letter editor (`/admin/encouragements/[id]`): confirm at 375px it can be READ and the publish/schedule controls are reachable and tappable; full editing comfort explicitly out of scope. Fix only what fails these three checks — no redesigns.
+- [ ] **Step 4: Tier 2 baseline sweep** — visit at 375px: resources, newsletter, testimonies, audit, settings, gallery, site-text, events/past: (a) drawer nav opens/closes, (b) zero horizontal scroll (`overflow-x-auto` on any wide table is acceptable containment), (c) primary actions ≥ 44px. Letter editor (`/admin/encouragements/[id]`): confirm at 375px it can be READ and the publish/schedule controls are reachable and tappable; full editing comfort explicitly out of scope. Fix only what fails these three checks — no redesigns.
 - [ ] **Step 5: Gates + commit** — `feat(admin): encouragements list stacks at 375px; AdminPageIntro everywhere; Tier 2 baseline`
 
 ---
@@ -796,13 +851,13 @@ On mobile order: title first (font-medium), then a single meta line combining is
 **Files:** none new (docs stamps at the end).
 
 - [ ] **Step 1: Static gates** — `npx tsc --noEmit` · `npm test` · `npx eslint <all touched files>` · `npm run check:contrast` — all green, reported honestly.
-- [ ] **Step 2: Apply migration 0019 to prod** — `DATABASE_URL='<unpooled>' node scripts/apply-neon-migration.mjs` then verify via information_schema (additive table; safe pre-merge, same as 0018).
+- [ ] **Step 2: Re-verify migration 0019** (applied in Task 1 Step 8) — `site_text` exists in prod with six columns, 0 rows at rest.
 - [ ] **Step 3: Live-fire on the dev server** (preview tools, NOT Bash):
   - Site text end-to-end: `/admin/site-text` → edit `home.hero.paragraph` to a sentinel → `/` shows it (revalidateTag + revalidatePath worked) → Reset to original → `/` shows default again. Confirm `site_text` table state before/after (0 rows at rest → 1 → 0).
   - generateMetadata: view-source of `/` shows the title/description; edit `home.meta.title` → sentinel appears in `<title>` → reset.
   - 375px walkthrough of all 8 Tier 1 pages + Tier 2 checks; screenshot evidence of members cards, groups cards, encouragements stack, site-text editor.
   - Desktop 1280px spot-check: tables and lists visually unchanged.
-- [ ] **Step 4: Final whole-branch review** — `scripts/review-package $(git merge-base main HEAD) HEAD`, then the multi-lens adversarial workflow (spec-coverage lens + trust/regression lens + ledger-triage lens), most capable model; ONE consolidated fix wave + re-verdict.
+- [ ] **Step 4: Final whole-branch review** — package the diff with the SDD skill's script (`"$SKILL_DIR/scripts/review-package" $(git merge-base main HEAD) HEAD` where `SKILL_DIR` is the subagent-driven-development skill directory — NOT a repo script), then the multi-lens adversarial workflow (spec-coverage lens + trust/regression lens + ledger-triage lens), most capable model; ONE consolidated fix wave + re-verdict.
 - [ ] **Step 5: Ship** — push branch → PR via `--body-file` (note: nothing publishes differently; site copy now editable at /admin/site-text; nav regrouped; 375px pass) → Vercel check green → squash-merge → migration Action green (0019 idempotent) → live prod verification: `/` + `/about` render unchanged defaults, `/admin/site-text` 307s unauth, zero runtime errors (1h window).
 - [ ] **Step 6: Docs + memory** — spec §Phase B stamped SHIPPED; CLAUDE.md: add `/admin/site-text` route + site_text pattern line (registry in code, DB overrides, tag `site-text`); ledger final entry; memory update (Phase B shipped = Phase 4 arc COMPLETE).
 - [ ] **Step 7: Report to Drew** — what shipped, where Jeremy edits copy, the arc-complete summary.
@@ -814,6 +869,8 @@ On mobile order: title first (font-medium), then a single meta line combining is
 1. **Spec coverage:** B.1 site_text (Tasks 1-5: table w/ exact spec columns, fallback rule verbatim, curated keys = homepage 5W1H + About only, generateMetadata, grouped tap→textarea→save→live editor, no layout controls) ✓ · B.2 nav regroup (Task 6, membership verbatim, tap budget check) ✓ · B.3 mobile pass (Tasks 7-9: Tier 1 parity incl. both tables + encouragements grid; Tier 2 baseline; letter editor read+publish only; orphans skipped) ✓ · B.4 (Task 9: AdminPageIntro on remaining sidebar pages + verb sweep) ✓ · cross-cutting ship pipeline (Task 10) ✓.
 2. **Placeholder scan:** Task 7 cards intentionally bind to the component's real iterators by instruction rather than pasted 964-line internals — the requirement (same array, same handlers, parity checklist) is complete and the scout map pins file structure. No TBDs remain.
 3. **Type consistency:** `SiteTextEntry.defaultValue`/`group`/`multiline` naming consistent across registry, tests, get.ts, editor (`EditorEntry` mirrors + `stored`); `resolveSiteText(stored, fallback)` signature identical in resolve.ts, get.ts, editor.tsx; actions return `{ ok, error? }` in both and the editor consumes exactly that.
+
+**Adversarial review (2026-07-10):** 3-lens workflow (spec-conformance: needs-fixes, technical-correctness: needs-fixes, plan-quality: ready) returned 20 findings, 0 Critical / 3 Important — all folded in: groups/members card action parity rewritten to the actual row handlers, migration 0019 moved to Task 1, EditForm single-mount hoist, `text-olive` palette fix, const-asserted registry typing (typo'd keys now fail tsc), `mergeSiteText` extracted + tested, `home.meta.social_description` key added (no silent OG change), best-match active-link logic promoted to its own step, drawer-badge verify added, events/past added to the Tier 2 sweep, schema in its own file per house directive, review-package path corrected to the skill directory.
 
 **Decisions locked here (with why):**
 - Registry-in-code + DB-overrides (not seeded rows): the spec's "seeded keys are exactly" defines the curated LIST; storing defaults in code makes "empty DB renders the site" trivially true and keeps git as the default-copy audit trail. label/group_name are still persisted on upsert per the spec's column list.
