@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/icons/Icon";
 import { Kicker } from "@/components/public/kicker";
@@ -7,6 +8,9 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import { getSiteTextMap } from "@/lib/site-text/get";
+import { getStudioConfig } from "@/lib/studio/get";
+import { renderMerge } from "@/lib/studio/config";
 
 export const metadata = {
   title: "FAQ — Sheepdog Society",
@@ -83,10 +87,11 @@ const sections = [
   },
 ];
 
-export default function FAQPage() {
-  return (
-    <>
-      {/* Hero */}
+export default async function FAQPage() {
+  const [t, config] = await Promise.all([getSiteTextMap(), getStudioConfig()]);
+
+  const pageSections: Record<string, React.ReactNode> = {
+    hero: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-24 md:px-12 md:py-32">
           <Kicker left="Frequently Asked" />
@@ -97,8 +102,8 @@ export default function FAQPage() {
           </h1>
         </div>
       </section>
-
-      {/* Sections */}
+    ),
+    questions: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-5xl px-6 pt-4 pb-28 md:px-12 md:pt-8 md:pb-40">
           {sections.map((section) => (
@@ -124,8 +129,8 @@ export default function FAQPage() {
           ))}
         </div>
       </section>
-
-      {/* CTA */}
+    ),
+    cta: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-5xl px-6 py-28 text-center md:px-12 md:py-40">
           <Icon
@@ -135,10 +140,10 @@ export default function FAQPage() {
             className="mx-auto text-brass"
           />
           <h2 className="display-xl mt-8 text-display-lg">
-            Still have a question?
+            {t["faq.cta.title"]}
           </h2>
           <p className="mx-auto mt-6 max-w-xl font-pullquote text-lede italic leading-relaxed text-muted-foreground">
-            Send us a note. We read every one.
+            {t["faq.cta.body"]}
           </p>
           <div className="mt-12">
             <Link
@@ -151,6 +156,16 @@ export default function FAQPage() {
           </div>
         </div>
       </section>
+    ),
+  };
+
+  return (
+    <>
+      {renderMerge("faq", config)
+        .filter((s) => s.visible)
+        .map((s) => (
+          <Fragment key={s.id}>{pageSections[s.id]}</Fragment>
+        ))}
     </>
   );
 }

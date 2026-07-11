@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { db } from "@/db";
@@ -7,6 +8,9 @@ import { MemberSignup, type GroupOption } from "@/components/MemberSignup";
 import { PlantRequestForm } from "@/components/public/plant-request-form";
 import { Kicker } from "@/components/public/kicker";
 import { Icon, type IconName } from "@/components/icons/Icon";
+import { getSiteTextMap } from "@/lib/site-text/get";
+import { getStudioConfig } from "@/lib/studio/get";
+import { renderMerge } from "@/lib/studio/config";
 
 export const metadata: Metadata = {
   title: "Join — Sheepdog Society",
@@ -91,9 +95,10 @@ export default async function JoinPage({
   const path = sp.path === "start" ? "start" : "join";
   const groups = path === "join" ? await getGroupOptions() : [];
   const preselectedGroupId = sp.group;
+  const [t, config] = await Promise.all([getSiteTextMap(), getStudioConfig()]);
 
-  return (
-    <>
+  const sections: Record<string, React.ReactNode> = {
+    hero: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-4xl px-6 py-16 md:px-10 md:py-24">
           <Kicker left="Sit at the table" right="No application · No interview" />
@@ -154,11 +159,11 @@ export default async function JoinPage({
           </div>
         </div>
       </section>
-
-      {/* Five core principles — what you are joining */}
+    ),
+    principles: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-4xl px-6 pb-20 md:px-10 md:pb-28">
-          <Kicker left="Five core principles" right="Know before you come" />
+          <Kicker left={t["join.principles.title"]} right="Know before you come" />
           <ul className="mt-8 divide-y divide-foreground/10 border-y border-foreground/15">
             {principles.map((p) => (
               <li key={p.title} className="grid gap-3 py-6 md:grid-cols-[64px_1fr] md:items-start">
@@ -183,6 +188,16 @@ export default async function JoinPage({
           </p>
         </div>
       </section>
+    ),
+  };
+
+  return (
+    <>
+      {renderMerge("join", config)
+        .filter((s) => s.visible)
+        .map((s) => (
+          <Fragment key={s.id}>{sections[s.id]}</Fragment>
+        ))}
     </>
   );
 }
