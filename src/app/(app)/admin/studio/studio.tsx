@@ -83,18 +83,24 @@ export function Studio({
   initialDraft,
   published,
   initialVersions,
-  textEntries,
+  pages,
+  entriesByGroup,
   draftEnabled,
 }: {
   initialDraft: StudioConfig;
   published: StudioConfig;
   initialVersions: Version[];
-  textEntries: TextEntry[];
+  pages: { id: string; label: string; path: string }[];
+  entriesByGroup: Record<string, TextEntry[]>;
   draftEnabled: boolean;
 }) {
   const [config, setConfig] = useState<StudioConfig>(initialDraft);
+  const [selectedPage, setSelectedPage] = useState(pages[0].id);
+  const pageMeta = pages.find((p) => p.id === selectedPage) ?? pages[0];
+  const pageEntries = entriesByGroup[selectedPage] ?? [];
+  const allEntries = Object.values(entriesByGroup).flat();
   const [texts, setTexts] = useState<Record<string, { stored: string | null; draftValue: string | null }>>(
-    Object.fromEntries(textEntries.map((e) => [e.key, { stored: e.stored, draftValue: e.draftValue }]))
+    Object.fromEntries(allEntries.map((e) => [e.key, { stored: e.stored, draftValue: e.draftValue }]))
   );
   const [versions, setVersions] = useState<Version[]>(initialVersions);
   const [openKey, setOpenKey] = useState<string | null>(null);
@@ -132,13 +138,13 @@ export function Studio({
   }
 
   // ---------- Sections ----------
-  const merged = renderMerge("home", config);
-  const registry = SECTION_REGISTRY.home;
+  const merged = renderMerge(selectedPage, config);
+  const registry = SECTION_REGISTRY[selectedPage];
   const defOf = (id: string) => registry.sections.find((s) => s.id === id);
 
-  /** Persist a new unlocked-order/visibility array for the homepage. */
+  /** Persist a new unlocked-order/visibility array for the selected page. */
   function saveSections(sections: { id: string; visible: boolean }[]) {
-    const next: StudioConfig = { ...config, pages: { ...config.pages, home: { sections } } };
+    const next: StudioConfig = { ...config, pages: { ...config.pages, [selectedPage]: { sections } } };
     setConfig(next);
     startTransition(async () => {
       const res = await saveDraftConfig(next);
@@ -308,8 +314,8 @@ export function Studio({
   }, [compare, draftEnabled, iframeKey, device, mode]);
 
   const frameWidth = device === "mobile" ? 375 : 1280;
-  const draftSrc = `/?studio-mode=${mode}`;
-  const liveSrc = `/?studio=published&studio-mode=${mode}`;
+  const draftSrc = `${pageMeta.path}?studio-mode=${mode}`;
+  const liveSrc = `${pageMeta.path}?studio=published&studio-mode=${mode}`;
 
   const toolbarBtn = (active: boolean) =>
     cn(
@@ -350,6 +356,23 @@ export function Studio({
       <div className="grid gap-8 xl:grid-cols-[minmax(0,380px)_minmax(0,1fr)]">
         {/* ---------- Left rail: controls ---------- */}
         <div className="min-w-0 space-y-10">
+          {/* Page selector */}
+          <div>
+            <label className="folio" htmlFor="studio-page-select">Page</label>
+            <select
+              id="studio-page-select"
+              value={selectedPage}
+              onChange={(e) => setSelectedPage(e.target.value)}
+              className="mt-3 h-11 w-full border border-foreground/20 bg-transparent px-4 text-sm text-foreground focus:border-brass focus:outline-none"
+            >
+              {pages.map((p) => (
+                <option key={p.id} value={p.id} className="bg-background text-foreground">
+                  {p.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
           {/* Theme picker */}
           <section>
             <div className="flex items-center gap-2">
@@ -394,8 +417,8 @@ export function Studio({
           {/* Sections */}
           <section>
             <div className="flex items-center gap-2">
-              <p className="section-mark text-brass">§ Homepage sections</p>
-              <HintTooltip hint="Show, hide, or reorder the pieces of the homepage. Greyed rows are fixed: Scripture, the hero, and anything fed by live content stays where it is." />
+              <p className="section-mark text-brass">§ {pageMeta.label} sections</p>
+              <HintTooltip hint="Show, hide, or reorder the pieces of this page. Greyed rows are fixed: Scripture, the hero, and anything fed by live content stays where it is." />
             </div>
             <ul className="mt-4 divide-y divide-stone/10 border-y border-stone/15">
               {merged.map((row) => {
@@ -457,11 +480,11 @@ export function Studio({
           {/* Text fields */}
           <section>
             <div className="flex items-center gap-2">
-              <p className="section-mark text-brass">§ Homepage words</p>
+              <p className="section-mark text-brass">§ {pageMeta.label} words</p>
               <HintTooltip hint="Tap a line, change the words, save. It lands in your draft and shows in the preview. Apply puts it live." />
             </div>
             <ul className="mt-4 divide-y divide-stone/10 border-y border-stone/15">
-              {textEntries.map((e) => {
+              {pageEntries.map((e) => {
                 const isOpen = openKey === e.key;
                 const chip = chipFor(e);
                 return (
