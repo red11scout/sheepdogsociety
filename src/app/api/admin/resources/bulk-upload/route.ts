@@ -14,10 +14,13 @@ import {
   CATEGORIZE_PROMPT_VERSION,
   categorizeResource,
 } from "@/lib/resources/categorize";
+import { generateFieldNotes, FIELD_NOTES_PROMPT_VERSION } from "@/lib/resources/generate-field-notes";
 import { uniqueResourceSlug } from "@/lib/resources/slug";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+// 300s (was 60): the per-file field-notes sonnet call stacks on top of
+// categorize for multi-file uploads. Matches the retag route's precedent.
+export const maxDuration = 300;
 
 const MAX_BYTES = 25 * 1024 * 1024;
 const DOCX_MIME =
@@ -250,6 +253,48 @@ export async function POST(req: Request) {
         error: "Database insert failed (the file is uploaded; nothing is rendered). Has migration 0006 been applied?",
       });
       continue;
+    }
+
+    // Field notes draft (spec §A-FN) — non-blocking; a failure leaves the
+    // row at status 'none' for the section backfill or a manual draft.
+    try {
+      const result = await generateFieldNotes({
+        provider: null,
+        bodyText,
+        title,
+        author: null,
+        description: summary || "",
+        summary,
+      });
+      if (result.status === "drafted") {
+        await db
+          .update(resources)
+          .set({ fieldNotesHtml: result.html, fieldNotesStatus: "draft", fieldNotesGeneratedAt: new Date() })
+          .where(eq(resources.id, row.id));
+        try {
+          await db.insert(aiGenerations).values({
+            type: "draft",
+            prompt: `field-notes: ${title}`,
+            promptVersion: FIELD_NOTES_PROMPT_VERSION,
+            model: "claude-sonnet-4-5",
+            output: result.html.slice(0, 4000),
+            inputTokens: result.tokensIn,
+            outputTokens: result.tokensOut,
+            entityType: "resource",
+            entityId: row.id,
+            userId,
+          });
+        } catch (logErr) {
+          console.error("field-notes ai_generations log failed:", logErr);
+        }
+      } else if (result.status === "insufficient") {
+        await db
+          .update(resources)
+          .set({ fieldNotesStatus: "insufficient" })
+          .where(eq(resources.id, row.id));
+      }
+    } catch (err) {
+      console.error("field-notes on upload failed", err);
     }
 
     results.push({

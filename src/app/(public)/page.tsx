@@ -129,6 +129,7 @@ async function getMeetingRhythms() {
           ne(locations.meetingDay, "")
         )
       )
+      .orderBy(asc(locations.city), asc(locations.meetingDay))
       .limit(4);
     return rows.filter((r) => r.day && r.city);
   } catch {
@@ -421,7 +422,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* 7 — One story */}
+      {/* 6 — One story */}
       {story && (
         <section className="bg-background text-foreground">
           <div className="mx-auto max-w-4xl px-6 pb-20 md:px-10 md:pb-28">
@@ -447,7 +448,7 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* 8 — Final Join CTA */}
+      {/* 7 — Final Join CTA */}
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-4xl border-t border-foreground/15 px-6 py-20 text-center md:px-10 md:py-28">
           <p className="folio">The invitation stands</p>

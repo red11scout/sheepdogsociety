@@ -10,6 +10,7 @@ import {
   CATEGORIZE_PROMPT_VERSION,
   categorizeResource,
 } from "@/lib/resources/categorize";
+import { generateFieldNotes, FIELD_NOTES_PROMPT_VERSION } from "@/lib/resources/generate-field-notes";
 import { uniqueResourceSlug } from "@/lib/resources/slug";
 import type { Provider } from "@/lib/resources/enrich";
 
@@ -137,6 +138,48 @@ export async function createLinkResource(input: CreateLinkResourceInput) {
       aiCategorizedAt,
     })
     .returning({ id: resources.id, slug: resources.slug });
+
+  // Field notes draft (spec §A-FN) — non-blocking; a failure leaves the
+  // row at status 'none' for the section backfill or a manual draft.
+  try {
+    const result = await generateFieldNotes({
+      provider: input.provider,
+      bodyText: null,
+      title: input.title,
+      author: input.author ?? null,
+      description: summary || "",
+      summary,
+    });
+    if (result.status === "drafted") {
+      await db
+        .update(resources)
+        .set({ fieldNotesHtml: result.html, fieldNotesStatus: "draft", fieldNotesGeneratedAt: new Date() })
+        .where(eq(resources.id, row.id));
+      try {
+        await db.insert(aiGenerations).values({
+          type: "draft",
+          prompt: `field-notes: ${input.title}`,
+          promptVersion: FIELD_NOTES_PROMPT_VERSION,
+          model: "claude-sonnet-4-5",
+          output: result.html.slice(0, 4000),
+          inputTokens: result.tokensIn,
+          outputTokens: result.tokensOut,
+          entityType: "resource",
+          entityId: row.id,
+          userId,
+        });
+      } catch (logErr) {
+        console.error("field-notes ai_generations log failed:", logErr);
+      }
+    } else if (result.status === "insufficient") {
+      await db
+        .update(resources)
+        .set({ fieldNotesStatus: "insufficient" })
+        .where(eq(resources.id, row.id));
+    }
+  } catch (err) {
+    console.error("field-notes on link create failed", err);
+  }
 
   revalidatePath("/admin/resources");
   revalidatePath("/resources");

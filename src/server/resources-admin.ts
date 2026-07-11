@@ -8,6 +8,7 @@ import { and, eq, isNull, asc, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { categorizeResource } from "@/lib/resources/categorize";
 import { uniqueResourceSlug } from "@/lib/resources/slug";
+import { sanitizeFieldNotes } from "@/lib/resources/sanitize-field-notes";
 
 async function requireAdmin(): Promise<string> {
   const { userId } = await auth();
@@ -106,6 +107,7 @@ export async function softDeleteSection(id: string) {
 // Resources
 // ============================================================
 export async function listResourcesForAdmin() {
+  await requireAdmin();
   return await db
     .select({
       id: resources.id,
@@ -128,6 +130,8 @@ export async function listResourcesForAdmin() {
       booksOfBible: resources.booksOfBible,
       estimatedMinutes: resources.estimatedMinutes,
       aiCategorizedAt: resources.aiCategorizedAt,
+      fieldNotesHtml: resources.fieldNotesHtml,
+      fieldNotesStatus: resources.fieldNotesStatus,
       createdAt: resources.createdAt,
     })
     .from(resources)
@@ -176,6 +180,8 @@ export async function updateResource(input: {
   category?: string;
   level?: string;
   isPublic?: boolean;
+  fieldNotesHtml?: string;
+  fieldNotesStatus?: "none" | "draft" | "approved" | "insufficient";
 }) {
   await requireAdmin();
   const patch: Record<string, unknown> = {};
@@ -186,6 +192,8 @@ export async function updateResource(input: {
   if (input.category != null) patch.category = input.category;
   if (input.level != null) patch.level = input.level;
   if (input.isPublic != null) patch.isPublic = input.isPublic;
+  if (input.fieldNotesHtml !== undefined) patch.fieldNotesHtml = sanitizeFieldNotes(input.fieldNotesHtml);
+  if (input.fieldNotesStatus !== undefined) patch.fieldNotesStatus = input.fieldNotesStatus;
   await db.update(resources).set(patch).where(eq(resources.id, input.id));
   revalidatePath("/admin/resources");
   revalidatePath("/resources");
@@ -286,10 +294,8 @@ export async function listSectionsAndResourcesForPublic() {
       fileKey: resources.fileKey,
       type: resources.type,
       provider: resources.provider,
-      sourceMime: resources.sourceMime,
       thumbnailUrl: resources.thumbnailUrl,
       author: resources.author,
-      durationSeconds: resources.durationSeconds,
       category: resources.category,
       sectionId: resources.sectionId,
       level: resources.level,
@@ -299,7 +305,6 @@ export async function listSectionsAndResourcesForPublic() {
       topics: resources.topics,
       themes: resources.themes,
       booksOfBible: resources.booksOfBible,
-      estimatedMinutes: resources.estimatedMinutes,
       hasBody: resources.bodyHtml,
       createdAt: resources.createdAt,
     })
@@ -344,6 +349,8 @@ export async function getPublicResourceBySlug(slug: string) {
       booksOfBible: resources.booksOfBible,
       estimatedMinutes: resources.estimatedMinutes,
       createdAt: resources.createdAt,
+      fieldNotesHtml: resources.fieldNotesHtml,
+      fieldNotesStatus: resources.fieldNotesStatus,
     })
     .from(resources)
     // Public detail gate: hidden/draft and soft-deleted resources must not
