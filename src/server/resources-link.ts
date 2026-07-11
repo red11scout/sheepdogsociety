@@ -10,6 +10,7 @@ import {
   CATEGORIZE_PROMPT_VERSION,
   categorizeResource,
 } from "@/lib/resources/categorize";
+import { generateFieldNotes } from "@/lib/resources/generate-field-notes";
 import { uniqueResourceSlug } from "@/lib/resources/slug";
 import type { Provider } from "@/lib/resources/enrich";
 
@@ -137,6 +138,27 @@ export async function createLinkResource(input: CreateLinkResourceInput) {
       aiCategorizedAt,
     })
     .returning({ id: resources.id, slug: resources.slug });
+
+  // Field notes draft (spec §A-FN) — non-blocking; a failure leaves the
+  // row at status 'none' for the section backfill or a manual draft.
+  try {
+    const notes = await generateFieldNotes({
+      provider: input.provider,
+      bodyText: null,
+      title: input.title,
+      author: input.author ?? null,
+      description: summary || "",
+      summary,
+    });
+    if (notes) {
+      await db
+        .update(resources)
+        .set({ fieldNotesHtml: notes.html, fieldNotesStatus: "draft", fieldNotesGeneratedAt: new Date() })
+        .where(eq(resources.id, row.id));
+    }
+  } catch (err) {
+    console.error("field-notes on link create failed", err);
+  }
 
   revalidatePath("/admin/resources");
   revalidatePath("/resources");
