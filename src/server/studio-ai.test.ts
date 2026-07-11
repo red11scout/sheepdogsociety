@@ -14,7 +14,7 @@ import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
 import { generateObject } from "ai";
 import { getStudioConfig } from "@/lib/studio/get";
-import { recommendForPage } from "./studio-ai";
+import { recommendForPage, assistField } from "./studio-ai";
 
 function mockAdmin() {
   vi.mocked(auth).mockResolvedValue({ userId: "u1" } as never);
@@ -76,5 +76,39 @@ describe("recommendForPage", () => {
       expect(result.suggestions).toHaveLength(1);
       expect(result.suggestions[0].what).toContain("Shorten");
     }
+  });
+});
+
+describe("assistField", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it("returns ok:false for an unknown key (no AI call made)", async () => {
+    mockAdmin();
+    const result = await assistField("not.a.real.key", "some text", "tighten");
+    expect(result.ok).toBe(false);
+    expect(generateObject).not.toHaveBeenCalled();
+  });
+
+  it("returns a draft + why on success", async () => {
+    mockAdmin();
+    vi.mocked(generateObject).mockResolvedValue({
+      object: { draft: "Shorter mission copy.", why: "Cut the repetition." },
+      usage: { inputTokens: 80, outputTokens: 30 },
+    } as never);
+    const result = await assistField("about.mission.body", "Our mission is our mission to serve.", "tighten");
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.draft).toBe("Shorter mission copy.");
+  });
+
+  it("rejects a draft containing banned language", async () => {
+    mockAdmin();
+    vi.mocked(generateObject).mockResolvedValue({
+      object: { draft: "Let's delve into our mission.", why: "More engaging." },
+      usage: { inputTokens: 80, outputTokens: 30 },
+    } as never);
+    const result = await assistField("about.mission.body", "Our mission.", "warm-up");
+    expect(result.ok).toBe(false);
   });
 });

@@ -13,6 +13,7 @@ import { SECTION_REGISTRY } from "@/lib/studio/sections";
 import { getStudioConfig } from "@/lib/studio/get";
 import { renderMerge } from "@/lib/studio/config";
 import type { Changeset } from "@/lib/studio/changeset";
+import { SITE_TEXT_KEYS } from "@/lib/site-text/registry";
 
 const MODEL = MODELS.default;
 const RECOMMEND_PROMPT_VERSION = "studio-recommend.v1";
@@ -85,5 +86,67 @@ Suggest 2-4 simple, concrete improvements Jeremy could make to this page's layou
   } catch (err) {
     console.error("recommendForPage error", err);
     return { ok: false, error: "Could not get recommendations. Try again shortly." };
+  }
+}
+
+const assistSchema = z.object({
+  draft: z.string(),
+  why: z.string(),
+});
+
+const ASSIST_INSTRUCTIONS: Record<"rewrite" | "tighten" | "warm-up", string> = {
+  rewrite: "Rewrite this line in the brand voice. Keep the meaning. Vary the phrasing meaningfully.",
+  tighten: "Tighten this line — cut filler, shorten where possible, keep the meaning.",
+  "warm-up": "Warm this line up — more inviting, less formal, same meaning and roughly the same length.",
+};
+
+const ASSIST_PROMPT_VERSION = "studio-assist.v1";
+
+export async function assistField(
+  key: string,
+  currentText: string,
+  mode: "rewrite" | "tighten" | "warm-up"
+): Promise<{ ok: true; draft: string; why: string } | { ok: false; error: string }> {
+  try {
+    const userId = await requireAdmin();
+    const entry = SITE_TEXT_KEYS.find((e) => e.key === key);
+    if (!entry) return { ok: false, error: "Unknown text key." };
+
+    const prompt = withBrandVoice(`${ASSIST_INSTRUCTIONS[mode]}
+
+Field: "${entry.label}"
+Current text:
+"""
+${currentText}
+"""`);
+
+    const result = await generateObject({
+      model: anthropic(MODEL),
+      system: BRAND_VOICE,
+      prompt,
+      schema: assistSchema,
+    });
+
+    if (findBannedLanguage(result.object.draft).length > 0) {
+      return { ok: false, error: "That draft used words outside the brand voice. Try again." };
+    }
+
+    await db.insert(aiGenerations).values({
+      type: "studio_assist",
+      prompt,
+      promptVersion: `${ASSIST_PROMPT_VERSION}.${mode}`,
+      model: MODEL,
+      output: JSON.stringify(result.object),
+      inputTokens: result.usage?.inputTokens,
+      outputTokens: result.usage?.outputTokens,
+      entityType: "site_text",
+      entityId: key,
+      userId,
+    });
+
+    return { ok: true, draft: result.object.draft, why: result.object.why };
+  } catch (err) {
+    console.error("assistField error", err);
+    return { ok: false, error: "Could not get a rewrite. Try again shortly." };
   }
 }
