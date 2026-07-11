@@ -124,6 +124,8 @@ export function AutopilotCard({
                       href={`/admin/encouragements/${id}`}
                       className="link-editorial text-xs text-stone/70"
                     >
+                      {/* "View letter" fallback is expected right after a disable: titles come from
+                          scheduledLetters (the scheduled list), which just reverted to draft. */}
                       {letter?.title ?? "View letter"}
                     </Link>
                   </li>

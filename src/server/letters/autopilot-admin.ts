@@ -14,6 +14,7 @@ import { letterAutopilot, letterSeries, weeklyEncouragements } from "@/db/schema
 import { users } from "@/db/schema";
 import { eq, and, isNull, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { getOrCreatePilotRow } from "@/server/letters/autopilot-state";
 
 async function requireAdmin(): Promise<string> {
   const { userId } = await auth();
@@ -34,10 +35,7 @@ async function autopilotSeriesIds(): Promise<string[]> {
 
 export async function getAutopilotStatus() {
   await requireAdmin();
-  let [pilot] = await db.select().from(letterAutopilot).limit(1);
-  if (!pilot) {
-    [pilot] = await db.insert(letterAutopilot).values({ enabled: false }).returning();
-  }
+  const pilot = await getOrCreatePilotRow();
 
   const seriesIds = await autopilotSeriesIds();
   const scheduledLetters =
@@ -67,10 +65,7 @@ export async function setAutopilotEnabled(
 ): Promise<{ enabled: boolean; reverted: number }> {
   await requireAdmin();
 
-  let [pilot] = await db.select().from(letterAutopilot).limit(1);
-  if (!pilot) {
-    [pilot] = await db.insert(letterAutopilot).values({ enabled: false }).returning();
-  }
+  const pilot = await getOrCreatePilotRow();
 
   await db
     .update(letterAutopilot)

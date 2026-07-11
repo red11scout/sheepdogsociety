@@ -44,10 +44,10 @@ import {
 } from "@/lib/letters/theme-calendar";
 import {
   createSeriesWithLettersCore,
-  computeScheduledFor,
   type DraftLetter,
 } from "@/server/letters/series-core";
 import { generateCoverImage } from "@/server/letters/cover-image";
+import { getOrCreatePilotRow, computeBlockDates } from "@/server/letters/autopilot-state";
 import { resend, FROM_TRANSACTIONAL } from "@/lib/email";
 
 const MODEL = "claude-sonnet-4-5";
@@ -300,10 +300,7 @@ export async function runAutopilot(opts?: { dryRun?: boolean }): Promise<Autopil
   const dryTag = dryRun ? " (dry run)" : "";
 
   // 1. Load the single autopilot row; create it (disabled) if missing.
-  let [pilot] = await db.select().from(letterAutopilot).limit(1);
-  if (!pilot) {
-    [pilot] = await db.insert(letterAutopilot).values({ enabled: false }).returning();
-  }
+  const pilot = await getOrCreatePilotRow();
   if (!pilot.enabled) {
     return skipped("disabled", dryRun);
   }
@@ -338,25 +335,24 @@ export async function runAutopilot(opts?: { dryRun?: boolean }): Promise<Autopil
   // 3. Block dates: the new block starts one week after the last
   // scheduled letter (fallback: now). Letters land at +7d, +14d, +21d,
   // +28d from that anchor, publish hour 6am Central, exactly as
-  // computeScheduledFor will persist them.
+  // computeScheduledFor will persist them. The pure computation lives in
+  // computeBlockDates (autopilot-state.ts) so it can be unit tested
+  // without a database.
   let maxScheduledFor: Date | null = null;
   for (const row of scheduledRows) {
     if (row.scheduledFor && (!maxScheduledFor || row.scheduledFor.getTime() > maxScheduledFor.getTime())) {
       maxScheduledFor = row.scheduledFor;
     }
   }
-  const anchor = maxScheduledFor ?? new Date();
-  const startParts = chicagoDateParts(new Date(anchor.getTime() + 7 * 86400000));
+  const blockDates = computeBlockDates(maxScheduledFor, new Date());
+  const startParts = chicagoDateParts(blockDates[0]);
   const startDate = `${startParts.year}-${pad2(startParts.month)}-${pad2(startParts.day)}`;
-  const startDateObj = new Date(`${startDate}T00:00:00Z`);
 
   // 4. Season context for each of the four weeks.
-  const weeks: WeekPlan[] = [];
-  for (let position = 1; position <= BLOCK_SIZE; position++) {
-    const scheduledFor = computeScheduledFor(startDateObj, position, "weekly", PUBLISH_HOUR);
+  const weeks: WeekPlan[] = blockDates.map((scheduledFor, i) => {
     const parts = chicagoDateParts(scheduledFor);
-    weeks.push({ position, scheduledFor, parts, season: seasonForDate(parts) });
-  }
+    return { position: i + 1, scheduledFor, parts, season: seasonForDate(parts) };
+  });
   const seasonBlock = weeks.map(seasonLine).join("\n");
 
   // 5. Next theologian in the rotation.
@@ -674,7 +670,12 @@ export async function runAutopilot(opts?: { dryRun?: boolean }): Promise<Autopil
         quality: "final",
         folder: "letters",
       });
-      if (!cover) continue;
+      if (!cover.ok) {
+        console.error(
+          `autopilot cover generation failed for position ${inserted.position}: ${cover.reason}`
+        );
+        continue;
+      }
       try {
         await db
           .update(weeklyEncouragements)

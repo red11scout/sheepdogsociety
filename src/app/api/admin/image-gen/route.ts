@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { generateCoverImage, STYLE_FRAGMENTS, HARD_SUFFIX } from "@/server/letters/cover-image";
+import { generateCoverImage, composeImagePrompt } from "@/server/letters/cover-image";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -37,8 +37,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Empty prompt" }, { status: 400 });
   }
 
-  const styleFragment = body.style ? STYLE_FRAGMENTS[body.style] ?? "" : "";
-  const fullPrompt = `${promptInput}. ${styleFragment}${HARD_SUFFIX}`.replace(/\s+/g, " ").trim();
+  const fullPrompt = composeImagePrompt(promptInput, body.style);
 
   // If save=true (default), delegate generation + Blob upload to the shared
   // helper and return the permanent URL.
@@ -50,11 +49,8 @@ export async function POST(req: Request) {
       quality: body.quality,
       folder: body.folder,
     });
-    if (!result) {
-      return NextResponse.json(
-        { error: "Image generation failed." },
-        { status: 502 }
-      );
+    if (!result.ok) {
+      return NextResponse.json({ error: result.reason }, { status: 502 });
     }
     return NextResponse.json({
       url: result.url,

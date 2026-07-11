@@ -29,6 +29,8 @@ export async function verifyReference(ref: string): Promise<ReferenceVerdict> {
       return "unavailable";
     }
 
+    // Request shape deliberately mirrors getESVPassage (src/lib/bible/esv.ts:11-48) —
+    // keep both in sync; if one changes, the other must drift with it.
     const params = new URLSearchParams({
       q: ref,
       "include-headings": "false",

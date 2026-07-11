@@ -18,6 +18,17 @@ export const STYLE_FRAGMENTS: Record<string, string> = {
     "Editorial broadsheet documentary photograph, muted Pasture & Iron palette (bone, iron, brass, olive), natural morning light, honest working men's textures (timber, canvas, leather, field), no text, no faces in sharp focus, grain like a printed newspaper photo",
 };
 
+/**
+ * Builds the final prompt string sent to OpenAI: base prompt + style
+ * fragment + HARD_SUFFIX, whitespace-collapsed. Shared by generateCoverImage
+ * and the admin image-gen route's no-save (preview) branch so the formula
+ * lives in exactly one place.
+ */
+export function composeImagePrompt(prompt: string, style?: string): string {
+  const styleFragment = style ? STYLE_FRAGMENTS[style] ?? "" : "";
+  return `${prompt}. ${styleFragment}${HARD_SUFFIX}`.replace(/\s+/g, " ").trim();
+}
+
 export interface GenerateCoverImageInput {
   prompt: string;
   style?: string;
@@ -26,33 +37,37 @@ export interface GenerateCoverImageInput {
   folder?: string;
 }
 
-export interface GenerateCoverImageResult {
-  url: string;
-  pathname: string;
-}
+// Discriminated result so callers can surface WHY generation failed instead
+// of a single generic error. `reason` is a short human string suitable for
+// direct admin display (see each failure site below for the exact wording).
+export type GenerateCoverImageResult =
+  | { ok: true; url: string; pathname: string }
+  | { ok: false; reason: string };
 
 /**
  * Generates a cover image with OpenAI's gpt-image-1 and uploads it to Vercel
- * Blob. Never throws — returns null on any failure (missing API key, OpenAI
- * error, Blob error) and logs the cause via console.error. Callers are
- * responsible for their own auth/admin gating; this helper does none.
+ * Blob. Never throws — returns { ok: false, reason } on any failure (missing
+ * API key, OpenAI error, Blob error) and logs the cause via console.error.
+ * Callers are responsible for their own auth/admin gating; this helper does
+ * none.
  */
 export async function generateCoverImage(
   input: GenerateCoverImageInput
-): Promise<GenerateCoverImageResult | null> {
+): Promise<GenerateCoverImageResult> {
   if (!process.env.OPENAI_API_KEY) {
-    console.error("generateCoverImage: OPENAI_API_KEY missing from server env.");
-    return null;
+    const reason = "OPENAI_API_KEY missing from server env.";
+    console.error(`generateCoverImage: ${reason}`);
+    return { ok: false, reason };
   }
 
   const promptInput = input.prompt.trim();
   if (!promptInput) {
-    console.error("generateCoverImage: empty prompt");
-    return null;
+    const reason = "Empty prompt.";
+    console.error(`generateCoverImage: ${reason}`);
+    return { ok: false, reason };
   }
 
-  const styleFragment = input.style ? STYLE_FRAGMENTS[input.style] ?? "" : "";
-  const fullPrompt = `${promptInput}. ${styleFragment}${HARD_SUFFIX}`.replace(/\s+/g, " ").trim();
+  const fullPrompt = composeImagePrompt(promptInput, input.style);
 
   const size =
     input.aspectRatio === "landscape"
@@ -80,18 +95,20 @@ export async function generateCoverImage(
     });
   } catch (err) {
     console.error("generateCoverImage: OpenAI fetch error:", err);
-    return null;
+    const reason = `OpenAI error: ${err instanceof Error ? err.message : "could not reach OpenAI."}`;
+    return { ok: false, reason };
   }
 
   if (!openaiRes.ok) {
     const text = await openaiRes.text().catch(() => "");
-    console.error(`generateCoverImage: OpenAI error: ${text || openaiRes.statusText}`);
-    return null;
+    const reason = `OpenAI error: ${text || openaiRes.statusText}`;
+    console.error(`generateCoverImage: ${reason}`);
+    return { ok: false, reason };
   }
 
   // Response parsing and the url-branch download can both throw (bad
   // JSON, network drop mid-body); the "never throws" contract means they
-  // must resolve to null like every other failure path.
+  // must resolve to a failure result like every other failure path.
   let buffer: ArrayBuffer;
   try {
     const data = (await openaiRes.json()) as {
@@ -99,8 +116,9 @@ export async function generateCoverImage(
     };
     const item = data.data?.[0];
     if (!item || (!item.b64_json && !item.url)) {
-      console.error("generateCoverImage: OpenAI returned no image.");
-      return null;
+      const reason = "OpenAI returned no image.";
+      console.error(`generateCoverImage: ${reason}`);
+      return { ok: false, reason };
     }
 
     if (item.b64_json) {
@@ -108,17 +126,20 @@ export async function generateCoverImage(
     } else if (item.url) {
       const r = await fetch(item.url);
       if (!r.ok) {
-        console.error(`generateCoverImage: image download failed: ${r.statusText}`);
-        return null;
+        const reason = `OpenAI error: image download failed (${r.statusText}).`;
+        console.error(`generateCoverImage: ${reason}`);
+        return { ok: false, reason };
       }
       buffer = await r.arrayBuffer();
     } else {
-      console.error("generateCoverImage: no image data");
-      return null;
+      const reason = "OpenAI returned no image.";
+      console.error(`generateCoverImage: ${reason}`);
+      return { ok: false, reason };
     }
   } catch (err) {
     console.error("generateCoverImage: failed to read OpenAI response:", err);
-    return null;
+    const reason = `OpenAI error: ${err instanceof Error ? err.message : "failed to read response."}`;
+    return { ok: false, reason };
   }
 
   const folder = input.folder ?? "ai-images";
@@ -129,9 +150,9 @@ export async function generateCoverImage(
       addRandomSuffix: false,
       contentType: "image/png",
     });
-    return { url: blob.url, pathname: blob.pathname };
+    return { ok: true, url: blob.url, pathname: blob.pathname };
   } catch (err) {
     console.error("generateCoverImage: Blob upload failed:", err);
-    return null;
+    return { ok: false, reason: "Saved to OpenAI but Blob upload failed." };
   }
 }
