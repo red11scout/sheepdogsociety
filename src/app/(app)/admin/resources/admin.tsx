@@ -1038,7 +1038,11 @@ function ResourceRow({
                 </button>
               )}
 
-              {fieldNotesStatus === "draft" && (
+              {/* While the notes editor is open, hide sibling actions so a
+               *  stray Approve/Redraft/Unpublish can't blow away unsaved
+               *  textarea content — same convention as row title/description
+               *  editing, which swaps the whole row for Save/Cancel. */}
+              {fieldNotesStatus === "draft" && !fnEditing && (
                 <>
                   <button
                     type="button"
@@ -1049,10 +1053,10 @@ function ResourceRow({
                   </button>
                   <button
                     type="button"
-                    onClick={fnEditing ? () => setFnEditing(false) : openFieldNotesEditor}
+                    onClick={openFieldNotesEditor}
                     className="text-xs text-stone/65 hover:text-bone"
                   >
-                    {fnEditing ? "Cancel" : "Edit"}
+                    Edit
                   </button>
                   <button
                     type="button"
@@ -1065,7 +1069,7 @@ function ResourceRow({
                 </>
               )}
 
-              {fieldNotesStatus === "approved" && (
+              {fieldNotesStatus === "approved" && !fnEditing && (
                 <>
                   <button
                     type="button"
@@ -1076,10 +1080,10 @@ function ResourceRow({
                   </button>
                   <button
                     type="button"
-                    onClick={fnEditing ? () => setFnEditing(false) : openFieldNotesEditor}
+                    onClick={openFieldNotesEditor}
                     className="text-xs text-stone/65 hover:text-bone"
                   >
-                    {fnEditing ? "Cancel" : "Edit"}
+                    Edit
                   </button>
                 </>
               )}
