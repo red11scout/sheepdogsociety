@@ -38,9 +38,10 @@ const navLinks: NavLink[] = [
   // { href: "/giving", label: "Give" }, // hidden — uncomment to restore
 ];
 
-/** Mobile panel links (spec §A.1). The five primary destinations live in
- *  the bottom tab bar; the hamburger holds everything else, Join first. */
+/** Mobile panel links (spec §A.1, revised per Drew 2026-07-09: Resources
+ *  leads the menu — users look for it here, not only in the tab bar). */
 const mobileSecondaryLinks: { href: string; label: string }[] = [
+  { href: "/resources", label: "Resources" },
   { href: "/join", label: "Join" },
   { href: "/events", label: "Events" },
   { href: "/stories", label: "Stories" },
