@@ -37,7 +37,9 @@ const notesSchema = z.object({
         reference: z.string().describe('e.g. "John 15:5" — reference ONLY, never verse text'),
         note: z
           .string()
-          .describe("One original sentence (10-200 characters) on why this passage matters here"),
+          .describe(
+            "One original sentence (10-200 characters) on why this passage matters here — in your own words, never quoting or closely echoing the verse's wording"
+          ),
       })
     )
     .describe("3 to 5 scripture references."),
@@ -50,9 +52,12 @@ type Notes = z.infer<typeof notesSchema>;
 
 const FRAMING_RULE = `You have ONLY the metadata below — you have NOT read this work.
 You MUST NOT claim, imply, or invent anything about its specific contents,
-chapters, arguments, or stories. Write why our brotherhood recommends a
-resource like this and how to put it to work in a study. Scriptures should
-fit the resource's stated topic.`;
+chapters, arguments, or stories. Even if you recognize the title, use NONE
+of your outside knowledge of it: every statement about the work must trace
+to a sentence in the metadata below, or be plainly about our brotherhood's
+use of it. Write why our brotherhood recommends a resource like this and
+how to put it to work in a study. Scriptures should fit the resource's
+stated topic.`;
 
 const FULL_RULE = `The full text is below. Ground every claim in it.`;
 
