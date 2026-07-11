@@ -176,6 +176,8 @@ export async function updateResource(input: {
   category?: string;
   level?: string;
   isPublic?: boolean;
+  fieldNotesHtml?: string;
+  fieldNotesStatus?: "none" | "draft" | "approved";
 }) {
   await requireAdmin();
   const patch: Record<string, unknown> = {};
@@ -186,6 +188,8 @@ export async function updateResource(input: {
   if (input.category != null) patch.category = input.category;
   if (input.level != null) patch.level = input.level;
   if (input.isPublic != null) patch.isPublic = input.isPublic;
+  if (input.fieldNotesHtml !== undefined) patch.fieldNotesHtml = input.fieldNotesHtml;
+  if (input.fieldNotesStatus !== undefined) patch.fieldNotesStatus = input.fieldNotesStatus;
   await db.update(resources).set(patch).where(eq(resources.id, input.id));
   revalidatePath("/admin/resources");
   revalidatePath("/resources");
@@ -344,6 +348,8 @@ export async function getPublicResourceBySlug(slug: string) {
       booksOfBible: resources.booksOfBible,
       estimatedMinutes: resources.estimatedMinutes,
       createdAt: resources.createdAt,
+      fieldNotesHtml: resources.fieldNotesHtml,
+      fieldNotesStatus: resources.fieldNotesStatus,
     })
     .from(resources)
     // Public detail gate: hidden/draft and soft-deleted resources must not
