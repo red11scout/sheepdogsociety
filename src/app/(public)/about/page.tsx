@@ -1,8 +1,11 @@
+import { Fragment } from "react";
 import type { Metadata } from "next";
 import { Icon } from "@/components/icons/Icon";
 import { Kicker } from "@/components/public/kicker";
 import { StaggerReveal } from "@/components/motion/StaggerReveal";
 import { getSiteTextMap } from "@/lib/site-text/get";
+import { getStudioConfig } from "@/lib/studio/get";
+import { renderMerge } from "@/lib/studio/config";
 
 export const revalidate = 300;
 
@@ -15,10 +18,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function AboutPage() {
-  const t = await getSiteTextMap();
-  return (
-    <>
-      {/* Hero */}
+  const [t, config] = await Promise.all([getSiteTextMap(), getStudioConfig()]);
+
+  const sections: Record<string, React.ReactNode> = {
+    hero: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
           <Kicker left="About · The Watch" />
@@ -32,8 +35,8 @@ export default async function AboutPage() {
           </p>
         </div>
       </section>
-
-      {/* Mission */}
+    ),
+    mission: (
       <section className="bg-background text-foreground">
         <div className="mx-auto grid max-w-7xl gap-12 px-6 py-28 md:grid-cols-[2fr_3fr] md:gap-20 md:px-12 md:py-40">
           <div>
@@ -47,8 +50,8 @@ export default async function AboutPage() {
           </p>
         </div>
       </section>
-
-      {/* Foundation: the page's one dark interlude */}
+    ),
+    foundation: (
       <section className="ember-band">
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
           <Kicker left="II · Foundation" />
@@ -72,8 +75,8 @@ export default async function AboutPage() {
           </div>
         </div>
       </section>
-
-      {/* Leadership Model */}
+    ),
+    leadership: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
           <Kicker left="III · Leadership" />
@@ -90,8 +93,8 @@ export default async function AboutPage() {
           </div>
         </div>
       </section>
-
-      {/* What We Believe */}
+    ),
+    believe: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
           <Kicker left="IV · What We Believe" />
@@ -143,8 +146,8 @@ export default async function AboutPage() {
           </StaggerReveal>
         </div>
       </section>
-
-      {/* Culture */}
+    ),
+    culture: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
           <Kicker left="V · Our Culture" />
@@ -192,6 +195,16 @@ export default async function AboutPage() {
           </ol>
         </div>
       </section>
+    ),
+  };
+
+  return (
+    <>
+      {renderMerge("about", config)
+        .filter((s) => s.visible)
+        .map((s) => (
+          <Fragment key={s.id}>{sections[s.id]}</Fragment>
+        ))}
     </>
   );
 }
