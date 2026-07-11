@@ -35,7 +35,7 @@ export function CommandPalette({ open, onClose, onAskAi }: CommandPaletteProps) 
         label: "Write a new Letter",
         hint: "Tiptap editor + Claude co-pilot",
         icon: "pen",
-        href: "/admin/letters/new",
+        href: "/admin/encouragements/new",
         group: "Quick action",
         keywords: "newsletter weekly compose draft",
       },

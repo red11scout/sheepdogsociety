@@ -1106,83 +1106,14 @@ export const verificationTokens = pgTable(
 );
 
 // ============================================================
-// Newsletter / Letters (brief Phase 1 + 2)
-// "letter" rather than "blog" — issue-based weekly editorial
+// Newsletter / Letters
 // ============================================================
-
-export const letterStatusEnum = pgEnum("letter_status", [
-  "draft",
-  "scheduled",
-  "published",
-  "archived",
-]);
-
-export const letters = pgTable(
-  "letters",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    slug: text("slug").notNull(),
-    issueNumber: integer("issue_number").notNull(),
-    title: text("title").notNull(),
-    subtitle: text("subtitle"),
-    themeWord: text("theme_word"),
-    coverImageUrl: text("cover_image_url"),
-    body: jsonb("body").notNull(), // Tiptap ProseMirror JSON
-    bodyHtml: text("body_html").notNull().default(""), // pre-rendered for SEO/email
-    excerpt: text("excerpt").default(""),
-    authorId: text("author_id")
-      .notNull()
-      .references(() => users.id),
-    status: letterStatusEnum("status").notNull().default("draft"),
-    tags: jsonb("tags").$type<string[]>().notNull().default([]),
-    emailSubject: text("email_subject"),
-    emailPreviewText: text("email_preview_text"),
-    metaDescription: text("meta_description"),
-    socialCopy: text("social_copy"),
-    broadcastId: text("broadcast_id"), // Resend Broadcast ID
-    publishedAt: timestamp("published_at"),
-    scheduledFor: timestamp("scheduled_for"),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-    updatedAt: timestamp("updated_at").notNull().defaultNow(),
-    deletedAt: timestamp("deleted_at"), // soft delete; 30-day cron purge
-  },
-  (table) => [
-    uniqueIndex("letters_slug_active_unique")
-      .on(table.slug)
-      .where(notDeletedPredicate),
-    uniqueIndex("letters_issue_active_unique")
-      .on(table.issueNumber)
-      .where(notDeletedPredicate),
-    index("letters_status_published_idx").on(
-      table.status,
-      table.publishedAt
-    ),
-    index("letters_author_idx").on(table.authorId),
-  ]
-);
-
-export const letterVersions = pgTable(
-  "letter_versions",
-  {
-    id: uuid("id").primaryKey().defaultRandom(),
-    letterId: uuid("letter_id")
-      .notNull()
-      .references(() => letters.id, { onDelete: "cascade" }),
-    versionNumber: integer("version_number").notNull(),
-    title: text("title").notNull(),
-    body: jsonb("body").notNull(),
-    bodyHtml: text("body_html").notNull().default(""),
-    editedById: text("edited_by_id").references(() => users.id),
-    createdAt: timestamp("created_at").notNull().defaultNow(),
-  },
-  (table) => [
-    uniqueIndex("letter_versions_unique").on(
-      table.letterId,
-      table.versionNumber
-    ),
-    index("letter_versions_letter_idx").on(table.letterId),
-  ]
-);
+// NOTE: The legacy `letters` / `letter_versions` tables and their
+// letterStatusEnum were removed from the ORM schema 2026-07-11. The canonical
+// Letter CMS is weeklyEncouragements (src/db/schema-new.ts, served at
+// /admin/encouragements and read by the public site). The physical DB tables
+// are intentionally left in place; drop them in a separate, explicitly
+// confirmed migration once their historical rows are archived.
 
 // ============================================================
 // Group Leaders (brief Phase 2; separates leader from member identity)
@@ -1307,28 +1238,6 @@ export const accountsRelations = relations(accounts, ({ one }) => ({
 export const sessionsRelations = relations(sessions, ({ one }) => ({
   user: one(users, { fields: [sessions.userId], references: [users.id] }),
 }));
-
-export const lettersRelations = relations(letters, ({ one, many }) => ({
-  author: one(users, {
-    fields: [letters.authorId],
-    references: [users.id],
-  }),
-  versions: many(letterVersions),
-}));
-
-export const letterVersionsRelations = relations(
-  letterVersions,
-  ({ one }) => ({
-    letter: one(letters, {
-      fields: [letterVersions.letterId],
-      references: [letters.id],
-    }),
-    editor: one(users, {
-      fields: [letterVersions.editedById],
-      references: [users.id],
-    }),
-  })
-);
 
 export const groupLeadersRelations = relations(groupLeaders, ({ one }) => ({
   user: one(users, {

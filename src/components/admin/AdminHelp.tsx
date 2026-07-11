@@ -58,7 +58,7 @@ const TOPICS: { section: string; items: Topic[] }[] = [
       {
         title: "Drafting with Claude",
         body: "Highlight any text in the editor. Six actions show up: Match voice, Tighten, Sharpen verbs, Expand, Fix, Pastoral. Streaming. Cmd-J anywhere triggers the last action.",
-        href: "/admin/letters",
+        href: "/admin/encouragements",
       },
       {
         title: "Cover image",
@@ -67,7 +67,7 @@ const TOPICS: { section: string; items: Topic[] }[] = [
       {
         title: "Publish flow",
         body: "Publish writes to the public archive AND queues a Resend Broadcast in one click. A 3-second countdown gives you time to bail. Letters lock from edits once sent — clone to revise.",
-        href: "/admin/letters",
+        href: "/admin/encouragements",
       },
     ],
   },

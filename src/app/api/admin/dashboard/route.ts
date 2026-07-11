@@ -5,7 +5,6 @@ import {
   groups,
   events,
   testimonies,
-  letters,
   aiGenerations,
   newsletterSubscribers,
   contactSubmissions,
@@ -82,28 +81,43 @@ export async function GET() {
       .where(eq(testimonies.isApproved, false)),
 
     // 5: Letter stats — drafts + published in one pass, soft-delete aware.
-    db
-      .select({
-        draft: sql<number>`count(*) FILTER (WHERE status = 'draft')::int`,
-        published: sql<number>`count(*) FILTER (WHERE status = 'published')::int`,
-      })
-      .from(letters)
-      .where(isNull(letters.deletedAt)),
+    // Canonical source is weeklyEncouragements (the /admin/encouragements CMS
+    // the public site actually reads). Wrapped so a missing migration can't
+    // break the dashboard.
+    (async () => {
+      try {
+        return await db
+          .select({
+            draft: sql<number>`count(*) FILTER (WHERE status = 'draft')::int`,
+            published: sql<number>`count(*) FILTER (WHERE status = 'published')::int`,
+          })
+          .from(weeklyEncouragements)
+          .where(isNull(weeklyEncouragements.deletedAt));
+      } catch {
+        return [{ draft: 0, published: 0 }];
+      }
+    })(),
 
-    // 6: Recent letters list for the bento bottom row.
-    db
-      .select({
-        id: letters.id,
-        title: letters.title,
-        themeWord: letters.themeWord,
-        issueNumber: letters.issueNumber,
-        status: letters.status,
-        updatedAt: letters.updatedAt,
-      })
-      .from(letters)
-      .where(isNull(letters.deletedAt))
-      .orderBy(desc(letters.updatedAt))
-      .limit(5),
+    // 6: Recent letters list for the bento bottom row (canonical CMS).
+    (async () => {
+      try {
+        return await db
+          .select({
+            id: weeklyEncouragements.id,
+            title: weeklyEncouragements.title,
+            themeWord: weeklyEncouragements.theme,
+            issueNumber: weeklyEncouragements.issueNumber,
+            status: weeklyEncouragements.status,
+            updatedAt: weeklyEncouragements.updatedAt,
+          })
+          .from(weeklyEncouragements)
+          .where(isNull(weeklyEncouragements.deletedAt))
+          .orderBy(desc(weeklyEncouragements.updatedAt))
+          .limit(5);
+      } catch {
+        return [] as never[];
+      }
+    })(),
 
     // 7: AI generations in last 7 days (single tile).
     db
