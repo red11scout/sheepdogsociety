@@ -182,8 +182,10 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
        *  viewport quickly. The whole point of /resources is "find a thing
        *  fast"; a 60% viewport-height hero gets in the way. */}
       <section className="relative overflow-hidden bg-background text-foreground">
-        <div className="aurora aurora--soft" aria-hidden />
-        <div className="dotted-grid absolute inset-0 opacity-50" aria-hidden />
+        {/* Decorative texture is desktop-only — mobile stays plain
+            (Drew, 2026-07-09: streamline the mobile resources surface). */}
+        <div className="aurora aurora--soft hidden md:block" aria-hidden />
+        <div className="dotted-grid absolute inset-0 hidden opacity-50 md:block" aria-hidden />
         <div className="relative mx-auto max-w-7xl px-6 py-10 md:px-12 md:py-28">
           <div className="flex items-center gap-4">
             <span className="section-mark">§ Resources</span>
@@ -402,7 +404,7 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
                               // wall of cards.
                               forceOpen={!!anyFilter}
                             >
-                              <ul className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                              <ul className="mt-4 grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
                                 {items.map((item) => (
                                   <li key={item.id}>
                                     <ResourceCard item={item} />
@@ -414,7 +416,7 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
                         })}
                       </div>
                     ) : (
-                      <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      <ul className="mt-6 grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
                         {sectionItems.map((item) => (
                           <li key={item.id}>
                             <ResourceCard item={item} />
@@ -767,13 +769,14 @@ function ResourceCard({ item }: { item: ItemLite }) {
   return (
     <article className="lift group/card flex h-full flex-col overflow-hidden border border-foreground/15 bg-card transition-colors hover:border-brass">
       <Link href={href} className="flex flex-1 flex-col">
-        {/* Thumbnail. Priority order:
+        {/* Thumbnail — DESKTOP ONLY (Drew, 2026-07-09: mobile users hate
+         *  the image-heavy interface; phones get clean text rows).
+         *  Desktop priority order:
          *   1. YouTube oEmbed or Amazon book cover (real cover art)
-         *   2. AI-generated SVG cover for everything else (file uploads,
-         *      mammoth-extracted .docx, etc.) — keyed by cluster theme
-         *      with per-id pattern variation.
+         *   2. AI-generated SVG cover for everything else — keyed by
+         *      cluster theme with per-id pattern variation.
          */}
-        <div className={`relative ${aspectClass} w-full overflow-hidden bg-foreground/5`}>
+        <div className={`relative ${aspectClass} hidden w-full overflow-hidden bg-foreground/5 md:block`}>
           {!useGeneratedCover && hasThumbnail ? (
             <Image
               src={item.thumbnailUrl!}
@@ -804,21 +807,21 @@ function ResourceCard({ item }: { item: ItemLite }) {
               type — Watch / Read / View book / Open / Download. */}
         </div>
 
-        {/* Body */}
-        <div className="flex flex-1 flex-col p-6">
+        {/* Body — compact text row on mobile, full card body on desktop */}
+        <div className="flex flex-1 flex-col p-4 md:p-6">
           {item.author && (
             <p className="section-mark text-muted-foreground">{item.author}</p>
           )}
-          <h3 className="display-xl mt-2 text-lg text-foreground md:text-xl">
+          <h3 className="display-xl mt-1 text-base text-foreground md:mt-2 md:text-xl">
             {item.title}
           </h3>
           {(item.summary || item.description) && (
-            <p className="mt-3 line-clamp-3 flex-1 text-sm leading-relaxed text-muted-foreground">
+            <p className="mt-2 line-clamp-2 flex-1 text-sm leading-relaxed text-muted-foreground md:mt-3 md:line-clamp-3">
               {item.summary || item.description}
             </p>
           )}
           {(item.booksOfBible.length > 0 || item.topics.length > 0) && (
-            <div className="mt-4 flex flex-wrap gap-1">
+            <div className="mt-4 hidden flex-wrap gap-1 md:flex">
               {item.booksOfBible.slice(0, 1).map((b) => (
                 <span
                   key={`b-${b}`}
@@ -837,7 +840,7 @@ function ResourceCard({ item }: { item: ItemLite }) {
               ))}
             </div>
           )}
-          <div className="mt-6 flex items-center justify-between">
+          <div className="mt-3 flex items-center justify-between md:mt-6">
             <span className="section-mark text-brass">{ctaLabel}</span>
           </div>
         </div>
