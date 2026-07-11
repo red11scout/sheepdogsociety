@@ -13,24 +13,26 @@ import { NewsletterForm } from "@/components/public/newsletter-form";
 import { LetterCover } from "@/components/letters/LetterCover";
 import { listPublishedEncouragements } from "@/server/encouragements";
 import { cadenceLabel, type SeriesCadence } from "@/lib/events/series";
+import { getSiteTextMap } from "@/lib/site-text/get";
 
 export const revalidate = 300;
 
-export const metadata: Metadata = {
-  title: "Sheepdog Society — Acts 20:28",
-  description:
-    "A brotherhood of Christian men anchored in Acts 20:28. Weekly tables around Scripture. Find your group, read the Letter, take a seat.",
-  openGraph: {
-    title: "Sheepdog Society — Find your brothers.",
-    description:
-      "A brotherhood of Christian men anchored in Acts 20:28. Weekly tables around Scripture.",
-    images: [{ url: "/api/og/verse", width: 1200, height: 630 }],
-  },
-  twitter: {
-    card: "summary_large_image",
-    images: ["/api/og/verse"],
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getSiteTextMap();
+  return {
+    title: t["home.meta.title"],
+    description: t["home.meta.description"],
+    openGraph: {
+      title: t["home.meta.social_title"],
+      description: t["home.meta.social_description"],
+      images: [{ url: "/api/og/verse", width: 1200, height: 630 }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      images: ["/api/og/verse"],
+    },
+  };
+}
 
 /** Next gatherings: one row per series (its next date), one-offs as-is,
  *  first four overall. Same filters as /events (Phase 1 semantics). */
@@ -144,11 +146,12 @@ const standingOrders = [
 ];
 
 export default async function HomePage() {
-  const [gatherings, letter, story, rhythms] = await Promise.all([
+  const [gatherings, letter, story, rhythms, t] = await Promise.all([
     getNextGatherings(),
     getLatestLetter(),
     getStory(),
     getMeetingRhythms(),
+    getSiteTextMap(),
   ]);
 
   return (
@@ -163,15 +166,12 @@ export default async function HomePage() {
                   exception): the prototype's 120px hero, above the
                   6rem cap of the locked --text-display-xl token. */}
               <h1 className="display-xl text-[clamp(3.25rem,9vw,7.5rem)]">
-                Find your
+                {t["home.hero.headline1"]}
                 <br />
-                <em>brothers.</em>
+                <em>{t["home.hero.headline2"]}</em>
               </h1>
               <p className="dropcap mt-10 max-w-2xl font-scripture text-lg text-foreground/85">
-                A brotherhood of Christian men, anchored in Acts 20:28. We
-                meet weekly around Scripture, tell each other the truth, and
-                stand watch over one another. You have walked alone long
-                enough.
+                {t["home.hero.paragraph"]}
               </p>
               <div className="mt-10 flex flex-wrap items-center gap-6">
                 <Link
@@ -237,22 +237,19 @@ export default async function HomePage() {
             <div>
               <p className="folio">Who it&rsquo;s for</p>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                Men. Fathers, sons, new believers, worn-out saints. If you
-                are a man, there is a seat.
+                {t["home.what.who"]}
               </p>
             </div>
             <div>
               <p className="folio">What happens</p>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                A weekly table. Scripture read plain. Straight talk. Prayer.
-                One hour that orders the rest of the week.
+                {t["home.what.happens"]}
               </p>
             </div>
             <div>
               <p className="folio">Why it exists</p>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                God did not build men to walk alone. Acts 20:28 says keep
-                watch. We keep it together.
+                {t["home.what.why"]}
               </p>
             </div>
             <div>
@@ -267,16 +264,14 @@ export default async function HomePage() {
                 </ul>
               ) : (
                 <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                  Tables gather weekly across Georgia. New ones are forming
-                  now.
+                  {t["home.what.where_fallback"]}
                 </p>
               )}
             </div>
             <div>
               <p className="folio">How to start</p>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-                Pick a group. Show up once. Keep showing up. That is the
-                whole program.
+                {t["home.what.start"]}
               </p>
               <Link
                 href="/join"
@@ -453,16 +448,16 @@ export default async function HomePage() {
         <div className="mx-auto max-w-4xl border-t border-foreground/15 px-6 py-20 text-center md:px-10 md:py-28">
           <p className="folio">The invitation stands</p>
           <h2 className="display-xl mt-6 text-display-lg">
-            There is a chair.
+            {t["home.join.headline1"]}
             <br />
-            <em>Sit in it.</em>
+            <em>{t["home.join.headline2"]}</em>
           </h2>
           <div className="mt-10">
             <Link
               href="/join"
               className="lift inline-flex h-12 items-center gap-3 bg-foreground px-8 text-base font-medium text-background"
             >
-              Join the brotherhood
+              {t["home.join.button"]}
               <Icon name="arrow-right" size={16} />
             </Link>
           </div>
