@@ -6,6 +6,12 @@ import { Icon, type IconName } from "@/components/icons/Icon";
 import { Magnetic } from "@/components/motion/Magnetic";
 import { HintTooltip } from "@/components/admin/HintTooltip";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   createSection,
   updateSection,
   softDeleteSection,
@@ -310,7 +316,7 @@ NEON_DATABASE_URL='paste-the-prod-url-here' \\
                     <h2 className="display-xl text-2xl text-bone md:text-3xl">
                       {activeSection.name}
                     </h2>
-                    <HintTooltip hint="Click resources to edit. Toggle public/private with the eye icon. Public resources appear on /resources." />
+                    <HintTooltip hint="Each resource has Edit, Hide/Show, and Delete buttons, plus a More menu for AI actions. Public resources appear on /resources." />
                   </div>
                   {activeSection.description && (
                     <p className="mt-2 text-sm text-stone/70">
@@ -884,7 +890,7 @@ function ResourceRow({
     /\.docx(\?|$)/i.test(resource.fileKey);
 
   return (
-    <li className="group/item border border-stone/15 bg-iron/30 px-4 py-3 transition-colors hover:border-stone/30">
+    <li className="border border-stone/15 bg-iron/30 px-4 py-3 transition-colors hover:border-stone/30">
       {editing ? (
         <div className="space-y-2">
           <input
@@ -918,13 +924,11 @@ function ResourceRow({
           </div>
         </div>
       ) : (
-        <div className="flex items-start gap-4">
-          <Icon
-            name={resource.fileKey ? "download" : "arrow-up-right"}
-            size={16}
-            className="mt-1 text-stone/55"
-          />
-          <div className="min-w-0 flex-1">
+        // Text-only row (Drew, 2026-07-11: admin matches the public
+        // streamline — no leading type glyph; the title + type/status
+        // meta line carries it).
+        <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
               {resource.slug ? (
                 <a
@@ -1151,90 +1155,99 @@ function ResourceRow({
               <p className="mt-1 text-[0.625rem] text-oxblood">{fnError}</p>
             )}
           </div>
-          <div className="flex flex-wrap items-center gap-1 opacity-100 transition-opacity md:opacity-0 md:group-hover/item:opacity-100">
-            {(resource.url || resource.fileKey) && (
-              <a
-                href={resource.url || resource.fileKey || "#"}
-                target="_blank"
-                rel="noopener"
-                className="rounded-none p-1.5 text-stone/55 transition-colors hover:text-bone"
-                title="Open file"
-              >
-                <Icon name="arrow-up-right" size={14} />
-              </a>
-            )}
-            {showReextract && (
-              <button
-                type="button"
-                onClick={handleReextract}
-                disabled={recat === "busy"}
-                className="rounded-none p-1.5 text-stone/55 transition-colors hover:text-brass disabled:opacity-50"
-                title="Extract HTML from .docx + AI tag (legacy resource)"
-              >
-                <Icon name="scroll" size={14} />
-              </button>
-            )}
-            {/* Re-fetch link metadata (thumbnail, embed, author) for any
-             *  resource whose source is a URL. Useful for legacy rows that
-             *  were created before the Add-from-link composer existed. */}
-            {resource.url && !resource.fileKey && (
-              <button
-                type="button"
-                onClick={handleRefreshMetadata}
-                disabled={recat === "busy"}
-                className="rounded-none p-1.5 text-stone/55 transition-colors hover:text-brass disabled:opacity-50"
-                title="Refresh thumbnail + embed from the URL"
-              >
-                <Icon name="image" size={14} />
-              </button>
-            )}
-            {/* Generate AI cover image (gpt-image-1) for any non-URL row.
-             *  URL rows already get thumbnails from oEmbed/OG; generating
-             *  one would overwrite the source thumbnail unnecessarily. */}
-            {resource.fileKey && (
-              <button
-                type="button"
-                onClick={handleGenerateCover}
-                disabled={recat === "busy"}
-                className="rounded-none p-1.5 text-stone/55 transition-colors hover:text-brass disabled:opacity-50"
-                title="Generate an AI cover image (~$0.011, 6-15s)"
-              >
-                <Icon name="image" size={14} />
-              </button>
-            )}
+          {/* Actions: three labeled 44px buttons for the everyday moves,
+           *  the rest behind a labeled More menu. Words, not glyphs
+           *  (Drew, 2026-07-11) — same layout at every breakpoint. All
+           *  handlers unchanged from the icon-button era. */}
+          <div className="mt-3 flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={handleRecategorize}
-              disabled={recat === "busy"}
-              className="rounded-none p-1.5 text-stone/55 transition-colors hover:text-brass disabled:opacity-50"
-              title="Re-tag with AI"
+              onClick={() => setEditing(true)}
+              className="inline-flex min-h-11 items-center border border-stone/20 px-3 text-xs text-stone/65 transition-colors hover:border-brass hover:text-brass"
             >
-              <Icon name="sparkles" size={14} />
+              Edit
             </button>
             <button
               type="button"
               onClick={onToggleVisibility}
-              className="rounded-none p-1.5 text-stone/55 transition-colors hover:text-brass"
               title={resource.isPublic ? "Hide from public" : "Show on public"}
+              className="inline-flex min-h-11 items-center border border-stone/20 px-3 text-xs text-stone/65 transition-colors hover:border-brass hover:text-brass"
             >
-              <Icon name="eye" size={14} />
-            </button>
-            <button
-              type="button"
-              onClick={() => setEditing(true)}
-              className="rounded-none p-1.5 text-stone/55 transition-colors hover:text-bone"
-              title="Edit"
-            >
-              <Icon name="pen" size={14} />
+              {resource.isPublic ? "Hide" : "Show"}
             </button>
             <button
               type="button"
               onClick={onDelete}
-              className="rounded-none p-1.5 text-stone/55 transition-colors hover:text-oxblood"
-              title="Delete"
+              className="inline-flex min-h-11 items-center border border-stone/20 px-3 text-xs text-stone/65 transition-colors hover:border-oxblood hover:text-oxblood"
             >
-              <Icon name="trash" size={14} />
+              Delete
             </button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className="inline-flex min-h-11 items-center border border-stone/20 px-3 text-xs text-stone/65 transition-colors hover:border-brass hover:text-brass"
+                >
+                  More
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent
+                align="start"
+                className="min-w-[220px] rounded-none border-stone/20 bg-iron text-bone"
+              >
+                {(resource.url || resource.fileKey) && (
+                  <DropdownMenuItem asChild className="min-h-11 rounded-none px-3 text-xs text-stone/75 focus:bg-brass/15 focus:text-bone">
+                    <a
+                      href={resource.url || resource.fileKey || "#"}
+                      target="_blank"
+                      rel="noopener"
+                    >
+                      Open file
+                    </a>
+                  </DropdownMenuItem>
+                )}
+                <DropdownMenuItem
+                  onClick={handleRecategorize}
+                  disabled={recat === "busy"}
+                  className="min-h-11 rounded-none px-3 text-xs text-stone/75 focus:bg-brass/15 focus:text-bone"
+                >
+                  Re-tag with AI
+                </DropdownMenuItem>
+                {/* Re-fetch link metadata (thumbnail, embed, author) for any
+                 *  resource whose source is a URL. Useful for legacy rows
+                 *  created before the Add-from-link composer existed. */}
+                {resource.url && !resource.fileKey && (
+                  <DropdownMenuItem
+                    onClick={handleRefreshMetadata}
+                    disabled={recat === "busy"}
+                    className="min-h-11 rounded-none px-3 text-xs text-stone/75 focus:bg-brass/15 focus:text-bone"
+                  >
+                    Refresh link preview
+                  </DropdownMenuItem>
+                )}
+                {/* Generate AI cover image (gpt-image-1) for any non-URL
+                 *  row. URL rows already get thumbnails from oEmbed/OG;
+                 *  generating one would overwrite the source thumbnail. */}
+                {resource.fileKey && (
+                  <DropdownMenuItem
+                    onClick={handleGenerateCover}
+                    disabled={recat === "busy"}
+                    className="min-h-11 rounded-none px-3 text-xs text-stone/75 focus:bg-brass/15 focus:text-bone"
+                  >
+                    Generate AI cover
+                  </DropdownMenuItem>
+                )}
+                {showReextract && (
+                  <DropdownMenuItem
+                    onClick={handleReextract}
+                    disabled={recat === "busy"}
+                    className="min-h-11 rounded-none px-3 text-xs text-stone/75 focus:bg-brass/15 focus:text-bone"
+                  >
+                    Re-extract from file
+                  </DropdownMenuItem>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       )}

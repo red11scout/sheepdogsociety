@@ -2,9 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Icon } from "@/components/icons/Icon";
-import { ResourceCover } from "@/components/resources/ResourceCover";
 import { BOOKS, parseReference } from "@/lib/bible/books";
 
 interface SectionLite {
@@ -404,7 +402,7 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
                               // wall of cards.
                               forceOpen={!!anyFilter}
                             >
-                              <ul className="mt-4 grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+                              <ul className="mt-4 space-y-3">
                                 {items.map((item) => (
                                   <li key={item.id}>
                                     <ResourceCard item={item} />
@@ -416,7 +414,7 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
                         })}
                       </div>
                     ) : (
-                      <ul className="mt-6 grid gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
+                      <ul className="mt-6 space-y-3">
                         {sectionItems.map((item) => (
                           <li key={item.id}>
                             <ResourceCard item={item} />
@@ -737,15 +735,6 @@ function ResourceCard({ item }: { item: ItemLite }) {
   // directly" behavior happens on the detail page via the action bar.
   const href = `/resources/${item.slug}`;
 
-  // For file-backed rows (uploaded studies/guides) we render a
-  // deterministic SVG cover instead of a real thumbnail. AI photos
-  // looked nearly identical across 56 rows; the SVG approach gives
-  // each card real per-id variation while keeping a unified palette.
-  // YouTube + Amazon thumbnails win when present (real cover art).
-  const useGeneratedCover =
-    !item.thumbnailUrl ||
-    (item.provider !== "youtube" && item.provider !== "amazon");
-
   // Primary action label depends on what's behind the card.
   const ctaLabel =
     item.provider === "youtube"
@@ -760,90 +749,27 @@ function ResourceCard({ item }: { item: ItemLite }) {
       ? "Download"
       : "Open";
 
-  const hasThumbnail = !!item.thumbnailUrl;
-
-  // For Amazon books we use a 2:3 aspect ratio (book covers); everything
-  // else gets 16:9 (videos and link cards).
-  const aspectClass = item.provider === "amazon" ? "aspect-[2/3]" : "aspect-video";
-
+  // Text-first row at EVERY breakpoint (Drew, 2026-07-11: no cover art
+  // on the list — desktop now matches the mobile streamline from
+  // 2026-07-09). Nothing pictorial on list rows: no thumbnails, no SVG
+  // covers, no play overlays, no chips. The CTA verb carries the type —
+  // Watch / Read / View book / Open / Download. Embeds and artwork live
+  // on the detail page.
   return (
-    <article className="lift group/card flex h-full flex-col overflow-hidden border border-foreground/15 bg-card transition-colors hover:border-brass">
-      <Link href={href} className="flex flex-1 flex-col">
-        {/* Thumbnail — DESKTOP ONLY (Drew, 2026-07-09: mobile users hate
-         *  the image-heavy interface; phones get clean text rows).
-         *  Desktop priority order:
-         *   1. YouTube oEmbed or Amazon book cover (real cover art)
-         *   2. AI-generated SVG cover for everything else — keyed by
-         *      cluster theme with per-id pattern variation.
-         */}
-        <div className={`relative ${aspectClass} hidden w-full overflow-hidden bg-foreground/5 md:block`}>
-          {!useGeneratedCover && hasThumbnail ? (
-            <Image
-              src={item.thumbnailUrl!}
-              alt=""
-              fill
-              sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
-              className="object-cover transition-transform duration-500 group-hover/card:scale-[1.03]"
-              unoptimized
-            />
-          ) : (
-            <ResourceCover
-              id={item.id}
-              title={item.title}
-              cluster={item.cluster}
-              className="absolute inset-0 h-full w-full transition-transform duration-500 group-hover/card:scale-[1.03]"
-            />
-          )}
-          {/* YouTube play overlay */}
-          {item.provider === "youtube" && hasThumbnail && (
-            <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-foreground/0 transition-colors group-hover/card:bg-foreground/15">
-              <div className="flex h-14 w-14 items-center justify-center bg-foreground/85 text-background shadow-lg backdrop-blur-sm transition-transform group-hover/card:scale-110">
-                <Icon name="play" size={20} />
-              </div>
-            </div>
-          )}
-          {/* No badges over the artwork (Drew, 2026-07-09 live review):
-              overlays read as clutter. The CTA verb below carries the
-              type — Watch / Read / View book / Open / Download. */}
-        </div>
-
-        {/* Body — compact text row on mobile, full card body on desktop */}
-        <div className="flex flex-1 flex-col p-4 md:p-6">
-          {item.author && (
-            <p className="section-mark text-muted-foreground">{item.author}</p>
-          )}
-          <h3 className="display-xl mt-1 text-base text-foreground md:mt-2 md:text-xl">
-            {item.title}
-          </h3>
-          {(item.summary || item.description) && (
-            <p className="mt-2 line-clamp-2 flex-1 text-sm leading-relaxed text-muted-foreground md:mt-3 md:line-clamp-3">
-              {item.summary || item.description}
-            </p>
-          )}
-          {(item.booksOfBible.length > 0 || item.topics.length > 0) && (
-            <div className="mt-4 hidden flex-wrap gap-1 md:flex">
-              {item.booksOfBible.slice(0, 1).map((b) => (
-                <span
-                  key={`b-${b}`}
-                  className="inline-flex h-5 items-center border border-brass/40 bg-brass/10 px-1.5 text-[0.5625rem] uppercase tracking-wider text-brass"
-                >
-                  {b}
-                </span>
-              ))}
-              {item.topics.slice(0, 1).map((t) => (
-                <span
-                  key={`t-${t}`}
-                  className="inline-flex h-5 items-center border border-foreground/15 bg-card px-1.5 text-[0.5625rem] text-muted-foreground"
-                >
-                  {t}
-                </span>
-              ))}
-            </div>
-          )}
-          <div className="mt-3 flex items-center justify-between md:mt-6">
-            <span className="section-mark text-brass">{ctaLabel}</span>
-          </div>
-        </div>
+    <article className="lift border border-foreground/15 bg-card transition-colors hover:border-brass">
+      <Link href={href} className="block p-4 md:px-6 md:py-5">
+        {item.author && (
+          <p className="section-mark text-muted-foreground">{item.author}</p>
+        )}
+        <h3 className="display-xl mt-1 text-base text-foreground md:text-lg">
+          {item.title}
+        </h3>
+        {(item.summary || item.description) && (
+          <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+            {item.summary || item.description}
+          </p>
+        )}
+        <p className="mt-3 section-mark text-brass md:mt-4">{ctaLabel}</p>
       </Link>
     </article>
   );
