@@ -31,10 +31,13 @@ export function AdminShell({
   const [seedPrompt, setSeedPrompt] = useState<string | undefined>();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
 
-  // Close mobile nav when route changes
-  useEffect(() => {
+  // Close mobile nav when the route changes — render-time adjustment per
+  // React docs, so the old drawer never paints over the new page.
+  const [prevPathname, setPrevPathname] = useState(pathname);
+  if (pathname !== prevPathname) {
+    setPrevPathname(pathname);
     setMobileNavOpen(false);
-  }, [pathname]);
+  }
 
   // ⌘K to open palette / ⌘J for AI
   useEffect(() => {

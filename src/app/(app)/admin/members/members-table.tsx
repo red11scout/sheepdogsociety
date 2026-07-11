@@ -47,7 +47,6 @@ export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [selected, setSelected] = useState<Set<string>>(new Set());
-  const [editing, setEditing] = useState<string | null>(null);
   const [busy, startTransition] = useTransition();
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -444,8 +443,6 @@ export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
                   onActive={(a) => handleActive(r.id, a)}
                   onGroup={(g) => handleGroup(r.id, g)}
                   onDelete={() => handleDelete(r.id)}
-                  editing={editing === r.id}
-                  onEdit={() => setEditing(editing === r.id ? null : r.id)}
                 />
               ))
             )}
@@ -503,8 +500,6 @@ function MemberRow({
   onActive,
   onGroup,
   onDelete,
-  editing,
-  onEdit,
 }: {
   row: AdminMemberRow;
   groupOptions: { id: string; name: string }[];
@@ -514,8 +509,6 @@ function MemberRow({
   onActive: (a: boolean) => void;
   onGroup: (g: string | null) => void;
   onDelete: () => void;
-  editing: boolean;
-  onEdit: () => void;
 }) {
   return (
     <tr className={cn("hover:bg-iron/30", selected && "bg-brass/5")}>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useCallback, useTransition } from "react";
+import Link from "next/link";
 import { useEditor, EditorContent } from "@tiptap/react";
 import { BubbleMenu } from "@tiptap/react/menus";
 import StarterKit from "@tiptap/starter-kit";
@@ -304,9 +305,9 @@ function Topbar({
   return (
     <header className="sticky top-0 z-40 bg-background/95 backdrop-blur border-b border-border px-6 py-3 flex items-center justify-between">
       <div className="flex items-center gap-4">
-        <a href="/admin/letters" className="font-body text-sm text-muted-foreground hover:text-foreground">
+        <Link href="/admin/letters" className="font-body text-sm text-muted-foreground hover:text-foreground">
           ← Letters
-        </a>
+        </Link>
         <span className="font-body text-xs uppercase tracking-[0.18em] text-muted-foreground">
           Issue No. {issueNumber} · {status}
         </span>
@@ -332,6 +333,15 @@ function SavedIndicator({
   savedAt: Date | null;
   state: "idle" | "saving" | "error";
 }) {
+  // Wall-clock reads happen in the interval callback, never during
+  // render (render must stay pure). Before the first tick `now` is 0,
+  // so the clamp below still shows "1s ago" right after a save.
+  const [now, setNow] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
   if (state === "saving") {
     return <span className="font-body text-xs text-muted-foreground">Saving…</span>;
   }
@@ -345,7 +355,7 @@ function SavedIndicator({
   if (!savedAt) {
     return <span className="font-body text-xs text-muted-foreground">Not saved yet</span>;
   }
-  const sec = Math.max(1, Math.round((Date.now() - savedAt.getTime()) / 1000));
+  const sec = Math.max(1, Math.round((now - savedAt.getTime()) / 1000));
   return (
     <span className="font-body text-xs text-muted-foreground">
       Saved · {sec}s ago
