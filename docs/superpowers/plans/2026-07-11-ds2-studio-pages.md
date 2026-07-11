@@ -211,7 +211,7 @@ git commit -m "feat(studio): section registries for all remaining public pages"
 
 **Interfaces:**
 - Consumes: `SiteTextEntry` type (existing).
-- Produces: new `SiteTextKey` literals used verbatim by Tasks 4-8's page wiring: `join.principles.title` group `"Join"`; `faq.cta.title`, `faq.cta.body` group `"FAQ"`; `contact.hero.headline1`, `contact.hero.headline2`, `contact.hero.paragraph` group `"Contact"`; `giving.hero.*`, `giving.why.*`, `giving.partners.*` group `"Giving"`; `wte.hero.*`, `wte.cta.*` group `"What to Expect"`; `hwg.hero.*`, `hwg.cta.*` group `"How We Gather"`; `events.hero.*`, `events.upcoming.empty` group `"Events"`; `letter.hero.*`, `letter.empty.body` group `"The Letter"`; `stories.hero.*`, `stories.empty.body`, `stories.cta.*` group `"Stories"`.
+- Produces: new `SiteTextKey` literals used verbatim by Tasks 4-8's page wiring: `join.principles.title` group `"Join"`; `faq.cta.title`, `faq.cta.body` group `"FAQ"`; `contact.hero.headline1`, `contact.hero.headline2`, `contact.hero.paragraph` group `"Contact"`; `giving.hero.*`, `giving.why.*`, `giving.partners.*` group `"Giving"`; `wte.hero.*`, `wte.cta.*` group `"What to Expect"`; `hwg.hero.*`, `hwg.cta.*` group `"How We Gather"`; `events.hero.*`, `events.upcoming.empty` group `"Events"`; `letter.hero.*`, `letter.empty.heading`, `letter.empty.body` group `"The Letter"`; `stories.hero.*`, `stories.empty.body`, `stories.cta.*` group `"Stories"`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -295,9 +295,9 @@ Then append these entries to `SITE_TEXT_KEYS`, immediately before the closing `]
     defaultValue: "Use the form below, or write us straight at" },
   // ── Giving ────────────────────────────────────────────────
   { key: "giving.hero.headline1", label: "Hero headline — line 1", group: "Giving", multiline: false,
-    defaultValue: "Fuel the" },
+    defaultValue: "Fuel the brotherhood." },
   { key: "giving.hero.headline2", label: "Hero headline — line 2 (italic)", group: "Giving", multiline: false,
-    defaultValue: "brotherhood." },
+    defaultValue: "Support the mission." },
   { key: "giving.why.title", label: "Why we give — title", group: "Giving", multiline: false,
     defaultValue: "Always free for every man." },
   { key: "giving.ways.title", label: "Ways to give — section title", group: "Giving", multiline: false,
@@ -330,8 +330,10 @@ Then append these entries to `SITE_TEXT_KEYS`, immediately before the closing `]
     defaultValue: "One letter" },
   { key: "letter.hero.headline2", label: "Hero headline — line 2 (italic)", group: "The Letter", multiline: false,
     defaultValue: "a week." },
-  { key: "letter.empty.body", label: "Issue grid — empty state", group: "The Letter", multiline: true,
-    defaultValue: "The first encouragement is on the way. Sign up below and it will land in your inbox the day it publishes." },
+  { key: "letter.empty.heading", label: "Issue grid — empty state heading", group: "The Letter", multiline: false,
+    defaultValue: "The first encouragement is on the way." },
+  { key: "letter.empty.body", label: "Issue grid — empty state body", group: "The Letter", multiline: true,
+    defaultValue: "Brothers are writing it. Sign up in the footer to get it the moment it lands." },
   // ── Stories ───────────────────────────────────────────────
   { key: "stories.hero.headline1", label: "Hero headline — line 1", group: "Stories", multiline: false,
     defaultValue: "Wolves transformed." },
@@ -976,7 +978,7 @@ git commit -m "feat(studio): wire Giving, What-to-Expect, How-We-Gather through 
 
 - [ ] **Step 2: Letter — add config fetch, wire sections**
 
-`letter/page.tsx`'s `LetterIndexPage` is already `async`. Add the three imports and fetch `[letterRows, t, config]` (or however its existing `listPublishedEncouragements()` call is named) via `Promise.all`. Wrap into a `sections` record keyed `hero`, `issue-grid` (matching `SECTION_REGISTRY.letter`): replace the hero's hardcoded headline with `t["letter.hero.headline1"]` / `t["letter.hero.headline2"]`, and the issue-grid's empty-state copy with `t["letter.empty.body"]` — the rest of both sections (including the "The full archive" link inside `issue-grid`) stays unchanged. Render via `renderMerge("letter", config)`.
+`letter/page.tsx`'s `LetterIndexPage` is already `async`. Add the three imports and fetch `[letterRows, t, config]` (or however its existing `listPublishedEncouragements()` call is named) via `Promise.all`. Wrap into a `sections` record keyed `hero`, `issue-grid` (matching `SECTION_REGISTRY.letter`): replace the hero's hardcoded headline with `t["letter.hero.headline1"]` / `t["letter.hero.headline2"]`, and the issue-grid's empty-state copy with `t["letter.empty.heading"]` (the `<h2>`) and `t["letter.empty.body"]` (the `<p>` right below it, which carries a "Copy fix, deliberate" comment above it in the source — keep that comment, it explains why the wording differs from other empty-states that say "sign up below") — the rest of both sections (including the "The full archive" link inside `issue-grid`) stays unchanged. Render via `renderMerge("letter", config)`.
 
 - [ ] **Step 3: Stories — add config fetch, wire sections**
 
