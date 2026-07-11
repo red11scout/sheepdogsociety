@@ -1,7 +1,11 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import { Icon, type IconName } from "@/components/icons/Icon";
 import { Spotlight } from "@/components/motion/Spotlight";
 import { Kicker } from "@/components/public/kicker";
+import { getSiteTextMap } from "@/lib/site-text/get";
+import { getStudioConfig } from "@/lib/studio/get";
+import { renderMerge } from "@/lib/studio/config";
 
 export const metadata = {
   title: "Give — Sheepdog Society",
@@ -36,31 +40,28 @@ const ways: { icon: IconName; roman: string; title: string; copy: string; cta: s
   },
 ];
 
-export default function GivingPage() {
-  return (
-    <>
-      {/* Hero */}
+export default async function GivingPage() {
+  const [t, config] = await Promise.all([getSiteTextMap(), getStudioConfig()]);
+
+  const sections: Record<string, React.ReactNode> = {
+    hero: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-24 md:px-12 md:py-32">
           <Kicker left="Give" />
           <h1 className="display-xl mt-10 max-w-4xl text-display-xl">
-            Fuel the brotherhood.
+            {t["giving.hero.headline1"]}
             <br />
-            <em>Support the mission.</em>
+            <em>{t["giving.hero.headline2"]}</em>
           </h1>
         </div>
       </section>
-
-      {/* Why we give */}
+    ),
+    "why-we-give": (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
           <Kicker left="Why we give" />
           <div className="mt-10 grid gap-12 md:grid-cols-[2fr_3fr] md:gap-20">
-            <h2 className="display-xl text-display-lg">
-              Always free
-              <br />
-              <em>for every man.</em>
-            </h2>
+            <h2 className="display-xl text-display-lg">{t["giving.why.title"]}</h2>
             <div className="space-y-6 text-base leading-relaxed text-muted-foreground md:text-lg">
               <p>
                 Sheepdog Society is free for every man who walks through the
@@ -82,14 +83,12 @@ export default function GivingPage() {
           </div>
         </div>
       </section>
-
-      {/* Ways to give */}
+    ),
+    "ways-to-give": (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
           <Kicker left="Ways to give" />
-          <h2 className="display-xl mt-10 max-w-3xl text-display-lg">
-            Three ways to invest.
-          </h2>
+          <h2 className="display-xl mt-10 max-w-3xl text-display-lg">{t["giving.ways.title"]}</h2>
           <div className="mt-16 grid gap-px bg-background/10 md:grid-cols-3">
             {ways.map((w) => (
               <Spotlight
@@ -127,16 +126,12 @@ export default function GivingPage() {
           </div>
         </div>
       </section>
-
-      {/* Partners */}
+    ),
+    partners: (
       <section id="partners" className="scroll-mt-24 bg-background text-foreground">
         <div className="mx-auto max-w-5xl px-6 py-28 text-center md:px-12 md:py-40">
           <span className="section-mark text-brass">§ Sheepdog Partners</span>
-          <h2 className="display-xl mt-6 text-display-lg">
-            Churches. Organizations.
-            <br />
-            <em>Brothers.</em>
-          </h2>
+          <h2 className="display-xl mt-6 text-display-lg">{t["giving.partners.title"]}</h2>
           <p className="mx-auto mt-8 max-w-xl font-pullquote text-xl italic leading-relaxed text-muted-foreground md:text-2xl">
             Our partners believe in the Sheepdog mission and stand with us
             through prayer, resources, and giving.
@@ -152,6 +147,16 @@ export default function GivingPage() {
           </div>
         </div>
       </section>
+    ),
+  };
+
+  return (
+    <>
+      {renderMerge("giving", config)
+        .filter((s) => s.visible)
+        .map((s) => (
+          <Fragment key={s.id}>{sections[s.id]}</Fragment>
+        ))}
     </>
   );
 }

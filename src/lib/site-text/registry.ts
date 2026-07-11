@@ -147,7 +147,7 @@ export const SITE_TEXT_KEYS = [
   { key: "giving.why.title", label: "Why we give — title", group: "Giving", multiline: false,
     defaultValue: "Always free for every man." },
   { key: "giving.ways.title", label: "Ways to give — section title", group: "Giving", multiline: false,
-    defaultValue: "Ways to give" },
+    defaultValue: "Three ways to invest." },
   { key: "giving.partners.title", label: "Partners CTA — title", group: "Giving", multiline: false,
     defaultValue: "Churches. Organizations. Brothers." },
   // ── What to Expect ────────────────────────────────────────

@@ -1,7 +1,11 @@
+import { Fragment } from "react";
 import { Icon } from "@/components/icons/Icon";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Kicker } from "@/components/public/kicker";
+import { getSiteTextMap } from "@/lib/site-text/get";
+import { getStudioConfig } from "@/lib/studio/get";
+import { renderMerge } from "@/lib/studio/config";
 
 export const metadata = {
   title: "How We Gather — Sheepdog Society",
@@ -69,17 +73,18 @@ const guidelines = [
   },
 ];
 
-export default function HowWeGatherPage() {
-  return (
-    <>
-      {/* Hero */}
+export default async function HowWeGatherPage() {
+  const [t, config] = await Promise.all([getSiteTextMap(), getStudioConfig()]);
+
+  const sections: Record<string, React.ReactNode> = {
+    hero: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
           <Kicker left="How We Gather" />
           <h1 className="display-xl mt-10 max-w-4xl text-display-xl">
-            Four rhythms.
+            {t["hwg.hero.headline1"]}
             <br />
-            <em>One brotherhood.</em>
+            <em>{t["hwg.hero.headline2"]}</em>
           </h1>
           <p className="mt-10 max-w-2xl font-pullquote text-lede italic leading-relaxed text-muted-foreground">
             Weekly. Monthly. Quarterly. Yearly. We gather in person, eat
@@ -87,8 +92,8 @@ export default function HowWeGatherPage() {
           </p>
         </div>
       </section>
-
-      {/* Rhythms */}
+    ),
+    rhythms: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
           <ol className="divide-y divide-foreground/10 border-y border-foreground/15">
@@ -138,8 +143,8 @@ export default function HowWeGatherPage() {
           </ol>
         </div>
       </section>
-
-      {/* Guidelines */}
+    ),
+    guidelines: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
           <Kicker left="Group size guidelines" />
@@ -164,8 +169,8 @@ export default function HowWeGatherPage() {
           </div>
         </div>
       </section>
-
-      {/* CTA */}
+    ),
+    cta: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-5xl px-6 py-28 text-center md:px-12 md:py-40">
           <Icon
@@ -175,7 +180,7 @@ export default function HowWeGatherPage() {
             className="mx-auto text-brass"
           />
           <h2 className="display-xl mt-10 text-display-lg">
-            Find a group, or plant one.
+            {t["hwg.cta.title"]}
           </h2>
           <div className="mt-12 flex flex-wrap items-center justify-center gap-6">
             <Button
@@ -198,6 +203,16 @@ export default function HowWeGatherPage() {
           </div>
         </div>
       </section>
+    ),
+  };
+
+  return (
+    <>
+      {renderMerge("how-we-gather", config)
+        .filter((s) => s.visible)
+        .map((s) => (
+          <Fragment key={s.id}>{sections[s.id]}</Fragment>
+        ))}
     </>
   );
 }
