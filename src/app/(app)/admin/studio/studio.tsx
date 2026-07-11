@@ -14,6 +14,7 @@ import {
   saveDraftConfig,
   saveDraftText,
 } from "@/server/studio";
+import { recommendForPage, describeChangeset, assistField } from "@/server/studio-ai";
 import { cn } from "@/lib/utils";
 
 /** pasture-iron's record in themes-data is empty by contract (identity theme,
@@ -104,7 +105,15 @@ export function Studio({
   );
   const [versions, setVersions] = useState<Version[]>(initialVersions);
   const [openKey, setOpenKey] = useState<string | null>(null);
+  // Read inside async callbacks after an await, where a closed-over
+  // `openKey` value would be stale — the ref always reflects the latest
+  // open field even if the admin switched fields mid-await.
+  const openKeyRef = useRef<string | null>(null);
+  useEffect(() => {
+    openKeyRef.current = openKey;
+  }, [openKey]);
   const [fieldDraft, setFieldDraft] = useState("");
+  const [assisting, setAssisting] = useState<string | null>(null);
   const [status, setStatus] = useState<StatusMsg | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -114,6 +123,17 @@ export function Studio({
   const [compare, setCompare] = useState(false);
   const [iframeKey, setIframeKey] = useState(0);
   const [showVersions, setShowVersions] = useState(false);
+
+  // AI helper strip
+  const [recommendations, setRecommendations] = useState<{ what: string; why: string }[]>([]);
+  const [loadingRecs, setLoadingRecs] = useState(false);
+  const [describeGoal, setDescribeGoal] = useState("");
+  const [describing, setDescribing] = useState(false);
+  const [describeResult, setDescribeResult] = useState<{
+    applied: number;
+    dropped: { summary: string; reason: string }[];
+  } | null>(null);
+
   const draftFrame = useRef<HTMLIFrameElement>(null);
   const liveFrame = useRef<HTMLIFrameElement>(null);
   const syncing = useRef(false);
@@ -255,6 +275,33 @@ export function Studio({
         window.location.reload();
       } else fail(res.error);
     });
+  }
+
+  // ---------- AI helper strip ----------
+  async function loadRecommendations() {
+    setLoadingRecs(true);
+    const res = await recommendForPage(selectedPage);
+    setLoadingRecs(false);
+    if (res.ok) setRecommendations(res.suggestions);
+    else fail(res.error);
+  }
+
+  async function submitDescribe() {
+    if (!describeGoal.trim()) return;
+    setDescribing(true);
+    setDescribeResult(null);
+    const res = await describeChangeset(describeGoal);
+    setDescribing(false);
+    if (res.ok) {
+      setDescribeResult({ applied: res.applied, dropped: res.dropped });
+      setDescribeGoal("");
+      // describeChangeset already persisted via saveDraftConfig/saveDraftText
+      // server-side, so the client just refreshes the preview iframe — same
+      // as every other draft-mutating action in this file.
+      if (res.applied > 0) refreshPreview();
+    } else {
+      fail(res.error);
+    }
   }
 
   // ---------- Walkthrough ----------
@@ -525,6 +572,30 @@ export function Studio({
                             Cancel
                           </button>
                         </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <span className="text-xs text-stone/60">AI:</span>
+                          {(["rewrite", "tighten", "warm-up"] as const).map((m) => (
+                            <button
+                              key={m}
+                              type="button"
+                              disabled={assisting !== null}
+                              onClick={async () => {
+                                setAssisting(m);
+                                const res = await assistField(e.key, fieldDraft, m);
+                                setAssisting(null);
+                                // Guard against the admin switching to a different
+                                // field while this call was in flight — only apply
+                                // the result if e.key is still the open field.
+                                if (openKeyRef.current !== e.key) return;
+                                if (res.ok) setFieldDraft(res.draft);
+                                else fail(res.error);
+                              }}
+                              className="text-xs font-medium text-brass hover:underline disabled:opacity-50"
+                            >
+                              {assisting === m ? "Working..." : m === "warm-up" ? "Warm up" : m.charAt(0).toUpperCase() + m.slice(1)}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     ) : (
                       <button
@@ -637,6 +708,72 @@ export function Studio({
                 save wins. Same goes for the Site text page, which writes to the same words.
               </p>
             </div>
+          </section>
+
+          {/* AI recommendations */}
+          <section>
+            <div className="flex items-center justify-between gap-3">
+              <p className="section-mark text-brass">§ AI recommendations</p>
+              <button
+                type="button"
+                disabled={loadingRecs}
+                onClick={loadRecommendations}
+                className="inline-flex h-11 items-center px-3 text-xs font-medium text-brass hover:underline disabled:opacity-50"
+              >
+                {loadingRecs ? "Thinking..." : "Get ideas for this page"}
+              </button>
+            </div>
+            {recommendations.length > 0 && (
+              <ul className="mt-4 space-y-3">
+                {recommendations.map((r, i) => (
+                  <li key={i} className="border-l-2 border-brass/40 py-1 pl-4">
+                    <p className="text-sm font-medium text-bone">{r.what}</p>
+                    <p className="text-xs leading-relaxed text-stone/70">{r.why}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+
+          {/* Describe-it */}
+          <section>
+            <p className="section-mark text-brass">§ Tell me what you want</p>
+            <p className="mt-2 text-sm leading-relaxed text-stone/70">
+              Describe a change in plain words. AI drafts it into your draft — nothing goes live until you Apply.
+            </p>
+            <textarea
+              value={describeGoal}
+              onChange={(e) => setDescribeGoal(e.target.value)}
+              rows={3}
+              maxLength={2000}
+              placeholder="e.g. Hide the culture section and warm up the mission paragraph."
+              className="mt-3 w-full border border-stone/25 bg-transparent p-3 text-sm leading-relaxed text-bone placeholder:text-stone/40 focus:border-brass focus:outline-none"
+            />
+            <button
+              type="button"
+              disabled={describing || !describeGoal.trim()}
+              onClick={submitDescribe}
+              className="lift mt-3 inline-flex h-11 items-center gap-2 border border-bone bg-bone px-5 text-sm font-medium text-iron disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {describing ? "Working..." : "Draft it"}
+            </button>
+            {describeResult && (
+              <div className="mt-4 text-sm">
+                <p className="text-bone">
+                  {describeResult.applied} {describeResult.applied === 1 ? "change" : "changes"} added to your
+                  draft.
+                </p>
+                {describeResult.dropped.length > 0 && (
+                  <ul className="mt-2 space-y-1 text-xs text-stone/60">
+                    {describeResult.dropped.map((d, i) => (
+                      <li key={i}>
+                        <span className="font-medium text-stone/80">{d.summary}:</span> {d.reason}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
           </section>
         </div>
 
