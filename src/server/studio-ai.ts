@@ -11,9 +11,11 @@ import { MODELS, BRAND_VOICE, withBrandVoice } from "@/lib/ai/prompts";
 import { findBannedLanguage } from "@/lib/ai/banned";
 import { SECTION_REGISTRY } from "@/lib/studio/sections";
 import { getStudioConfig } from "@/lib/studio/get";
-import { renderMerge } from "@/lib/studio/config";
-import type { Changeset } from "@/lib/studio/changeset";
+import { renderMerge, resolveThemeId } from "@/lib/studio/config";
+import { validateChangeset, type Changeset } from "@/lib/studio/changeset";
 import { SITE_TEXT_KEYS } from "@/lib/site-text/registry";
+import { saveDraftConfig, saveDraftText } from "@/server/studio";
+import { THEME_IDS } from "@/lib/studio/themes";
 
 const MODEL = MODELS.default;
 const RECOMMEND_PROMPT_VERSION = "studio-recommend.v1";
@@ -148,5 +150,121 @@ ${currentText}
   } catch (err) {
     console.error("assistField error", err);
     return { ok: false, error: "Could not get a rewrite. Try again shortly." };
+  }
+}
+
+// Bounds-free by house rule — counts/lengths enforced in validateChangeset,
+// not in this schema.
+const changesetSchema = z.object({
+  themeId: z.string().optional(),
+  sectionChanges: z.array(
+    z.object({
+      pageId: z.string(),
+      sectionId: z.string(),
+      visible: z.boolean().optional(),
+      position: z.number().optional(),
+    })
+  ),
+  textEdits: z.array(
+    z.object({
+      key: z.string(),
+      value: z.string(),
+      why: z.string(),
+    })
+  ),
+});
+
+const DESCRIBE_PROMPT_VERSION = "studio-describe.v1";
+
+export async function describeChangeset(
+  goal: string
+): Promise<
+  | { ok: true; applied: number; dropped: { summary: string; reason: string }[] }
+  | { ok: false; error: string }
+> {
+  try {
+    const userId = await requireAdmin();
+    const config = await getStudioConfig();
+
+    const prompt = withBrandVoice(`Jeremy (the admin of this Christian men's brotherhood website) wants: "${goal}"
+
+Turn this into a changeset: which sections to show/hide/reorder, and/or which text fields to rewrite. Only use section and text-field ids you're confident exist on this site — if you're unsure, leave that part out rather than guessing. Keep textEdits short and in the site's plain, warm, direct voice.`);
+
+    const result = await generateObject({
+      model: anthropic(MODEL),
+      system: BRAND_VOICE,
+      prompt,
+      schema: changesetSchema,
+    });
+
+    const raw: Changeset = result.object;
+    const { accepted, dropped } = validateChangeset(raw, config);
+
+    let themeId: string | undefined;
+    if (accepted.themeId !== undefined) {
+      const resolved = resolveThemeId({ themeId: accepted.themeId, pages: {} }, THEME_IDS);
+      if (accepted.themeId === resolved) {
+        themeId = resolved;
+      } else {
+        dropped.push({
+          item: { pageId: "", sectionId: "" },
+          reason: `"${accepted.themeId}" is not a real theme — kept the current one.`,
+        });
+      }
+    }
+
+    let applied = 0;
+    if (themeId || accepted.sectionChanges.length > 0) {
+      const nextPages = { ...config.pages };
+      for (const change of accepted.sectionChanges) {
+        const existing = nextPages[change.pageId]?.sections ?? [];
+        const idx = existing.findIndex((s) => s.id === change.sectionId);
+        const nextSections = [...existing];
+        if (idx >= 0) {
+          nextSections[idx] = { ...nextSections[idx], visible: change.visible ?? nextSections[idx].visible };
+        } else {
+          nextSections.push({ id: change.sectionId, visible: change.visible ?? true });
+        }
+        nextPages[change.pageId] = { sections: nextSections };
+        applied++;
+      }
+      const configRes = await saveDraftConfig({
+        ...config,
+        themeId: themeId ?? config.themeId,
+        pages: nextPages,
+      });
+      if (!configRes.ok) return { ok: false, error: configRes.error ?? "Could not save changes." };
+      if (themeId) applied++;
+    }
+
+    for (const edit of accepted.textEdits) {
+      const textRes = await saveDraftText(edit.key, edit.value);
+      if (textRes.ok) applied++;
+    }
+
+    await db.insert(aiGenerations).values({
+      type: "studio_describe",
+      prompt,
+      promptVersion: DESCRIBE_PROMPT_VERSION,
+      model: MODEL,
+      output: JSON.stringify(raw),
+      inputTokens: result.usage?.inputTokens,
+      outputTokens: result.usage?.outputTokens,
+      entityType: "studio_changeset",
+      entityId: null,
+      userId,
+    });
+
+    return {
+      ok: true,
+      applied,
+      dropped: dropped.map((d) => ({
+        summary: "key" in d.item ? d.item.key : `${d.item.pageId}/${d.item.sectionId}`,
+        reason: d.reason,
+      })),
+    };
+  } catch (err) {
+    console.error("describeChangeset error", err);
+    return { ok: false, error: "Could not process that. Try describing it differently." };
   }
 }

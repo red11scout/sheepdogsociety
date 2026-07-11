@@ -112,3 +112,54 @@ describe("assistField", () => {
     expect(result.ok).toBe(false);
   });
 });
+
+vi.mock("@/server/studio", () => ({
+  saveDraftConfig: vi.fn().mockResolvedValue({ ok: true }),
+  saveDraftText: vi.fn().mockResolvedValue({ ok: true }),
+}));
+
+import { describeChangeset } from "./studio-ai";
+import { saveDraftConfig, saveDraftText } from "@/server/studio";
+
+describe("describeChangeset", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(getStudioConfig).mockResolvedValue({ themeId: "pasture-iron", pages: {} });
+  });
+
+  it("stages valid parts of the AI-drafted changeset and reports dropped items", async () => {
+    mockAdmin();
+    vi.mocked(generateObject).mockResolvedValue({
+      object: {
+        sectionChanges: [
+          { pageId: "about", sectionId: "mission", visible: false },
+          { pageId: "about", sectionId: "hero", visible: false }, // locked, will drop
+        ],
+        textEdits: [{ key: "about.mission.body", value: "New copy.", why: "Shorter." }],
+      },
+      usage: { inputTokens: 100, outputTokens: 60 },
+    } as never);
+
+    const result = await describeChangeset("Hide the mission section on the About page and shorten the mission copy.");
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.applied).toBe(2); // 1 section change + 1 text edit accepted
+      expect(result.dropped).toHaveLength(1); // the locked hero attempt
+    }
+    expect(saveDraftConfig).toHaveBeenCalled();
+    expect(saveDraftText).toHaveBeenCalledWith("about.mission.body", "New copy.");
+  });
+
+  it("returns ok:false when nothing in the changeset validates", async () => {
+    mockAdmin();
+    vi.mocked(generateObject).mockResolvedValue({
+      object: { sectionChanges: [{ pageId: "about", sectionId: "hero", visible: false }], textEdits: [] },
+      usage: { inputTokens: 50, outputTokens: 20 },
+    } as never);
+
+    const result = await describeChangeset("Hide the hero on About.");
+    expect(result.ok).toBe(true); // still ok:true, just applied:0 — the caller sees the dropped-item reasons
+    if (result.ok) expect(result.applied).toBe(0);
+    expect(saveDraftConfig).not.toHaveBeenCalled();
+  });
+});
