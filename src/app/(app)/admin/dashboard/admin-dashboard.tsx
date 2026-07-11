@@ -325,8 +325,9 @@ export function AdminDashboard({ greetingName = "brother" }: AdminDashboardProps
                     })}
                   </span>
                 </div>
-                {/* Desktop-only: status pill (grid col 3) */}
-                <div className="hidden md:block">
+                {/* Desktop-only: status pill (grid col 3) — md:contents so the
+                    pill itself is the grid child, stretched to the column */}
+                <div className="hidden md:contents">
                   <StatusPill status={letter.status} />
                 </div>
                 {/* Desktop-only: updated date (grid col 4) */}
