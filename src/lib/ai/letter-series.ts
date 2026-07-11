@@ -4,7 +4,7 @@ import { z } from "zod";
 import { SYSTEM_PROMPT } from "./system-prompt";
 import { findVoice } from "./voices";
 import { scrubAiPayload } from "./scrub";
-import { findBannedLanguage } from "./banned";
+import { BANNED_PHRASES, BANNED_WORDS, findBannedLanguage } from "./banned";
 
 const MODEL = "claude-sonnet-4-5";
 export const SERIES_PLAN_PROMPT_VERSION = "letter-series-plan.v1";
@@ -106,7 +106,9 @@ For EACH of the ${input.totalCount} letters, return:
 
 Each letter must carry one image or story that lands in the chest — one, not three, and never sentimental.
 
-Across the whole series: NO em-dashes, NO hashtags, no emoji. Plain prose. Real verses only. No fabricated quotations from any named theologian. Write like a man who has read his Bible his whole life talks at a kitchen table.`;
+Across the whole series: NO em-dashes, NO hashtags, no emoji. Plain prose. Real verses only. No fabricated quotations from any named theologian. Write like a man who has read his Bible his whole life talks at a kitchen table.
+
+HARD RULE — a machine gate rejects the whole series if ANY of these words or phrases appear anywhere (titles, prose, scripture notes, calls to action), in any casing or grammatical form that matches the word exactly. Do not use them: ${[...BANNED_WORDS, ...BANNED_PHRASES].join(", ")}. Where you would reach for one, choose a plainer word ("get up" not the r-word above, "take hold" not the r-word, "carry" not the l-word).`;
 
   // Two-attempt loop. The model occasionally drops a letter or returns
   // a single scriptures entry on the first pass; one silent retry hides
