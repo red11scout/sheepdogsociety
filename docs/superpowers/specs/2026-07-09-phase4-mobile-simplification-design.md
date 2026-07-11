@@ -83,6 +83,8 @@ Also in scope: **update the homepage `metadata` title/description/openGraph** to
 
 ## Phase C — Letter Autopilot
 
+> **SHIPPED 2026-07-10** — PR #43, squash `88e9c86`, migration 0018 applied, live prod verification green. Ships **disabled**; go-live = the Autopilot card toggle at `/admin/encouragements`.
+
 The existing engine is retained. Two extractions are prerequisites (both verified against current code):
 
 - **P1 — Session-less series core.** `createSeriesWithLetters` is a `"use server"` action that requires an admin session and stamps `createdBy`/`authorId` from it; a cron has no session. Extract the insert/scheduling internals (including `computeScheduledFor`, which cannot be exported from a `"use server"` file) into a shared server library `createSeriesWithLettersCore(authorId, input)` used by both the admin action and the cron. Autopilot runs attribute to a configured admin author stored in `letter_autopilot.default_author_id` (seeded to Jeremy's user id). Wrap the issue-number MAX+1 + inserts in a transaction so concurrent wizard/cron writers can't collide and a mid-run death leaves nothing half-created.
