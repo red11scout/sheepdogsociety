@@ -224,7 +224,7 @@ Turn this into a changeset: which sections to show/hide/reorder, and/or which te
         changesByPage.set(change.pageId, list);
       }
       for (const [pageId, changes] of changesByPage) {
-        let nextSections = [...(nextPages[pageId]?.sections ?? [])];
+        const nextSections = [...(nextPages[pageId]?.sections ?? [])];
         // Apply visibility patches first, adding any brand-new ids.
         for (const change of changes) {
           const idx = nextSections.findIndex((s) => s.id === change.sectionId);
