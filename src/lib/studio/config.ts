@@ -10,6 +10,9 @@ export type SectionState = { id: string; visible: boolean };
 export type StudioConfig = {
   themeId: string;
   pages: Record<string, { sections: SectionState[] }>;
+  /** Studio-only UI flag: the first-run walkthrough strip was dismissed.
+   *  Carried through normalize/validate; never read on the public site. */
+  walkthroughDismissed?: boolean;
 };
 
 export const DEFAULT_CONFIG: StudioConfig = { themeId: "pasture-iron", pages: {} };

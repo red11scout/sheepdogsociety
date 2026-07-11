@@ -12,6 +12,9 @@ export function normalize(raw: unknown): StudioConfig {
   return {
     themeId: resolveThemeId({ themeId: c.themeId ?? "pasture-iron", pages: {} }, THEME_IDS),
     pages: c.pages ?? {},
+    ...(typeof c.walkthroughDismissed === "boolean"
+      ? { walkthroughDismissed: c.walkthroughDismissed }
+      : {}),
   };
 }
 

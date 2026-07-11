@@ -80,7 +80,13 @@ function validateConfig(input: unknown): { ok: true; config: StudioConfig } | { 
   }
   return {
     ok: true,
-    config: { themeId: resolveThemeId({ themeId: c.themeId, pages: {} }, THEME_IDS), pages },
+    config: {
+      themeId: resolveThemeId({ themeId: c.themeId, pages: {} }, THEME_IDS),
+      pages,
+      ...(typeof c.walkthroughDismissed === "boolean"
+        ? { walkthroughDismissed: c.walkthroughDismissed }
+        : {}),
+    },
   };
 }
 
