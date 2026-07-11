@@ -420,10 +420,33 @@ In `studio.tsx`, change the `Studio` component's props type to accept `pages: { 
   const [selectedPage, setSelectedPage] = useState(pages[0].id);
   const pageMeta = pages.find((p) => p.id === selectedPage) ?? pages[0];
   const pageEntries = entriesByGroup[selectedPage] ?? [];
-  const pageSections = SECTION_REGISTRY[selectedPage]?.sections ?? [];
 ```
 
-Replace every existing reference to the hardcoded `SECTION_REGISTRY.home.sections` with `pageSections`, every `renderMerge("home", config)` with `renderMerge(selectedPage, config)`, and every reference to the old `textEntries` prop with `pageEntries`. Replace the hardcoded preview iframe `src="/"` (and the compare iframe's `src="/?studio=published..."`) with `src={pageMeta.path}` (and `` `${pageMeta.path}?studio=published...` ``, preserving whatever query-string construction already exists for the mode toggle).
+**Important — `saveDraftConfig` takes the whole `StudioConfig`, not a `(pageId, sections)` pair.** It already exists (`src/server/studio.ts`) as `saveDraftConfig(config: StudioConfig): Promise<{ ok: boolean; error?: string }>` — do not change its signature. The existing homepage-only code builds the per-page patch inline and hardcodes the page key:
+
+```ts
+  const merged = renderMerge("home", config);
+  const registry = SECTION_REGISTRY.home;
+  ...
+  function saveSections(sections: { id: string; visible: boolean }[]) {
+    const next: StudioConfig = { ...config, pages: { ...config.pages, home: { sections } } };
+    ...
+```
+
+Replace this with the page-scoped equivalents, using a computed key instead of the literal `home`:
+
+```ts
+  const merged = renderMerge(selectedPage, config);
+  const registry = SECTION_REGISTRY[selectedPage];
+  ...
+  function saveSections(sections: { id: string; visible: boolean }[]) {
+    const next: StudioConfig = { ...config, pages: { ...config.pages, [selectedPage]: { sections } } };
+    ...
+```
+
+(`registry` was previously used only for `defOf`/lookups — keep those call sites unchanged, they now read from the page-scoped `registry`.) Every other `saveDraftConfig(next)` call site (theme pick, walkthrough dismiss) is unaffected — they already pass the *whole* `config` object with one field patched (`themeId` or `walkthroughDismissed`), which is page-agnostic and needs no change.
+
+Replace every reference to the old `textEntries` prop with `pageEntries`. Replace the hardcoded preview iframe `src="/"` (and the compare iframe's `src="/?studio=published..."`) with `src={pageMeta.path}` (and `` `${pageMeta.path}?studio=published...` ``, preserving whatever query-string construction already exists for the mode toggle).
 
 Add a page-selector control in the left rail, directly above the existing theme picker:
 
@@ -445,7 +468,7 @@ Add a page-selector control in the left rail, directly above the existing theme 
         </div>
 ```
 
-Section show/hide, reorder, and text-field save calls already go through `saveDraftConfig(pageId, sections)` / `saveDraftText(key, value)` — confirm (read the existing calls) that `saveDraftConfig` takes a `pageId` argument already (it must, since DS-1's config shape is `pages: Record<pageId, ...>`); if so, replace the hardcoded `"home"` argument in those calls with `selectedPage`. Do not change `saveDraftConfig`'s or `saveDraftText`'s signatures — this task is UI-only.
+`saveDraftText(key, value)` is already page-agnostic (site-text keys are globally unique strings like `"about.mission.body"`, not scoped by page) — no change needed to its call sites.
 
 - [ ] **Step 4: Manual verification**
 
