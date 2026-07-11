@@ -2,8 +2,7 @@
 
 import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
-import { weeklyEncouragements, letterSeries } from "@/db/schema-new";
-import { users } from "@/db/schema";
+import { weeklyEncouragements, letterSeries, users } from "@/db/schema";
 import { eq, isNull, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { createSeriesWithLettersCore } from "@/server/letters/series-core";

@@ -1,3 +1,4 @@
+import { Webhook } from "svix";
 import { db } from "@/db";
 import { newsletterSubscribers } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -6,6 +7,13 @@ import { eq } from "drizzle-orm";
 // Subscribers state mirror: marks rows inactive on bounce/complaint/unsubscribe.
 // Resend is the source of truth; this just keeps the local table in sync so
 // the admin subscribers list shows accurate counts.
+//
+// Security: Resend signs webhooks with svix. We verify the signature against
+// RESEND_WEBHOOK_SECRET before trusting the payload — without this, anyone
+// could forge bounce/unsubscribe events keyed on a victim's email to toggle
+// their subscription. In production the secret is REQUIRED (fail closed); in
+// dev/preview, where the secret is often unset, we process unverified so local
+// sync keeps working.
 
 interface ResendWebhookPayload {
   type: string;
@@ -23,15 +31,39 @@ function extractEmail(data: ResendWebhookPayload["data"]): string | null {
   return null;
 }
 
+function isProduction(): boolean {
+  if (process.env.VERCEL_ENV) return process.env.VERCEL_ENV === "production";
+  return process.env.NODE_ENV === "production";
+}
+
 export async function POST(req: Request) {
-  // Resend signs webhooks with a secret; verification deferred until we
-  // configure RESEND_WEBHOOK_SECRET in env. For now accept and process so
-  // local sync works in dev/preview. Add svix verification in Phase G.
+  const secret = process.env.RESEND_WEBHOOK_SECRET;
+  const raw = await req.text();
+
   let payload: ResendWebhookPayload;
-  try {
-    payload = await req.json();
-  } catch {
-    return new Response("Bad request", { status: 400 });
+  if (secret) {
+    const headers = {
+      "svix-id": req.headers.get("svix-id") ?? "",
+      "svix-timestamp": req.headers.get("svix-timestamp") ?? "",
+      "svix-signature": req.headers.get("svix-signature") ?? "",
+    };
+    try {
+      payload = new Webhook(secret).verify(raw, headers) as ResendWebhookPayload;
+    } catch {
+      return new Response("Invalid signature", { status: 400 });
+    }
+  } else {
+    // No secret configured. Reject in production (fail closed); tolerate in
+    // dev/preview so local delivery-event sync still works.
+    if (isProduction()) {
+      console.error("RESEND_WEBHOOK_SECRET not set; rejecting webhook in production");
+      return new Response("Webhook not configured", { status: 401 });
+    }
+    try {
+      payload = JSON.parse(raw) as ResendWebhookPayload;
+    } catch {
+      return new Response("Bad request", { status: 400 });
+    }
   }
 
   const email = extractEmail(payload.data);

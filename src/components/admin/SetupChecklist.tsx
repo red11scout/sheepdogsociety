@@ -55,7 +55,7 @@ export function SetupChecklist({ stats }: { stats: SetupStats }) {
       key: "letter",
       label: "Publish the first Letter",
       done: stats.publishedLetters > 0,
-      href: "/admin/letters",
+      href: "/admin/encouragements",
       hint: "One scripture. One practice. Five-minute read. Saves to a Resend Broadcast and to the public archive in one click.",
     },
     {

@@ -1,16 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // Skip type checking during build (handled in CI)
+  // Type errors fail the build (kept on; comment previously said the opposite).
   typescript: {
     ignoreBuildErrors: false,
-  },
-  // Allow Clerk/Supabase images
-  images: {
-    remotePatterns: [
-      { protocol: "https", hostname: "img.clerk.com" },
-      { protocol: "https", hostname: "**.supabase.co" },
-    ],
   },
   // Phase 2 IA consolidation. All 308s. Config redirects run before
   // middleware and the filesystem; keep /locations/request ABOVE

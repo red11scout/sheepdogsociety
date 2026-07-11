@@ -10,8 +10,7 @@
 
 import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
-import { letterAutopilot, letterSeries, weeklyEncouragements } from "@/db/schema-new";
-import { users } from "@/db/schema";
+import { letterAutopilot, letterSeries, weeklyEncouragements, users } from "@/db/schema";
 import { eq, and, isNull, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getOrCreatePilotRow } from "@/server/letters/autopilot-state";

@@ -4,9 +4,9 @@ import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
 import {
   weeklyEncouragements,
+  users,
   type ScriptureRef,
-} from "@/db/schema-new";
-import { users } from "@/db/schema";
+} from "@/db/schema";
 import { eq, and, isNull, desc, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { render } from "@react-email/render";

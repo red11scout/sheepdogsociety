@@ -275,10 +275,10 @@ export function AdminDashboard({ greetingName = "brother" }: AdminDashboardProps
         </div>
       </section>
 
-      {/* Recent letters from the legacy /admin/letters table — read-only history */}
+      {/* Recent Letters from the canonical weeklyEncouragements CMS */}
       <section className="mt-14">
         <div className="flex items-center gap-4">
-          <span className="section-mark text-brass">§ Recent Letters (legacy)</span>
+          <span className="section-mark text-brass">§ Recent Letters</span>
           <div className="hairline flex-1" />
           <Link
             href="/admin/encouragements"
@@ -292,7 +292,7 @@ export function AdminDashboard({ greetingName = "brother" }: AdminDashboardProps
             {data.recentLetters.map((letter, i) => (
               <Link
                 key={letter.id}
-                href={`/admin/letters/${letter.id}`}
+                href={`/admin/encouragements/${letter.id}`}
                 className={cn(
                   "group/row flex flex-col gap-2 px-4 py-4 transition-colors hover:bg-iron/60 md:grid md:grid-cols-[80px_1fr_120px_110px] md:items-center md:gap-4 md:px-6",
                   i > 0 && "border-t border-stone/10"
@@ -348,7 +348,7 @@ export function AdminDashboard({ greetingName = "brother" }: AdminDashboardProps
               body="The Letter is your weekly word. Draft one with Claude, autosave, then publish + broadcast in one click. The first one gets the brotherhood paying attention."
               primary={{
                 label: "Write the first Letter",
-                href: "/admin/letters/new",
+                href: "/admin/encouragements/new",
               }}
             />
           </div>

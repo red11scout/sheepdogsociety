@@ -14,9 +14,9 @@ const ways: { icon: IconName; roman: string; title: string; copy: string; cta: s
     icon: "key",
     roman: "I",
     title: "Give online",
-    copy: "Secure one-time or recurring giving through our online platform.",
-    cta: "Give now",
-    href: "#give-online",
+    copy: "One-time or recurring support. Reach out and we will get you set up.",
+    cta: "Get started",
+    href: "/contact",
   },
   {
     icon: "mail",
@@ -32,7 +32,7 @@ const ways: { icon: IconName; roman: string; title: string; copy: string; cta: s
     title: "Partner with us",
     copy: "Become a Sheepdog Partner with ongoing monthly support.",
     cta: "Learn more",
-    href: "#give-partner",
+    href: "#partners",
   },
 ];
 
@@ -129,7 +129,7 @@ export default function GivingPage() {
       </section>
 
       {/* Partners */}
-      <section className="bg-background text-foreground">
+      <section id="partners" className="scroll-mt-24 bg-background text-foreground">
         <div className="mx-auto max-w-5xl px-6 py-28 text-center md:px-12 md:py-40">
           <span className="section-mark text-brass">§ Sheepdog Partners</span>
           <h2 className="display-xl mt-6 text-display-lg">

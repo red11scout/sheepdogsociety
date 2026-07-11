@@ -8,7 +8,7 @@
 
 import { asc } from "drizzle-orm";
 import { db } from "@/db";
-import { letterAutopilot, type LetterAutopilot } from "@/db/schema-new";
+import { letterAutopilot, type LetterAutopilot } from "@/db/schema";
 import { computeScheduledFor } from "@/server/letters/series-core";
 import { chicagoDateParts } from "@/lib/letters/theme-calendar";
 

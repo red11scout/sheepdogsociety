@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { put } from "@vercel/blob";
 import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
-import { resources, users, aiGenerations } from "@/db/schema";
-import { resourceSections } from "@/db/schema-new";
+import { resources, users, aiGenerations, resourceSections } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import {
   convertDocxBuffer,

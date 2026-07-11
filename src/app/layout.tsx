@@ -46,12 +46,32 @@ const jetbrainsMono = JetBrains_Mono({
   subsets: ["latin"],
 });
 
+const SITE_NAME = "Sheepdog Society";
+const SITE_DESCRIPTION =
+  "A brotherhood of Christian men, anchored in Acts 20:28. We meet weekly around Scripture, tell each other the truth, and stand watch over one another.";
+
 export const metadata: Metadata = {
   metadataBase: new URL(
     process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.acts2028sheepdogsociety.com"
   ),
-  title: "Sheepdog Society",
-  description: "Men of Faith Community",
+  title: "Sheepdog Society — Acts 20:28",
+  description: SITE_DESCRIPTION,
+  // Site-wide social-share defaults. Pages that set their own openGraph
+  // (home, acts-20-28, letters) override these; everything else now shares
+  // as a branded card instead of a bare link.
+  openGraph: {
+    type: "website",
+    siteName: SITE_NAME,
+    title: "Sheepdog Society — Acts 20:28",
+    description: SITE_DESCRIPTION,
+    images: [{ url: "/api/og/verse", width: 1200, height: 630 }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Sheepdog Society — Acts 20:28",
+    description: SITE_DESCRIPTION,
+    images: ["/api/og/verse"],
+  },
   icons: {
     icon: [
       { url: "/logo.png", type: "image/png" },

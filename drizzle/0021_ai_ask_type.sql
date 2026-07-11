@@ -1,0 +1,11 @@
+-- Migration 0021: add 'ask' to ai_generation_type enum (P0 — public AI ask logging)
+--
+-- The public homepage "Ask the Watch" endpoint (src/app/api/public/ai/ask)
+-- is unauthenticated and calls the paid Sonnet tier. It now logs every served
+-- answer to ai_generations (entity_type = 'public_ask') for cost visibility and
+-- as the source of the shared daily cap. This enum value is what those rows use.
+--
+-- ADD VALUE IF NOT EXISTS is idempotent, so the apply script can safely re-run.
+-- Note: ALTER TYPE ... ADD VALUE cannot run inside a transaction block; the
+-- apply-neon-migration script executes each statement separately, so this is fine.
+ALTER TYPE "public"."ai_generation_type" ADD VALUE IF NOT EXISTS 'ask';
