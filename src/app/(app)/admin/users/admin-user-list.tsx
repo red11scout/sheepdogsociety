@@ -112,65 +112,71 @@ export function AdminUserList({
 
     return (
       <Card className="mb-3">
-        <CardContent className="flex items-center gap-4 p-4">
-          <Avatar>
-            <AvatarImage src={user.avatarUrl ?? undefined} />
-            <AvatarFallback>{initials || "?"}</AvatarFallback>
-          </Avatar>
-          <div className="flex-1">
-            <p className="font-medium">
-              {user.firstName} {user.lastName}
-              {isCurrentUser && (
-                <span className="ml-2 text-xs text-muted-foreground">(you)</span>
-              )}
-            </p>
-            <p className="text-sm text-muted-foreground">{user.email}</p>
-          </div>
-          {showRoleSelect ? (
-            <Select
-              value={user.role}
-              onValueChange={(value) =>
-                handleRoleChange(user.id, value as UserRole)
-              }
-              disabled={isCurrentUser || roleLoading === user.id}
-            >
-              <SelectTrigger className="w-[150px]" size="sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {(Object.entries(ROLE_LABELS) as [UserRole, string][]).map(
-                  ([value, label]) => (
-                    <SelectItem key={value} value={value}>
-                      {label}
-                    </SelectItem>
-                  )
+        <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+          <div className="flex min-w-0 items-center gap-4">
+            <Avatar>
+              <AvatarImage src={user.avatarUrl ?? undefined} />
+              <AvatarFallback>{initials || "?"}</AvatarFallback>
+            </Avatar>
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-medium">
+                {user.firstName} {user.lastName}
+                {isCurrentUser && (
+                  <span className="ml-2 text-xs text-muted-foreground">(you)</span>
                 )}
-              </SelectContent>
-            </Select>
-          ) : (
-            <Badge variant={user.role === "admin" ? "default" : "secondary"}>
-              {user.role.replace("_", " ")}
-            </Badge>
-          )}
-          {user.status === "pending" && (
-            <div className="flex gap-2">
-              <Button
-                size="sm"
-                onClick={() => handleAction(user.id, "approve")}
-                disabled={loading === user.id}
-              >
-                Approve
-              </Button>
-              <Button
-                size="sm"
-                variant="destructive"
-                onClick={() => handleAction(user.id, "reject")}
-                disabled={loading === user.id}
-              >
-                Deny
-              </Button>
+              </p>
+              <p className="truncate text-sm text-muted-foreground">{user.email}</p>
             </div>
-          )}
+          </div>
+          <div className="flex flex-wrap items-center gap-4">
+            {showRoleSelect ? (
+              <Select
+                value={user.role}
+                onValueChange={(value) =>
+                  handleRoleChange(user.id, value as UserRole)
+                }
+                disabled={isCurrentUser || roleLoading === user.id}
+              >
+                <SelectTrigger className="min-h-11 w-[150px]" size="sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {(Object.entries(ROLE_LABELS) as [UserRole, string][]).map(
+                    ([value, label]) => (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    )
+                  )}
+                </SelectContent>
+              </Select>
+            ) : (
+              <Badge variant={user.role === "admin" ? "default" : "secondary"}>
+                {user.role.replace("_", " ")}
+              </Badge>
+            )}
+            {user.status === "pending" && (
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  size="sm"
+                  className="min-h-11"
+                  onClick={() => handleAction(user.id, "approve")}
+                  disabled={loading === user.id}
+                >
+                  Approve
+                </Button>
+                <Button
+                  size="sm"
+                  variant="destructive"
+                  className="min-h-11"
+                  onClick={() => handleAction(user.id, "reject")}
+                  disabled={loading === user.id}
+                >
+                  Deny
+                </Button>
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
     );

@@ -56,8 +56,8 @@ export function AdminLocationInterests({
             {open.map((interest) => (
               <Card key={interest.id}>
                 <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-0">
+                    <div className="min-w-0 space-y-1">
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-bronze" />
                         <span className="font-bold">
@@ -68,9 +68,9 @@ export function AdminLocationInterests({
                         <Badge variant="secondary">{interest.status}</Badge>
                       </div>
                       <p className="text-sm font-medium">{interest.name}</p>
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Mail className="h-3 w-3" />
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                        <span className="flex min-w-0 items-center gap-1 break-words">
+                          <Mail className="h-3 w-3 shrink-0" />
                           {interest.email}
                         </span>
                         {interest.phone && (
@@ -90,11 +90,12 @@ export function AdminLocationInterests({
                         {format(new Date(interest.createdAt), "MMM d, yyyy")}
                       </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       {interest.status === "new" && (
                         <Button
                           size="sm"
                           variant="secondary"
+                          className="min-h-11"
                           onClick={() => handleAction(interest.id, "contacted")}
                         >
                           Mark Contacted
@@ -102,6 +103,7 @@ export function AdminLocationInterests({
                       )}
                       <Button
                         size="sm"
+                        className="min-h-11"
                         onClick={() => handleAction(interest.id, "resolved")}
                       >
                         <Check className="mr-1 h-4 w-4" />
@@ -124,10 +126,10 @@ export function AdminLocationInterests({
           <div className="space-y-2">
             {resolved.map((interest) => (
               <Card key={interest.id} className="opacity-75">
-                <CardContent className="flex items-center justify-between gap-3 p-3">
-                  <div className="flex items-center gap-3">
+                <CardContent className="flex flex-col gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex min-w-0 items-center gap-3">
                     <Badge>resolved</Badge>
-                    <span className="text-sm">
+                    <span className="truncate text-sm">
                       {interest.locationName ?? "Unknown group"} —{" "}
                       {interest.name}
                     </span>
@@ -135,6 +137,7 @@ export function AdminLocationInterests({
                   <Button
                     size="sm"
                     variant="ghost"
+                    className="min-h-11 self-start sm:self-auto"
                     onClick={() => handleAction(interest.id, "new")}
                   >
                     <RotateCcw className="mr-1 h-4 w-4" />

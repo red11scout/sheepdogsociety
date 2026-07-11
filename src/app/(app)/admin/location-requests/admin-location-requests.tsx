@@ -58,8 +58,8 @@ export function AdminLocationRequests({
             {pending.map((req) => (
               <Card key={req.id}>
                 <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-0">
+                    <div className="min-w-0 space-y-1">
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-bronze" />
                         <span className="font-bold">
@@ -70,9 +70,9 @@ export function AdminLocationRequests({
                       <p className="text-sm font-medium">
                         {req.requesterName}
                       </p>
-                      <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                        <span className="flex items-center gap-1">
-                          <Mail className="h-3 w-3" />
+                      <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
+                        <span className="flex min-w-0 items-center gap-1 break-words">
+                          <Mail className="h-3 w-3 shrink-0" />
                           {req.requesterEmail}
                         </span>
                         {req.requesterPhone && (
@@ -97,9 +97,10 @@ export function AdminLocationRequests({
                         {format(new Date(req.createdAt), "MMM d, yyyy")}
                       </p>
                     </div>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         size="sm"
+                        className="min-h-11"
                         onClick={() => handleAction(req.id, "approved")}
                       >
                         <Check className="mr-1 h-4 w-4" />
@@ -108,6 +109,7 @@ export function AdminLocationRequests({
                       <Button
                         size="sm"
                         variant="destructive"
+                        className="min-h-11"
                         onClick={() => handleAction(req.id, "declined")}
                       >
                         <X className="mr-1 h-4 w-4" />

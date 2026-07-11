@@ -327,7 +327,7 @@ export default function AdminEventsPage() {
         <div className="space-y-3">
           {filtered.map((ev) => (
             <Card key={ev.id}>
-              <CardContent className="flex items-center justify-between gap-4 py-4">
+              <CardContent className="flex flex-col gap-3 py-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="font-medium truncate">{ev.title}</h3>
@@ -341,22 +341,23 @@ export default function AdminEventsPage() {
                       <Badge variant="destructive">Cancelled</Badge>
                     )}
                   </div>
-                  <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                  <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                     <span>
                       {format(new Date(ev.startTime), "MMM d, yyyy h:mm a")}
                     </span>
-                    {ev.location && <span>{ev.location}</span>}
+                    {ev.location && <span className="break-words">{ev.location}</span>}
                     <span className="flex items-center gap-1">
                       <Users className="h-3 w-3" />
                       {ev.rsvpCount} RSVP{ev.rsvpCount !== 1 && "s"}
                     </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
                   {ev.seriesId && (
                     <Button
                       variant="outline"
                       size="sm"
+                      className="min-h-11"
                       onClick={() => setCancelTarget(ev)}
                     >
                       {ev.isCancelled ? "Restore date" : "Cancel date"}
@@ -365,6 +366,7 @@ export default function AdminEventsPage() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="min-h-11"
                     onClick={() => openEdit(ev)}
                   >
                     <Pencil className="h-4 w-4" />
@@ -372,6 +374,7 @@ export default function AdminEventsPage() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="min-h-11"
                     onClick={() => setDeleteId(ev.id)}
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />

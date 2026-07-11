@@ -164,7 +164,7 @@ export default function AdminContactsPage() {
               className="cursor-pointer transition-colors hover:bg-accent/50"
               onClick={() => openMessage(contact)}
             >
-              <CardContent className="flex items-center justify-between gap-4 p-4">
+              <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span
@@ -194,10 +194,11 @@ export default function AdminContactsPage() {
                     {format(new Date(contact.createdAt), "MMM d, yyyy h:mm a")}
                   </p>
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
+                <div className="flex flex-wrap shrink-0 items-center gap-2 sm:gap-1">
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="min-h-11"
                     title={contact.isRead ? "Mark unread" : "Mark read"}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -213,6 +214,7 @@ export default function AdminContactsPage() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="min-h-11"
                     title={contact.resolvedAt ? "Reopen" : "Mark resolved"}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -228,6 +230,7 @@ export default function AdminContactsPage() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="min-h-11"
                     onClick={(e) => {
                       e.stopPropagation();
                       setDeleteTarget(contact);
