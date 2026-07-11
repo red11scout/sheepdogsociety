@@ -89,23 +89,35 @@ export async function generateCoverImage(
     return null;
   }
 
-  const data = (await openaiRes.json()) as {
-    data?: Array<{ b64_json?: string; url?: string }>;
-  };
-  const item = data.data?.[0];
-  if (!item || (!item.b64_json && !item.url)) {
-    console.error("generateCoverImage: OpenAI returned no image.");
-    return null;
-  }
-
+  // Response parsing and the url-branch download can both throw (bad
+  // JSON, network drop mid-body); the "never throws" contract means they
+  // must resolve to null like every other failure path.
   let buffer: ArrayBuffer;
-  if (item.b64_json) {
-    buffer = Buffer.from(item.b64_json, "base64").buffer as ArrayBuffer;
-  } else if (item.url) {
-    const r = await fetch(item.url);
-    buffer = await r.arrayBuffer();
-  } else {
-    console.error("generateCoverImage: no image data");
+  try {
+    const data = (await openaiRes.json()) as {
+      data?: Array<{ b64_json?: string; url?: string }>;
+    };
+    const item = data.data?.[0];
+    if (!item || (!item.b64_json && !item.url)) {
+      console.error("generateCoverImage: OpenAI returned no image.");
+      return null;
+    }
+
+    if (item.b64_json) {
+      buffer = Buffer.from(item.b64_json, "base64").buffer as ArrayBuffer;
+    } else if (item.url) {
+      const r = await fetch(item.url);
+      if (!r.ok) {
+        console.error(`generateCoverImage: image download failed: ${r.statusText}`);
+        return null;
+      }
+      buffer = await r.arrayBuffer();
+    } else {
+      console.error("generateCoverImage: no image data");
+      return null;
+    }
+  } catch (err) {
+    console.error("generateCoverImage: failed to read OpenAI response:", err);
     return null;
   }
 

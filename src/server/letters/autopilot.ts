@@ -296,6 +296,8 @@ function toDraft(letter: PlanLetter, position: number): DraftLetter {
 
 export async function runAutopilot(opts?: { dryRun?: boolean }): Promise<AutopilotRunReport> {
   const dryRun = opts?.dryRun ?? false;
+  // Dry-run AI calls are real spend; the tag keeps cost analysis honest.
+  const dryTag = dryRun ? " (dry run)" : "";
 
   // 1. Load the single autopilot row; create it (disabled) if missing.
   let [pilot] = await db.select().from(letterAutopilot).limit(1);
@@ -304,6 +306,18 @@ export async function runAutopilot(opts?: { dryRun?: boolean }): Promise<Autopil
   }
   if (!pilot.enabled) {
     return skipped("disabled", dryRun);
+  }
+
+  // Overlap guard (a): the weekly cron and a manual ?key= smoke test can
+  // race or double-fire. A real run inside the last 24 hours means this
+  // one stands down. Dry runs skip the guard: they persist nothing, so
+  // they cannot double-book the calendar.
+  if (
+    !dryRun &&
+    pilot.lastRunAt &&
+    Date.now() - pilot.lastRunAt.getTime() < 24 * 3600 * 1000
+  ) {
+    return skipped("ran recently", dryRun);
   }
 
   // 2. How many letters are already scheduled? Two or more means the
@@ -359,7 +373,7 @@ export async function runAutopilot(opts?: { dryRun?: boolean }): Promise<Autopil
 
   const proposal = await proposeTheme({ voice, seasonBlock, recentThemes });
   await logGeneration({
-    prompt: `autopilot theme: block starting ${startDate}, voice ${voice.name}`,
+    prompt: `autopilot theme: block starting ${startDate}, voice ${voice.name}${dryTag}`,
     promptVersion: AUTOPILOT_THEME_PROMPT_VERSION,
     output: proposal.ok
       ? JSON.stringify({ theme: proposal.theme, rationale: proposal.rationale })
@@ -396,7 +410,7 @@ export async function runAutopilot(opts?: { dryRun?: boolean }): Promise<Autopil
     const detail = err instanceof Error ? err.message.slice(0, 400) : "";
     console.error("autopilot series generation failed:", err);
     await logGeneration({
-      prompt: `autopilot series: ${theme} (${voice.name})`,
+      prompt: `autopilot series: ${theme} (${voice.name})${dryTag}`,
       promptVersion: SERIES_PLAN_PROMPT_VERSION,
       output: `FAILED: ${detail}`,
       userId: pilot.defaultAuthorId,
@@ -410,7 +424,7 @@ export async function runAutopilot(opts?: { dryRun?: boolean }): Promise<Autopil
     return skipped("series generation failed", dryRun);
   }
   await logGeneration({
-    prompt: `autopilot series: ${theme} (${voice.name})`,
+    prompt: `autopilot series: ${theme} (${voice.name})${dryTag}`,
     promptVersion: SERIES_PLAN_PROMPT_VERSION,
     output: JSON.stringify(plan.letters),
     tokensIn: plan.tokensIn,
@@ -464,7 +478,7 @@ export async function runAutopilot(opts?: { dryRun?: boolean }): Promise<Autopil
         seasonContext: seasonLine(week),
       });
       await logGeneration({
-        prompt: `autopilot regenerate: position ${position}, ${theme} (${voice.name})`,
+        prompt: `autopilot regenerate: position ${position}, ${theme} (${voice.name})${dryTag}`,
         promptVersion: SERIES_PLAN_PROMPT_VERSION,
         output: JSON.stringify(single.letters),
         tokensIn: single.tokensIn,
@@ -488,7 +502,7 @@ export async function runAutopilot(opts?: { dryRun?: boolean }): Promise<Autopil
       regenDetail = `regeneration failed (${err instanceof Error ? err.message.slice(0, 200) : ""})`;
       console.error(`autopilot regeneration for position ${position} failed:`, err);
       await logGeneration({
-        prompt: `autopilot regenerate: position ${position}, ${theme} (${voice.name})`,
+        prompt: `autopilot regenerate: position ${position}, ${theme} (${voice.name})${dryTag}`,
         promptVersion: SERIES_PLAN_PROMPT_VERSION,
         output: `FAILED: ${regenDetail}`,
         userId: pilot.defaultAuthorId,
@@ -557,68 +571,124 @@ export async function runAutopilot(opts?: { dryRun?: boolean }): Promise<Autopil
     return skipped("no default author configured", dryRun);
   }
 
+  // Overlap guard (b): generation took minutes; re-check the queue right
+  // before writing. Another writer (a concurrent run or the admin wizard)
+  // may have scheduled letters in the meantime, and standing down beats a
+  // double-booked calendar. Alert-free by design: nothing is wrong, the
+  // queue is simply full.
+  const recheck = await db
+    .select({ id: weeklyEncouragements.id })
+    .from(weeklyEncouragements)
+    .where(
+      and(
+        eq(weeklyEncouragements.status, "scheduled"),
+        isNull(weeklyEncouragements.deletedAt)
+      )
+    );
+  if (recheck.length >= 2) {
+    return skipped("letters were scheduled while generating", dryRun);
+  }
+
   // Persist. Gap-week rule (locked): survivors keep their ORIGINAL
   // positions (holes allowed) and the original block startDate. The core
   // computes each date from its position, so a dropped letter is simply
-  // a missing week, never a renumbered one.
-  const created = await createSeriesWithLettersCore(authorId, {
-    title: theme,
-    theme,
-    voice: voice.id,
-    totalCount: survivors.length,
-    cadence: "weekly",
-    startDate,
-    publishHour: PUBLISH_HOUR,
-    origin: "autopilot",
-    letters: survivors,
-  });
+  // a missing week, never a renumbered one. A throw here is a terminal,
+  // report-shaped outcome with an alert: the shepherd must know the week
+  // produced nothing, not find out from a bare 500 in the cron logs.
+  let created: Awaited<ReturnType<typeof createSeriesWithLettersCore>>;
+  try {
+    created = await createSeriesWithLettersCore(authorId, {
+      title: theme,
+      theme,
+      voice: voice.id,
+      totalCount: survivors.length,
+      cadence: "weekly",
+      startDate,
+      publishHour: PUBLISH_HOUR,
+      origin: "autopilot",
+      letters: survivors,
+    });
+  } catch (err) {
+    const detail = err instanceof Error ? err.message.slice(0, 400) : "";
+    console.error("autopilot persistence failed:", err);
+    await sendEmail(
+      "The letter autopilot could not finish this week",
+      buildAlertBody(`it could not save the block to the database (${detail})`)
+    );
+    return {
+      ran: false,
+      reason: "persistence failed",
+      theme,
+      voice: voice.name,
+      scheduled: [],
+      gaps,
+      ...(verificationSkipped ? { verificationSkipped } : {}),
+      coversGenerated: 0,
+    };
+  }
+
+  // From here on, letters ARE persisted and WILL publish. Steps 10 and 11
+  // are wrapped so no failure in covers or bookkeeping can silently
+  // swallow step 12's visibility email: unreviewed letters on the
+  // calendar with no note to the shepherd is the one outcome this engine
+  // must never produce.
 
   // 10. Covers: broadsheet style, landscape, final quality. Prompt names
   // the title, theme, and season only, never scripture text. Failures
   // are counted by omission and never block the run.
   let coversGenerated = 0;
-  for (const inserted of created.letters) {
-    const draft = survivors.find((s) => s.position === inserted.position);
-    const week = weeks[inserted.position - 1];
-    if (!draft || !week) continue;
-    const seasonStr = week.season.cultural
-      ? `${week.season.liturgical}, ${week.season.cultural}`
-      : week.season.liturgical;
-    const cover = await generateCoverImage({
-      prompt: `Cover image for a weekly pastoral letter titled "${draft.title}". Series theme: ${theme}. Season: ${seasonStr}`,
-      style: "broadsheet",
-      aspectRatio: "landscape",
-      quality: "final",
-      folder: "letters",
-    });
-    if (!cover) continue;
-    try {
-      await db
-        .update(weeklyEncouragements)
-        .set({
-          coverImageUrl: cover.url,
-          coverImageAlt: draft.title,
-          updatedAt: new Date(),
-        })
-        .where(eq(weeklyEncouragements.id, inserted.id));
-      coversGenerated += 1;
-    } catch (err) {
-      console.error(`autopilot cover save failed for ${inserted.id}:`, err);
+  try {
+    for (const inserted of created.letters) {
+      const draft = survivors.find((s) => s.position === inserted.position);
+      const week = weeks[inserted.position - 1];
+      if (!draft || !week) continue;
+      const seasonStr = week.season.cultural
+        ? `${week.season.liturgical}, ${week.season.cultural}`
+        : week.season.liturgical;
+      const cover = await generateCoverImage({
+        prompt: `Cover image for a weekly pastoral letter titled "${draft.title}". Series theme: ${theme}. Season: ${seasonStr}`,
+        style: "broadsheet",
+        aspectRatio: "landscape",
+        quality: "final",
+        folder: "letters",
+      });
+      if (!cover) continue;
+      try {
+        await db
+          .update(weeklyEncouragements)
+          .set({
+            coverImageUrl: cover.url,
+            coverImageAlt: draft.title,
+            updatedAt: new Date(),
+          })
+          .where(eq(weeklyEncouragements.id, inserted.id));
+        coversGenerated += 1;
+      } catch (err) {
+        console.error(`autopilot cover save failed for ${inserted.id}:`, err);
+      }
     }
+  } catch (err) {
+    console.error("autopilot cover generation failed:", err);
   }
 
-  // 11. Advance the autopilot state.
-  await db
-    .update(letterAutopilot)
-    .set({
-      voiceRotationIndex: pilot.voiceRotationIndex + 1,
-      lastRunAt: new Date(),
-      lastBlockTheme: theme,
-      lastBlockVoice: voice.id,
-      lastBlockLetterIds: created.letters.map((l) => l.id),
-      updatedAt: new Date(),
-    })
-    .where(eq(letterAutopilot.id, pilot.id));
+  // 11. Advance the autopilot state. If this write fails, lastRunAt does
+  // not advance, but the >= 2 scheduled-letters guard still stands the
+  // next run down, so the block cannot double up.
+  try {
+    await db
+      .update(letterAutopilot)
+      .set({
+        voiceRotationIndex: pilot.voiceRotationIndex + 1,
+        lastRunAt: new Date(),
+        lastBlockTheme: theme,
+        lastBlockVoice: voice.id,
+        lastBlockLetterIds: created.letters.map((l) => l.id),
+        updatedAt: new Date(),
+      })
+      .where(eq(letterAutopilot.id, pilot.id));
+  } catch (err) {
+    console.error("autopilot state update failed:", err);
+  }
 
   // 12. Visibility email to the shepherd. Best-effort, never blocking.
   const scheduled = created.letters.map((l) => {
