@@ -118,6 +118,12 @@ export function AdminSidebar({
       label: "Site Content",
       items: [
         {
+          href: "/admin/studio",
+          label: "Studio",
+          icon: "sparkles",
+          hint: "Change the site's look, layout, and words. Preview first, apply when ready.",
+        },
+        {
           href: "/admin/site-text",
           label: "Site text",
           icon: "scroll",

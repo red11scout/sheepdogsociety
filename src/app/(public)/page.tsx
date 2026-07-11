@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
@@ -14,6 +15,8 @@ import { LetterCover } from "@/components/letters/LetterCover";
 import { listPublishedEncouragements } from "@/server/encouragements";
 import { cadenceLabel, type SeriesCadence } from "@/lib/events/series";
 import { getSiteTextMap } from "@/lib/site-text/get";
+import { getStudioConfig } from "@/lib/studio/get";
+import { renderMerge } from "@/lib/studio/config";
 
 export const revalidate = 300;
 
@@ -146,17 +149,17 @@ const standingOrders = [
 ];
 
 export default async function HomePage() {
-  const [gatherings, letter, story, rhythms, t] = await Promise.all([
+  const [gatherings, letter, story, rhythms, t, config] = await Promise.all([
     getNextGatherings(),
     getLatestLetter(),
     getStory(),
     getMeetingRhythms(),
     getSiteTextMap(),
+    getStudioConfig(),
   ]);
 
-  return (
-    <>
-      {/* 1 — Hero: the front page */}
+  const sections: Record<string, React.ReactNode> = {
+    hero: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 pb-16 pt-12 md:px-10 md:pb-24 md:pt-16">
           <Kicker left="The front page" right="Every man needs a watch to stand" />
@@ -213,8 +216,8 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* 2 — The why: Acts 20:28 ember band */}
+    ),
+    verse: (
       <section className="ember-band">
         <div className="mx-auto max-w-4xl px-6 py-20 text-center md:px-10 md:py-28">
           <p className="section-mark">§ Acts 20:28</p>
@@ -228,8 +231,8 @@ export default async function HomePage() {
           </Link>
         </div>
       </section>
-
-      {/* 3 — What this is: the 5W1H band (spec §A.2) */}
+    ),
+    "what-this-is": (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-20 md:px-10 md:py-28">
           <Kicker left="What this is" right="Plain answers" />
@@ -283,8 +286,8 @@ export default async function HomePage() {
           </StaggerReveal>
         </div>
       </section>
-
-      {/* 4 — Next gatherings (live series data) */}
+    ),
+    gatherings: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 pb-20 md:px-10 md:pb-28">
           <Kicker left="Next gatherings" right="Come once · Come often" />
@@ -340,8 +343,8 @@ export default async function HomePage() {
           </Link>
         </div>
       </section>
-
-      {/* 5 — The latest Letter */}
+    ),
+    letter: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 pb-20 md:px-10 md:pb-28">
           <Kicker
@@ -416,34 +419,32 @@ export default async function HomePage() {
           </Reveal>
         </div>
       </section>
-
-      {/* 6 — One story */}
-      {story && (
-        <section className="bg-background text-foreground">
-          <div className="mx-auto max-w-4xl px-6 pb-20 md:px-10 md:pb-28">
-            <Kicker left="One story" right="Told plain" />
-            <Reveal className="mt-10">
-              <blockquote className="border-l-2 border-brass pl-6">
-                <p className="font-pullquote text-xl italic leading-relaxed text-foreground/85 md:text-2xl">
-                  {story.content.slice(0, 280)}
-                  {story.content.length > 280 ? "..." : ""}
-                </p>
-                <footer className="section-mark mt-6">
-                  {story.authorFirstName || "A brother"}
-                </footer>
-              </blockquote>
-              <Link
-                href="/stories"
-                className="link-editorial mt-8 inline-block text-sm"
-              >
-                More stories
-              </Link>
-            </Reveal>
-          </div>
-        </section>
-      )}
-
-      {/* 7 — Final Join CTA */}
+    ),
+    story: story ? (
+      <section className="bg-background text-foreground">
+        <div className="mx-auto max-w-4xl px-6 pb-20 md:px-10 md:pb-28">
+          <Kicker left="One story" right="Told plain" />
+          <Reveal className="mt-10">
+            <blockquote className="border-l-2 border-brass pl-6">
+              <p className="font-pullquote text-xl italic leading-relaxed text-foreground/85 md:text-2xl">
+                {story.content.slice(0, 280)}
+                {story.content.length > 280 ? "..." : ""}
+              </p>
+              <footer className="section-mark mt-6">
+                {story.authorFirstName || "A brother"}
+              </footer>
+            </blockquote>
+            <Link
+              href="/stories"
+              className="link-editorial mt-8 inline-block text-sm"
+            >
+              More stories
+            </Link>
+          </Reveal>
+        </div>
+      </section>
+    ) : null,
+    "join-cta": (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-4xl border-t border-foreground/15 px-6 py-20 text-center md:px-10 md:py-28">
           <p className="folio">The invitation stands</p>
@@ -463,6 +464,16 @@ export default async function HomePage() {
           </div>
         </div>
       </section>
+    ),
+  };
+
+  return (
+    <>
+      {renderMerge("home", config)
+        .filter((s) => s.visible)
+        .map((s) => (
+          <Fragment key={s.id}>{sections[s.id]}</Fragment>
+        ))}
     </>
   );
 }

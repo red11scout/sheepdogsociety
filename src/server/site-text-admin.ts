@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath, updateTag } from "next/cache";
-import { eq } from "drizzle-orm";
+import { and, eq, isNotNull, isNull } from "drizzle-orm";
 import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
 import { siteText, users } from "@/db/schema";
@@ -45,7 +45,14 @@ export async function saveSiteText(
       return { ok: false, error: "That text is too long. Keep it under 2,000 characters." };
     }
     if (!value.trim()) {
-      await db.delete(siteText).where(eq(siteText.key, key));
+      // Draft-safety: a row carrying a Studio draft_value must survive a
+      // blank save (which means "use default"). Blank the published value
+      // where a draft is staged; delete only draft-free rows.
+      await db
+        .update(siteText)
+        .set({ value: "", updatedAt: new Date(), updatedBy: userId })
+        .where(and(eq(siteText.key, key), isNotNull(siteText.draftValue)));
+      await db.delete(siteText).where(and(eq(siteText.key, key), isNull(siteText.draftValue)));
       revalidateSiteText(key);
       return { ok: true };
     }
@@ -75,9 +82,14 @@ export async function resetSiteText(
   key: string
 ): Promise<{ ok: boolean; error?: string }> {
   try {
-    await requireAdmin();
+    const userId = await requireAdmin();
     if (!entryFor(key)) return { ok: false, error: "Unknown text key." };
-    await db.delete(siteText).where(eq(siteText.key, key));
+    // Draft-safety: preserve rows carrying a Studio draft_value (see saveSiteText).
+    await db
+      .update(siteText)
+      .set({ value: "", updatedAt: new Date(), updatedBy: userId })
+      .where(and(eq(siteText.key, key), isNotNull(siteText.draftValue)));
+    await db.delete(siteText).where(and(eq(siteText.key, key), isNull(siteText.draftValue)));
     revalidateSiteText(key);
     return { ok: true };
   } catch (err) {
