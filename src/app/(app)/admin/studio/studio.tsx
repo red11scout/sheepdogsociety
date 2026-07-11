@@ -227,6 +227,10 @@ export function Studio({
       const res = await discardDraft();
       if (res.ok) {
         setConfig(published);
+        // Re-derive from the restored (published) config, not the frozen
+        // mount-time value — otherwise a dismissed walkthrough can silently
+        // reappear (or a shown one silently vanish) after Discard.
+        setWalkthroughGone(!!published.walkthroughDismissed);
         setTexts((t) => Object.fromEntries(Object.entries(t).map(([k, v]) => [k, { ...v, draftValue: null }])));
         setOpenKey(null);
         setStatus({ msg: "Draft discarded. You are back to what is live.", ok: true });

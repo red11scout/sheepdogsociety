@@ -45,8 +45,14 @@ type Snapshot = { config: StudioConfig; textOverrides: Record<string, string> };
 
 /** Task 4 carry-in: getStudioConfig's normalize is shallow — keep malformed
  *  jsonb out of the column at THIS write boundary instead. Validates shape,
- *  resolves themeId, drops unknown page/section ids (render-merge idiom). */
-function validateConfig(input: unknown): { ok: true; config: StudioConfig } | { ok: false; error: string } {
+ *  resolves themeId, drops unknown page/section ids (render-merge idiom).
+ *  `droppedCount` on the ok result lets callers (Restore) surface stale-id
+ *  drops to the admin the same way text-key drops already are (spec: config
+ *  restoration "drops stale ids ... with a per-item note, same idiom as
+ *  changeset validation"). */
+function validateConfig(
+  input: unknown
+): { ok: true; config: StudioConfig; droppedCount: number } | { ok: false; error: string } {
   if (typeof input !== "object" || input === null || Array.isArray(input)) {
     return { ok: false, error: "Malformed config." };
   }
@@ -55,10 +61,14 @@ function validateConfig(input: unknown): { ok: true; config: StudioConfig } | { 
   if (typeof c.pages !== "object" || c.pages === null || Array.isArray(c.pages)) {
     return { ok: false, error: "Malformed config: pages must be an object." };
   }
+  let droppedCount = 0;
   const pages: StudioConfig["pages"] = {};
   for (const [pageId, page] of Object.entries(c.pages as Record<string, unknown>)) {
     const registry = SECTION_REGISTRY[pageId];
-    if (!registry) continue; // unknown page ids dropped
+    if (!registry) {
+      droppedCount++; // unknown page id dropped
+      continue;
+    }
     if (typeof page !== "object" || page === null || Array.isArray(page)) {
       return { ok: false, error: `Malformed config: page "${pageId}" must be an object.` };
     }
@@ -74,12 +84,14 @@ function validateConfig(input: unknown): { ok: true; config: StudioConfig } | { 
       if (typeof id !== "string" || typeof visible !== "boolean") {
         return { ok: false, error: "Malformed config: sections must be {id: string, visible: boolean}." };
       }
-      if (known.has(id)) kept.push({ id, visible }); // unknown section ids dropped
+      if (known.has(id)) kept.push({ id, visible });
+      else droppedCount++; // unknown section id dropped
     }
     pages[pageId] = { sections: kept };
   }
   return {
     ok: true,
+    droppedCount,
     config: {
       themeId: resolveThemeId({ themeId: c.themeId, pages: {} }, THEME_IDS),
       pages,
@@ -248,9 +260,12 @@ export async function restoreVersion(
         snap?.textOverrides && typeof snap.textOverrides === "object" ? snap.textOverrides : {};
 
       // Config restored into draft wholesale, through the render-merge rule
-      // (validateConfig drops stale ids the registry no longer knows).
+      // (validateConfig drops stale ids the registry no longer knows — count
+      // folded into the same `dropped` total the text-key loop below uses,
+      // so the admin sees ONE combined note per spec's per-item-note idiom).
       const checked = validateConfig(snapConfig);
       const draftConfig = checked.ok ? checked.config : normalize(undefined);
+      if (checked.ok) dropped += checked.droppedCount;
       const row = await pilotRow(tx as unknown as typeof db);
       await tx
         .update(siteStudio)
@@ -310,7 +325,7 @@ export async function restoreVersion(
     });
     if (!found) return { ok: false, error: "That version no longer exists." };
     return dropped > 0
-      ? { ok: true, note: `${dropped} retired text ${dropped === 1 ? "line" : "lines"} from that version no longer exist and ${dropped === 1 ? "was" : "were"} skipped.` }
+      ? { ok: true, note: `${dropped} ${dropped === 1 ? "item" : "items"} from that version no longer exist (a retired text line or a section that isn't on the page anymore) and ${dropped === 1 ? "was" : "were"} skipped.` }
       : { ok: true };
   } catch (err) {
     console.error("restoreVersion failed", err);
