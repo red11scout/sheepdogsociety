@@ -9,6 +9,7 @@
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import path from "node:path";
+import { THEME_DATA } from "../src/lib/studio/themes-data.mjs";
 
 const cssPath = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -107,19 +108,18 @@ const PAIRS = [
   ["#1c1610", "#c9834a", 4.5, "ember band copper kicker"],
 ];
 
-let failed = false;
-for (const [themeName, vars] of [
-  ["light", light],
-  ["dark", dark],
-]) {
-  console.log(`\n=== ${themeName} ===`);
-  for (const [bgKey, fgKey, min, label] of PAIRS) {
+/** Run every declared PAIR against one resolved var set, logging under
+ *  `label`. Returns true if any pair failed or could not be resolved. */
+function runPairs(label, vars) {
+  console.log(`\n=== ${label} ===`);
+  let failed = false;
+  for (const [bgKey, fgKey, min, pairLabel] of PAIRS) {
     const bgRaw = bgKey.startsWith("#") ? bgKey : resolve(vars, vars[bgKey] ?? "");
     const fgRaw = fgKey.startsWith("#") ? fgKey : resolve(vars, vars[fgKey] ?? "");
     const bg = bgRaw ? toLuminance(bgRaw) : null;
     const fg = fgRaw ? toLuminance(fgRaw) : null;
     if (bg == null || fg == null) {
-      console.log(`  ?? ${label}: could not resolve ${bgKey} / ${fgKey}`);
+      console.log(`  ?? ${pairLabel}: could not resolve ${bgKey} / ${fgKey}`);
       failed = true;
       continue;
     }
@@ -127,8 +127,28 @@ for (const [themeName, vars] of [
     const ok = r >= min;
     if (!ok) failed = true;
     console.log(
-      `  ${ok ? "OK " : "FAIL"} ${label}: ${r.toFixed(2)}:1 (needs ${min}:1) [${bgKey} vs ${fgKey}]`
+      `  ${ok ? "OK " : "FAIL"} ${pairLabel}: ${r.toFixed(2)}:1 (needs ${min}:1) [${bgKey} vs ${fgKey}]`
     );
   }
+  return failed;
 }
+
+let failed = false;
+for (const [themeName, vars] of [
+  ["light", light],
+  ["dark", dark],
+]) {
+  if (runPairs(themeName, vars)) failed = true;
+}
+
+// For each non-identity theme: overlay its vars on the parsed baseline and
+// re-run the same PAIRS in both modes. A theme may not ship below AA.
+for (const theme of THEME_DATA) {
+  if (Object.keys(theme.light).length === 0) continue; // pasture-iron identity
+  const tLight = { ...light, ...theme.light };
+  const tDark = { ...dark, ...theme.dark };
+  if (runPairs(`theme:${theme.id} light`, tLight)) failed = true;
+  if (runPairs(`theme:${theme.id} dark`, tDark)) failed = true;
+}
+
 process.exit(failed ? 1 : 0);
