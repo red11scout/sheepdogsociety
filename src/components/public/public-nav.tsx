@@ -43,7 +43,9 @@ const navLinks: NavLink[] = [
 const mobileSecondaryLinks: { href: string; label: string }[] = [
   { href: "/resources", label: "Resources" },
   { href: "/join", label: "Join" },
-  { href: "/events", label: "Events" },
+  // Events moved to the bottom tab bar (Drew 2026-07-11); The Letter took
+  // its panel slot so every primary destination stays reachable on mobile.
+  { href: "/letter", label: "The Letter" },
   { href: "/stories", label: "Stories" },
   { href: "/about", label: "About us" },
   { href: "/what-to-expect", label: "What to expect" },
