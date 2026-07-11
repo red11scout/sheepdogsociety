@@ -218,6 +218,7 @@ export async function discardDraft(): Promise<{ ok: boolean; error?: string }> {
   try {
     const userId = await requireAdmin();
     await db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${STUDIO_LOCK})`);
       const row = await pilotRow(tx as unknown as typeof db);
       await tx
         .update(siteStudio)

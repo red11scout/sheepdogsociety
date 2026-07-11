@@ -75,7 +75,7 @@ const STUCK_CARDS: { title: string; body: string }[] = [
 
 const WALKTHROUGH_STEPS = [
   "Pick a theme. The preview recolors right away.",
-  "Show, hide, or move a homepage section.",
+  "Show, hide, or move a section on this page.",
   "Tap a line of text and change the words.",
   "Happy with the preview? Hit Apply. A snapshot is saved so you can undo.",
 ];
@@ -375,7 +375,7 @@ export function Studio({
       {/* First-run walkthrough */}
       {!walkthroughGone && (
         <div className="border border-brass/30 bg-brass/5 p-4">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-wrap items-start justify-between gap-4">
             <p className="section-mark text-brass">First time here? Four steps.</p>
             <button
               type="button"
@@ -409,7 +409,11 @@ export function Studio({
             <select
               id="studio-page-select"
               value={selectedPage}
-              onChange={(e) => setSelectedPage(e.target.value)}
+              onChange={(e) => {
+                setSelectedPage(e.target.value);
+                setOpenKey(null);
+                setFieldDraft("");
+              }}
               className="mt-3 h-11 w-full border border-foreground/20 bg-transparent px-4 text-sm text-foreground focus:border-brass focus:outline-none"
             >
               {pages.map((p) => (
@@ -590,7 +594,7 @@ export function Studio({
                                 if (res.ok) setFieldDraft(res.draft);
                                 else fail(res.error);
                               }}
-                              className="text-xs font-medium text-brass hover:underline disabled:opacity-50"
+                              className="inline-flex min-h-11 items-center text-xs font-medium text-brass hover:underline disabled:opacity-50"
                             >
                               {assisting === m ? "Working..." : m === "warm-up" ? "Warm up" : m.charAt(0).toUpperCase() + m.slice(1)}
                             </button>
@@ -712,7 +716,7 @@ export function Studio({
 
           {/* AI recommendations */}
           <section>
-            <div className="flex items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="section-mark text-brass">§ AI recommendations</p>
               <button
                 type="button"
