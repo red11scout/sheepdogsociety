@@ -266,7 +266,7 @@ export function GroupsLocationsTable({ initialRows, dbError }: Props) {
         title="Where men meet."
         description="One row per group. Approving a group automatically puts it on the public map. Toggle active state and on-map visibility inline; edit address, lat/lng, and meeting day by clicking Edit. Bulk actions for the busy weeks."
         hint="Each group meets at one location. Members assigned to a group inherit its location for routing email/SMS. Approving auto-flips 'On Map' to On so the pin shows up on /locations right away. You can still toggle On Map off later to soft-hide an approved group without un-approving it."
-        primary={{ label: "New group", href: "#", icon: "plus" }}
+        primary={{ label: "Add group", href: "#", icon: "plus" }}
       />
 
       {/* Filter bar */}
@@ -328,7 +328,7 @@ export function GroupsLocationsTable({ initialRows, dbError }: Props) {
           className="lift inline-flex h-9 items-center gap-1.5 border border-bone bg-bone px-3 text-xs font-medium uppercase tracking-wider text-iron transition-colors hover:bg-stone"
         >
           <Icon name="plus" size={12} />
-          New group
+          Add group
         </button>
       </div>
 

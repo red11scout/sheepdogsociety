@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
-import { Trash2, Pencil, Users } from "lucide-react";
-import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { Trash2, Pencil, Users, Plus, Search } from "lucide-react";
+import { AdminPageIntro } from "@/components/admin/AdminPageIntro";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import {
   Card,
@@ -293,29 +293,42 @@ export default function AdminEventsPage() {
 
   return (
     <div className="space-y-6">
-      <AdminPageHeader
-        title="Events Management"
-        description="Create and manage events"
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Search events by title..."
-        onCreateClick={openCreate}
-        createLabel="New Event"
-      >
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Event Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            {EVENT_TYPES.map((t) => (
-              <SelectItem key={t} value={t}>
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </AdminPageHeader>
+      <AdminPageIntro
+        kicker="Events"
+        title="Every gathering, one calendar."
+        description="Add a gathering, keep a recurring series going, and see who's coming."
+      />
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-1 flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search events by title..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9"
+            />
+          </div>
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="min-h-11 w-full sm:w-[140px]">
+              <SelectValue placeholder="Event Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              {EVENT_TYPES.map((t) => (
+                <SelectItem key={t} value={t}>
+                  {t.charAt(0).toUpperCase() + t.slice(1)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <Button onClick={openCreate} size="sm" className="min-h-11">
+          <Plus className="mr-1.5 h-4 w-4" />
+          Add event
+        </Button>
+      </div>
 
       <SeriesPanel refreshSignal={seriesRefresh} />
 

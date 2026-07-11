@@ -5,15 +5,16 @@ import { format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminPageIntro } from "@/components/admin/AdminPageIntro";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
-import { Mail, MailOpen, Trash2, CheckCircle2, Circle } from "lucide-react";
+import { Mail, MailOpen, Trash2, CheckCircle2, Circle, Search } from "lucide-react";
 
 type Contact = {
   id: string;
@@ -129,13 +130,28 @@ export default function AdminContactsPage() {
 
   return (
     <div className="mx-auto max-w-5xl p-6">
-      <AdminPageHeader
-        title="Contact Inbox"
-        description={unreadCount > 0 ? `${unreadCount} unread message${unreadCount !== 1 ? "s" : ""}` : "All messages read"}
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Search by name or email..."
+      <AdminPageIntro
+        kicker="Inbox"
+        title="What comes in through the site."
+        description="Messages from the website. Read them, answer them, mark them done."
       />
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative sm:max-w-xs sm:flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search by name or email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {unreadCount > 0
+            ? `${unreadCount} unread message${unreadCount !== 1 ? "s" : ""}`
+            : "All messages read"}
+        </p>
+      </div>
 
       <div className="mt-3 flex items-center justify-between">
         <p className="text-xs text-muted-foreground">

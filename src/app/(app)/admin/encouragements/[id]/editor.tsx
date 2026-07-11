@@ -284,7 +284,7 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
             type="button"
             onClick={unpublish}
             disabled={pending}
-            className="inline-flex h-9 items-center gap-2 border border-stone/30 bg-transparent px-4 text-xs font-medium uppercase tracking-wider text-stone transition-colors hover:border-brass hover:text-brass disabled:opacity-60"
+            className="inline-flex h-9 min-h-11 items-center gap-2 border border-stone/30 bg-transparent px-4 text-xs font-medium uppercase tracking-wider text-stone transition-colors hover:border-brass hover:text-brass disabled:opacity-60"
           >
             Unpublish
           </button>
@@ -294,7 +294,7 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
               type="button"
               onClick={publishNow}
               disabled={pending}
-              className="lift inline-flex h-9 items-center gap-2 bg-brass px-4 text-xs font-medium uppercase tracking-wider text-ink transition-colors hover:bg-gold disabled:opacity-60"
+              className="lift inline-flex h-9 min-h-11 items-center gap-2 bg-brass px-4 text-xs font-medium uppercase tracking-wider text-ink transition-colors hover:bg-gold disabled:opacity-60"
             >
               {pending ? "Publishing..." : "Publish now"}
               <Icon name="send" size={12} />
@@ -414,25 +414,25 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
           {scriptures.map((s, i) => (
             <li
               key={i}
-              className="grid grid-cols-[200px_1fr_auto] gap-3 border border-stone/15 bg-iron/30 p-3"
+              className="grid grid-cols-1 gap-2 border border-stone/15 bg-iron/30 p-3 sm:grid-cols-[200px_1fr_auto] sm:items-center sm:gap-3"
             >
               <input
                 value={s.ref}
                 onChange={(e) => updateScripture(i, { ref: e.target.value })}
                 placeholder="Romans 5:3-4"
-                className="bg-transparent px-2 py-1 text-sm font-medium text-bone focus:outline-none"
+                className="min-w-0 bg-transparent px-2 py-1 text-sm font-medium text-bone focus:outline-none"
                 style={{ fontFamily: "var(--font-jetbrains-mono)" }}
               />
               <input
                 value={s.note ?? ""}
                 onChange={(e) => updateScripture(i, { note: e.target.value })}
                 placeholder="Why this verse this week"
-                className="bg-transparent px-2 py-1 text-sm text-stone/85 focus:outline-none"
+                className="min-w-0 bg-transparent px-2 py-1 text-sm text-stone/85 focus:outline-none"
               />
               <button
                 type="button"
                 onClick={() => removeScripture(i)}
-                className="rounded-none p-1 text-stone/45 transition-colors hover:text-oxblood"
+                className="justify-self-start rounded-none p-1 text-stone/45 transition-colors hover:text-oxblood sm:justify-self-auto"
                 aria-label="Remove"
               >
                 <Icon name="close" size={14} />

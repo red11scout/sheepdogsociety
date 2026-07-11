@@ -126,11 +126,12 @@ export default async function EncouragementsAdminPage() {
                 key={row.id}
                 href={`/admin/encouragements/${row.id}`}
                 className={cn(
-                  "group/row grid grid-cols-[80px_1fr_140px_120px_120px] items-center gap-4 px-6 py-4 transition-colors hover:bg-iron/60",
+                  "group/row flex flex-col gap-2 px-4 py-4 transition-colors hover:bg-iron/60 md:grid md:grid-cols-[80px_1fr_140px_120px_120px] md:items-center md:gap-4 md:px-6",
                   i > 0 && "border-t border-stone/10"
                 )}
               >
-                <span className="section-mark text-stone/45">
+                {/* Desktop-only: issue number cell (grid col 1) */}
+                <span className="hidden section-mark text-stone/45 md:block">
                   No. {row.issueNumber}
                   {(row as { seriesPosition?: number | null; }).seriesPosition && (
                     <span className="ml-1 text-brass/65">
@@ -139,7 +140,7 @@ export default async function EncouragementsAdminPage() {
                   )}
                 </span>
                 <div className="min-w-0">
-                  <p className="truncate display-xl text-base text-bone group-hover/row:text-brass md:text-lg">
+                  <p className="truncate display-xl text-base font-medium text-bone group-hover/row:text-brass md:text-lg">
                     {row.title || "Untitled"}
                   </p>
                   {(row as { theme?: string | null }).theme ? (
@@ -152,13 +153,36 @@ export default async function EncouragementsAdminPage() {
                     </p>
                   ) : null}
                 </div>
-                <StatusPill status={row.status} />
-                <span className="text-xs text-stone/55">
+                {/* Mobile-only: one meta line — issue number, status, date */}
+                <div className="flex flex-wrap items-center gap-2 text-xs text-stone/55 md:hidden">
+                  <span className="section-mark text-stone/45">
+                    No. {row.issueNumber}
+                    {(row as { seriesPosition?: number | null; }).seriesPosition && (
+                      <span className="text-brass/65">
+                        {" "}
+                        · {(row as { seriesPosition?: number | null }).seriesPosition} of series
+                      </span>
+                    )}
+                  </span>
+                  <StatusPill status={row.status} />
+                  <span>
+                    {row.publishDate
+                      ? format(new Date(row.publishDate), "MMM d, yyyy")
+                      : "—"}
+                  </span>
+                </div>
+                {/* Desktop-only: status pill (grid col 3) */}
+                <div className="hidden md:block">
+                  <StatusPill status={row.status} />
+                </div>
+                {/* Desktop-only: publish date (grid col 4) */}
+                <span className="hidden text-xs text-stone/55 md:block">
                   {row.publishDate
                     ? format(new Date(row.publishDate), "MMM d, yyyy")
                     : "—"}
                 </span>
-                <span className="text-right text-xs text-stone/55">
+                {/* Desktop-only: updated date (grid col 5) */}
+                <span className="hidden text-right text-xs text-stone/55 md:block">
                   Updated {format(new Date(row.updatedAt), "MMM d")}
                 </span>
               </Link>

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import { Check, X } from "lucide-react";
-import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { AdminPageIntro } from "@/components/admin/AdminPageIntro";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
 import {
   Card,
@@ -89,9 +89,10 @@ export default function AdminTestimoniesPage() {
 
   return (
     <div className="space-y-6">
-      <AdminPageHeader
-        title="Testimonies Moderation"
-        description="Review and approve member testimonies"
+      <AdminPageIntro
+        kicker="Stories"
+        title="Stories men send in."
+        description="Read what men write about the brotherhood. Approve the ones worth sharing on the public Stories page."
       />
 
       <Tabs value={tab} onValueChange={setTab}>
@@ -137,18 +138,18 @@ export default function AdminTestimoniesPage() {
                         ? t.content.slice(0, 150) + "..."
                         : t.content}
                     </p>
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="text-xs text-muted-foreground">
                         <span>{t.authorFirstName ?? "Unknown"}</span>
                         <span className="mx-2">|</span>
                         <span>{format(new Date(t.createdAt), "MMM d, yyyy")}</span>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         {!t.isApproved && (
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-green-600 border-green-600 hover:bg-green-600 hover:text-white"
+                            className="min-h-11 text-green-600 border-green-600 hover:bg-green-600 hover:text-white"
                             onClick={() => handleApprove(t.id)}
                           >
                             <Check className="mr-1 h-4 w-4" />
@@ -158,7 +159,7 @@ export default function AdminTestimoniesPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          className="text-destructive border-destructive hover:bg-destructive hover:text-white"
+                          className="min-h-11 text-destructive border-destructive hover:bg-destructive hover:text-white"
                           onClick={() => setDeleteId(t.id)}
                         >
                           <X className="mr-1 h-4 w-4" />

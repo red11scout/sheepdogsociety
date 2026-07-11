@@ -342,7 +342,7 @@ NEON_DATABASE_URL='paste-the-prod-url-here' \\
                     <button
                       type="button"
                       onClick={() => setShowNewResource(true)}
-                      className="lift inline-flex h-9 items-center gap-2 border border-bone bg-bone px-4 text-xs font-medium uppercase tracking-wider text-iron transition-colors hover:bg-stone"
+                      className="lift inline-flex h-9 min-h-11 items-center gap-2 border border-bone bg-bone px-4 text-xs font-medium uppercase tracking-wider text-iron transition-colors hover:bg-stone"
                     >
                       <Icon name="plus" size={12} />
                       Add one
@@ -1151,7 +1151,7 @@ function ResourceRow({
               <p className="mt-1 text-[0.625rem] text-oxblood">{fnError}</p>
             )}
           </div>
-          <div className="flex items-center gap-1 opacity-0 transition-opacity group-hover/item:opacity-100">
+          <div className="flex flex-wrap items-center gap-1 opacity-100 transition-opacity md:opacity-0 md:group-hover/item:opacity-100">
             {(resource.url || resource.fileKey) && (
               <a
                 href={resource.url || resource.fileKey || "#"}
