@@ -1216,6 +1216,7 @@ export const aiTypeEnum = pgEnum("ai_generation_type", [
   "publish_meta",
   "alt_text",
   "image",
+  "ask",
 ]);
 
 export const aiGenerations = pgTable(
