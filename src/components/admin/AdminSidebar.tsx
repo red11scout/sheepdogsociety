@@ -37,7 +37,7 @@ export function AdminSidebar({
 
   const groups: NavGroup[] = [
     {
-      label: "Today",
+      label: "This Week",
       items: [
         {
           href: "/admin/dashboard",
@@ -55,7 +55,7 @@ export function AdminSidebar({
       ],
     },
     {
-      label: "Write",
+      label: "The Letter",
       items: [
         {
           href: "/admin/encouragements",
@@ -64,51 +64,27 @@ export function AdminSidebar({
           hint: "Your weekly word to the brotherhood. Single letters or a scheduled series. Theme, image, voice, AI draft, then publish.",
         },
         {
-          href: "/admin/testimonies",
-          label: "Stories",
-          icon: "flame",
-          hint: "Submitted testimonies. Approve to publish on the public Stories page.",
-        },
-      ],
-    },
-    {
-      label: "People",
-      items: [
-        {
           href: "/admin/newsletter",
           label: "Subscribers",
           icon: "mail",
           hint: "Newsletter list. Send Resend Broadcasts.",
         },
+      ],
+    },
+    {
+      label: "People & Groups",
+      items: [
         {
-          href: "/admin/events",
-          label: "Events",
-          icon: "calendar",
-          hint: "Breakfasts, prayer nights, retreats. Upcoming on the public events page.",
-        },
-        {
-          href: "/admin/events/past",
-          label: "Past events",
-          icon: "image",
-          hint: "After-event recaps + photo galleries. Renders on the public Past Gatherings section.",
-        },
-        {
-          href: "/admin/gallery",
-          label: "Gallery",
-          icon: "image",
-          hint: "Unified photo manager across every event. Drag-drop uploads, captions, per-event descriptions. Public site at /gallery.",
+          href: "/admin/members",
+          label: "Members",
+          icon: "users-group",
+          hint: "Every signup from /join. Approve or reject inline, assign to a group, toggle active. Bulk actions for the queue.",
         },
         {
           href: "/admin/groups",
           label: "Groups & Locations",
           icon: "map-pin",
           hint: "One row per group with its location. Approve, toggle on-map visibility, edit address and meeting time, delete. Bulk actions for the busy weeks.",
-        },
-        {
-          href: "/admin/members",
-          label: "Members",
-          icon: "users-group",
-          hint: "Every signup from /join. Approve or reject inline, assign to a group, toggle active. Bulk actions for the queue.",
         },
         {
           href: "/admin/location-requests",
@@ -124,16 +100,46 @@ export function AdminSidebar({
           badge: pendingLocationInterests > 0 ? pendingLocationInterests : undefined,
           hint: "Men who clicked 'I'm interested' on a group's page. Mark contacted or resolved as you follow up.",
         },
+        {
+          href: "/admin/events",
+          label: "Events",
+          icon: "calendar",
+          hint: "Breakfasts, prayer nights, retreats. Upcoming on the public events page.",
+        },
+        {
+          href: "/admin/events/past",
+          label: "Past events",
+          icon: "image",
+          hint: "After-event recaps + photo galleries. Renders on the public Past Gatherings section.",
+        },
       ],
     },
     {
-      label: "Assets",
+      label: "Site Content",
       items: [
+        {
+          href: "/admin/site-text",
+          label: "Site text",
+          icon: "scroll",
+          hint: "Change the words on the homepage and About page.",
+        },
         {
           href: "/admin/resources",
           label: "Resources",
           icon: "download",
           hint: "PDFs and guides organized by section. Pick a section, then add a resource.",
+        },
+        {
+          href: "/admin/gallery",
+          label: "Gallery",
+          icon: "image",
+          hint: "Unified photo manager across every event. Drag-drop uploads, captions, per-event descriptions. Public site at /gallery.",
+        },
+        {
+          href: "/admin/testimonies",
+          label: "Stories",
+          icon: "flame",
+          hint: "Submitted testimonies. Approve to publish on the public Stories page.",
         },
       ],
     },
@@ -182,55 +188,65 @@ export function AdminSidebar({
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto px-3 py-5">
-        {groups.map((group) => (
-          <div key={group.label} className="mb-6 last:mb-0">
-            <div className="px-3 pb-2 section-mark text-stone/40">
-              {group.label}
-            </div>
-            <ul className="space-y-0.5">
-              {group.items.map((item) => {
-                const active =
-                  pathname === item.href ||
-                  pathname?.startsWith(`${item.href}/`);
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      title={item.hint}
-                      className={cn(
-                        "group flex items-center gap-3 rounded-none px-3 py-2 text-sm transition-colors",
-                        active
-                          ? "bg-brass/15 text-bone"
-                          : "text-stone/75 hover:bg-iron/60 hover:text-bone"
-                      )}
-                    >
-                      <Icon
-                        name={item.icon}
-                        size={16}
+        {(() => {
+          const allItems = groups.flatMap((g) => g.items);
+          const activeHref = allItems
+            .filter(
+              (it) =>
+                pathname === it.href || pathname?.startsWith(`${it.href}/`)
+            )
+            .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+
+          return groups.map((group) => (
+            <div key={group.label} className="mb-6 last:mb-0">
+              <div className="px-3 pb-2 section-mark text-stone/40">
+                {group.label}
+              </div>
+              <ul className="space-y-0.5">
+                {group.items.map((item) => {
+                  const active = item.href === activeHref;
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        title={item.hint}
                         className={cn(
-                          "shrink-0",
-                          active ? "text-brass" : "text-stone/55 group-hover:text-stone"
+                          "group relative flex min-h-11 items-center gap-3 rounded-none px-3 py-2 text-sm transition-colors",
+                          active
+                            ? "bg-brass/15 text-bone"
+                            : "text-stone/75 hover:bg-iron/60 hover:text-bone"
                         )}
-                      />
-                      <span className="flex-1 truncate">{item.label}</span>
-                      {item.badge != null && (
-                        <span className="inline-flex h-5 min-w-[20px] items-center justify-center bg-brass px-1.5 text-[0.625rem] font-semibold text-ink">
-                          {item.badge}
-                        </span>
-                      )}
-                      {active && (
-                        <span
-                          className="absolute left-0 h-6 w-[3px] bg-brass"
-                          aria-hidden
+                      >
+                        <Icon
+                          name={item.icon}
+                          size={16}
+                          className={cn(
+                            "shrink-0",
+                            active
+                              ? "text-brass"
+                              : "text-stone/55 group-hover:text-stone"
+                          )}
                         />
-                      )}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
+                        <span className="flex-1 truncate">{item.label}</span>
+                        {item.badge != null && (
+                          <span className="inline-flex h-5 min-w-[20px] items-center justify-center bg-brass px-1.5 text-[0.625rem] font-semibold text-ink">
+                            {item.badge}
+                          </span>
+                        )}
+                        {active && (
+                          <span
+                            className="absolute left-0 h-6 w-[3px] bg-brass"
+                            aria-hidden
+                          />
+                        )}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ));
+        })()}
       </nav>
 
       {/* Footer */}
