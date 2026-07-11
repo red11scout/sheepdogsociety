@@ -128,6 +128,8 @@ New `/api/cron/autopilot-letters` (weekly; `vercel.json` entry with `maxDuration
 
 ## Phase B — Admin for a Ten-Year-Old
 
+> **SHIPPED 2026-07-11** — PR #44, squash `ca5f6b9`, migration 0019 applied, live prod verification green. Phase 4 arc COMPLETE (A → A-FN → C → B all live). As-built notes: `updateTag` replaces `revalidateTag` in the save actions (Next 16 requires a profile arg; updateTag is the Server-Action read-your-own-writes API); blank-save deletes the override row (equivalent to Reset); tap targets uniformly ≥44px including desktop (adjudicated a11y win).
+
 ### B.1 Site text
 
 - New `site_text` table: `key` (unique), `label`, `groupName`, `value`, `updatedAt`, `updatedBy`.
