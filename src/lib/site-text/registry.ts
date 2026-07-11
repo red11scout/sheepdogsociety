@@ -189,8 +189,10 @@ export const SITE_TEXT_KEYS = [
     defaultValue: "Wolves transformed." },
   { key: "stories.hero.headline2", label: "Hero headline — line 2 (italic)", group: "Stories", multiline: false,
     defaultValue: "Sheepdogs sent." },
-  { key: "stories.empty.body", label: "Stories ledger — empty state", group: "Stories", multiline: true,
+  { key: "stories.empty.heading", label: "Stories ledger — empty state heading", group: "Stories", multiline: false,
     defaultValue: "Stories on the way." },
+  { key: "stories.empty.body", label: "Stories ledger — empty state body", group: "Stories", multiline: true,
+    defaultValue: "Brothers are writing them now." },
   { key: "stories.cta.title", label: "Closing CTA — title", group: "Stories", multiline: false,
     defaultValue: "Have a story?" },
 ] as const satisfies readonly SiteTextEntry[];

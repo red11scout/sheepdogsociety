@@ -94,10 +94,10 @@ export default async function StoriesPage() {
             <div className="border border-dashed border-foreground/15 p-16 text-center">
               <Icon name="flame" size={48} strokeWidth={2} className="mx-auto text-brass" />
               <h3 className="display-soft mt-8 text-2xl md:text-3xl">
-                Stories on the way.
+                {t["stories.empty.heading"]}
               </h3>
               <p className="mx-auto mt-4 max-w-md font-pullquote text-lg italic text-muted-foreground">
-                Brothers are writing them now.
+                {t["stories.empty.body"]}
               </p>
             </div>
           )}
