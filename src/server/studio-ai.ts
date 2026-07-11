@@ -5,12 +5,12 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
-import { aiGenerations, users } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { aiGenerations, users, siteStudio } from "@/db/schema";
+import { eq, asc } from "drizzle-orm";
 import { MODELS, BRAND_VOICE, withBrandVoice } from "@/lib/ai/prompts";
 import { findBannedLanguage } from "@/lib/ai/banned";
 import { SECTION_REGISTRY } from "@/lib/studio/sections";
-import { getStudioConfig } from "@/lib/studio/get";
+import { getStudioConfig, normalize } from "@/lib/studio/get";
 import { renderMerge, resolveThemeId } from "@/lib/studio/config";
 import { validateChangeset, type Changeset } from "@/lib/studio/changeset";
 import { SITE_TEXT_KEYS } from "@/lib/site-text/registry";
@@ -184,7 +184,8 @@ export async function describeChangeset(
 > {
   try {
     const userId = await requireAdmin();
-    const config = await getStudioConfig();
+    const [row] = await db.select().from(siteStudio).orderBy(asc(siteStudio.id)).limit(1);
+    const config = normalize(row?.draft);
 
     const prompt = withBrandVoice(`Jeremy (the admin of this Christian men's brotherhood website) wants: "${goal}"
 
@@ -216,17 +217,34 @@ Turn this into a changeset: which sections to show/hide/reorder, and/or which te
     let applied = 0;
     if (themeId || accepted.sectionChanges.length > 0) {
       const nextPages = { ...config.pages };
+      const changesByPage = new Map<string, typeof accepted.sectionChanges>();
       for (const change of accepted.sectionChanges) {
-        const existing = nextPages[change.pageId]?.sections ?? [];
-        const idx = existing.findIndex((s) => s.id === change.sectionId);
-        const nextSections = [...existing];
-        if (idx >= 0) {
-          nextSections[idx] = { ...nextSections[idx], visible: change.visible ?? nextSections[idx].visible };
-        } else {
-          nextSections.push({ id: change.sectionId, visible: change.visible ?? true });
+        const list = changesByPage.get(change.pageId) ?? [];
+        list.push(change);
+        changesByPage.set(change.pageId, list);
+      }
+      for (const [pageId, changes] of changesByPage) {
+        let nextSections = [...(nextPages[pageId]?.sections ?? [])];
+        // Apply visibility patches first, adding any brand-new ids.
+        for (const change of changes) {
+          const idx = nextSections.findIndex((s) => s.id === change.sectionId);
+          if (idx >= 0) {
+            nextSections[idx] = { ...nextSections[idx], visible: change.visible ?? nextSections[idx].visible };
+          } else {
+            nextSections.push({ id: change.sectionId, visible: change.visible ?? true });
+          }
         }
-        nextPages[change.pageId] = { sections: nextSections };
-        applied++;
+        // Then apply position patches by moving entries to their target index.
+        for (const change of changes) {
+          if (change.position === undefined) continue;
+          const from = nextSections.findIndex((s) => s.id === change.sectionId);
+          if (from < 0) continue;
+          const [moved] = nextSections.splice(from, 1);
+          const to = Math.max(0, Math.min(change.position, nextSections.length));
+          nextSections.splice(to, 0, moved);
+        }
+        nextPages[pageId] = { sections: nextSections };
+        applied += changes.length;
       }
       const configRes = await saveDraftConfig({
         ...config,

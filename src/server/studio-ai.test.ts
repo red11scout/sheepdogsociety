@@ -8,7 +8,10 @@ vi.mock("@/db", () => ({
   },
 }));
 vi.mock("ai", () => ({ generateObject: vi.fn() }));
-vi.mock("@/lib/studio/get", () => ({ getStudioConfig: vi.fn() }));
+vi.mock("@/lib/studio/get", () => ({
+  getStudioConfig: vi.fn(),
+  normalize: vi.fn((raw: unknown) => raw ?? { themeId: "pasture-iron", pages: {} }),
+}));
 
 import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
@@ -19,7 +22,22 @@ import { recommendForPage, assistField } from "./studio-ai";
 function mockAdmin() {
   vi.mocked(auth).mockResolvedValue({ userId: "u1" } as never);
   vi.mocked(db.select).mockReturnValue({
-    from: () => ({ where: () => Promise.resolve([{ id: "u1", role: "admin" }]) }),
+    from: () => ({
+      where: () => Promise.resolve([{ id: "u1", role: "admin" }]),
+      orderBy: () => ({ limit: () => Promise.resolve([]) }),
+    }),
+  } as never);
+}
+
+/** Sets up db.select so the auth check (from().where()) resolves the admin
+ *  row, and the draft read (from().orderBy().limit()) resolves the given
+ *  draft row. Call after mockAdmin() to override the draft-row response. */
+function mockDraftRow(draft: unknown) {
+  vi.mocked(db.select).mockReturnValue({
+    from: () => ({
+      where: () => Promise.resolve([{ id: "u1", role: "admin" }]),
+      orderBy: () => ({ limit: () => Promise.resolve(draft === undefined ? [] : [{ draft }]) }),
+    }),
   } as never);
 }
 
@@ -124,11 +142,11 @@ import { saveDraftConfig, saveDraftText } from "@/server/studio";
 describe("describeChangeset", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getStudioConfig).mockResolvedValue({ themeId: "pasture-iron", pages: {} });
   });
 
   it("stages valid parts of the AI-drafted changeset and reports dropped items", async () => {
     mockAdmin();
+    mockDraftRow({ themeId: "pasture-iron", pages: {} });
     vi.mocked(generateObject).mockResolvedValue({
       object: {
         sectionChanges: [
@@ -152,6 +170,7 @@ describe("describeChangeset", () => {
 
   it("returns ok:false when nothing in the changeset validates", async () => {
     mockAdmin();
+    mockDraftRow({ themeId: "pasture-iron", pages: {} });
     vi.mocked(generateObject).mockResolvedValue({
       object: { sectionChanges: [{ pageId: "about", sectionId: "hero", visible: false }], textEdits: [] },
       usage: { inputTokens: 50, outputTokens: 20 },
@@ -161,5 +180,66 @@ describe("describeChangeset", () => {
     expect(result.ok).toBe(true); // still ok:true, just applied:0 — the caller sees the dropped-item reasons
     if (result.ok) expect(result.applied).toBe(0);
     expect(saveDraftConfig).not.toHaveBeenCalled();
+  });
+
+  it("reads the draft config directly from the db, not getStudioConfig (published)", async () => {
+    mockAdmin();
+    // The draft has "mission" already hidden; if this function read the
+    // published config instead (via getStudioConfig, unmocked here and
+    // pointed elsewhere), this staged state would be silently lost.
+    mockDraftRow({
+      themeId: "pasture-iron",
+      pages: { about: { sections: [{ id: "mission", visible: false }] } },
+    });
+    vi.mocked(generateObject).mockResolvedValue({
+      object: {
+        sectionChanges: [{ pageId: "about", sectionId: "leadership", visible: false }],
+        textEdits: [],
+      },
+      usage: { inputTokens: 50, outputTokens: 20 },
+    } as never);
+
+    const result = await describeChangeset("Hide the leadership section on About.");
+    expect(result.ok).toBe(true);
+    expect(getStudioConfig).not.toHaveBeenCalled();
+    expect(saveDraftConfig).toHaveBeenCalled();
+    const savedConfig = vi.mocked(saveDraftConfig).mock.calls[0][0] as {
+      pages: Record<string, { sections: { id: string; visible?: boolean }[] }>;
+    };
+    const sections = savedConfig.pages.about.sections;
+    expect(sections.find((s) => s.id === "mission")?.visible).toBe(false); // preserved from draft
+    expect(sections.find((s) => s.id === "leadership")?.visible).toBe(false); // newly applied
+  });
+
+  it("actually reorders sections when the AI changeset carries a position patch", async () => {
+    mockAdmin();
+    mockDraftRow({
+      themeId: "pasture-iron",
+      pages: {
+        about: {
+          sections: [
+            { id: "mission", visible: true },
+            { id: "leadership", visible: true },
+          ],
+        },
+      },
+    });
+    vi.mocked(generateObject).mockResolvedValue({
+      object: {
+        // Move "leadership" to index 0, ahead of "mission".
+        sectionChanges: [{ pageId: "about", sectionId: "leadership", position: 0 }],
+        textEdits: [],
+      },
+      usage: { inputTokens: 50, outputTokens: 20 },
+    } as never);
+
+    const result = await describeChangeset("Move leadership before mission on About.");
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.applied).toBe(1);
+    const savedConfig = vi.mocked(saveDraftConfig).mock.calls[0][0] as {
+      pages: Record<string, { sections: { id: string }[] }>;
+    };
+    const ids = savedConfig.pages.about.sections.map((s) => s.id);
+    expect(ids).toEqual(["leadership", "mission"]);
   });
 });
