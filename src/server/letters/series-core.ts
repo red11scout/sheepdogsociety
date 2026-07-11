@@ -4,8 +4,13 @@
 // neither an admin session nor a request context is required here.
 //
 // The whole issueNumber-MAX+1-plus-inserts flow runs inside one
-// db.transaction so a concurrent wizard submission and a cron run
-// can't race each other into duplicate issue numbers or slugs.
+// db.transaction for atomicity. The transaction alone does NOT prevent
+// duplicate issue numbers — READ COMMITTED lets two concurrent writers
+// (wizard + autopilot cron) read the same MAX(issue_number) — so the
+// transaction takes a pg_advisory_xact_lock as its first statement to
+// serialize series creation. Slugs are additionally backstopped by the
+// we_slug_unique index; issue_number has no unique constraint, making
+// the lock the only guard.
 
 import { db } from "@/db";
 import { weeklyEncouragements, letterSeries } from "@/db/schema-new";
@@ -83,6 +88,13 @@ export async function createSeriesWithLettersCore(
   }
 
   return await db.transaction(async (tx) => {
+    // Serialize series creation across concurrent writers (wizard +
+    // autopilot cron): READ COMMITTED lets two transactions read the same
+    // MAX(issue_number). The xact-scoped advisory lock releases on
+    // commit/rollback automatically. 815551 = arbitrary app-wide constant
+    // reserved for letter-series creation.
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(815551)`);
+
     // 1. Create the series row.
     const [series] = await tx
       .insert(letterSeries)
