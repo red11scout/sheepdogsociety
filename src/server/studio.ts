@@ -209,6 +209,10 @@ export async function discardDraft(): Promise<{ ok: boolean; error?: string }> {
         .update(siteText)
         .set({ draftValue: null, updatedAt: new Date(), updatedBy: userId })
         .where(isNotNull(siteText.draftValue));
+      // Sweep carrier rows (value '' + no draft) a stage-then-discard leaves
+      // behind, so the table stays override-only at rest. Publicly harmless
+      // (blank resolves to the default) but keeps the "no orphan rows" invariant.
+      await tx.execute(sql`DELETE FROM site_text WHERE btrim(value) = '' AND draft_value IS NULL`);
     });
     return { ok: true };
   } catch (err) {
@@ -246,6 +250,14 @@ export async function restoreVersion(
         .update(siteStudio)
         .set({ draft: draftConfig, updatedAt: new Date(), updatedBy: userId })
         .where(eq(siteStudio.id, row.id));
+
+      // Clear every pending draft first: Restore replaces the draft
+      // wholesale, so a stale draft on a carrier row (staged for a key the
+      // restored version never touched) must not survive to be published on
+      // the next Apply. This makes the Restore promise ("your unsaved draft
+      // changes go away") true, then the full diff below re-derives drafts
+      // purely from the snapshot vs current published state.
+      await tx.execute(sql`UPDATE site_text SET draft_value = NULL WHERE draft_value IS NOT NULL`);
 
       // Full diff against CURRENT published overrides, staged into drafts.
       const rows = await tx.select({ key: siteText.key, value: siteText.value }).from(siteText);
