@@ -76,8 +76,10 @@ export default auth((req) => {
   // Studio compare: the LIVE iframe carries ?studio=published — forward the
   // request without the draftMode cookie so it renders as a true public
   // request (published theme/config/text, normal cache). Inert without
-  // draftMode: no cookie, nothing to strip.
-  if (req.nextUrl.searchParams.get("studio") === "published") {
+  // draftMode: no cookie, nothing to strip. Gated on isPublic so this
+  // early return can never skip the session gate on a protected path (the
+  // compare iframe only ever loads public pages).
+  if (isPublic(pathname) && req.nextUrl.searchParams.get("studio") === "published") {
     const headers = new Headers(req.headers);
     const cookie = headers.get("cookie");
     if (cookie?.includes("__prerender_bypass")) {
