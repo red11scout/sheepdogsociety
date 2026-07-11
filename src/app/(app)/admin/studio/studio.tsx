@@ -14,7 +14,7 @@ import {
   saveDraftConfig,
   saveDraftText,
 } from "@/server/studio";
-import { recommendForPage, describeChangeset } from "@/server/studio-ai";
+import { recommendForPage, describeChangeset, assistField } from "@/server/studio-ai";
 import { cn } from "@/lib/utils";
 
 /** pasture-iron's record in themes-data is empty by contract (identity theme,
@@ -106,6 +106,7 @@ export function Studio({
   const [versions, setVersions] = useState<Version[]>(initialVersions);
   const [openKey, setOpenKey] = useState<string | null>(null);
   const [fieldDraft, setFieldDraft] = useState("");
+  const [assisting, setAssisting] = useState<string | null>(null);
   const [status, setStatus] = useState<StatusMsg | null>(null);
   const [pending, startTransition] = useTransition();
 
@@ -563,6 +564,26 @@ export function Studio({
                           >
                             Cancel
                           </button>
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          <span className="text-xs text-stone/60">AI:</span>
+                          {(["rewrite", "tighten", "warm-up"] as const).map((m) => (
+                            <button
+                              key={m}
+                              type="button"
+                              disabled={assisting !== null}
+                              onClick={async () => {
+                                setAssisting(m);
+                                const res = await assistField(e.key, fieldDraft, m);
+                                setAssisting(null);
+                                if (res.ok) setFieldDraft(res.draft);
+                                else fail(res.error);
+                              }}
+                              className="text-xs font-medium text-brass hover:underline disabled:opacity-50"
+                            >
+                              {assisting === m ? "Working..." : m === "warm-up" ? "Warm up" : m.charAt(0).toUpperCase() + m.slice(1)}
+                            </button>
+                          ))}
                         </div>
                       </div>
                     ) : (
