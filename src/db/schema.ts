@@ -1363,3 +1363,4 @@ const notDeletedPredicate = sql`deleted_at IS NULL`;
 // ============================================================
 export * from "./schema-members";
 export * from "./schema-pages";
+export * from "./schema-site-text";
