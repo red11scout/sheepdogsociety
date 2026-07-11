@@ -75,7 +75,7 @@ const STUCK_CARDS: { title: string; body: string }[] = [
 
 const WALKTHROUGH_STEPS = [
   "Pick a theme. The preview recolors right away.",
-  "Show, hide, or move a homepage section.",
+  "Show, hide, or move a section on this page.",
   "Tap a line of text and change the words.",
   "Happy with the preview? Hit Apply. A snapshot is saved so you can undo.",
 ];
@@ -409,7 +409,11 @@ export function Studio({
             <select
               id="studio-page-select"
               value={selectedPage}
-              onChange={(e) => setSelectedPage(e.target.value)}
+              onChange={(e) => {
+                setSelectedPage(e.target.value);
+                setOpenKey(null);
+                setFieldDraft("");
+              }}
               className="mt-3 h-11 w-full border border-foreground/20 bg-transparent px-4 text-sm text-foreground focus:border-brass focus:outline-none"
             >
               {pages.map((p) => (
