@@ -7,7 +7,7 @@ import { DEFAULT_CONFIG, type StudioConfig } from "./config";
 import { resolveThemeId } from "./config";
 import { THEME_IDS } from "./themes";
 
-function normalize(raw: unknown): StudioConfig {
+export function normalize(raw: unknown): StudioConfig {
   const c = (raw ?? {}) as Partial<StudioConfig>;
   return {
     themeId: resolveThemeId({ themeId: c.themeId ?? "pasture-iron", pages: {} }, THEME_IDS),

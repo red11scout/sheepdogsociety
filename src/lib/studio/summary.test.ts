@@ -16,6 +16,14 @@ describe("summarize", () => {
     expect(s).toContain("hid What this is");
     expect(s).toContain("edited 2 lines");
   });
+  it("counts a section un-hidden by REMOVING its config entry (union of before+after)", () => {
+    const prev = {
+      config: { themeId: "pasture-iron", pages: { home: { sections: [{ id: "what-this-is", visible: false }] } } },
+      textOverrides: {} as Record<string, string>,
+    };
+    const s = summarize(prev, base, labels, names);
+    expect(s).toBe("Showed What this is.");
+  });
   it("no changes reads plainly", () => {
     expect(summarize(base, base, labels, names)).toBe("No changes.");
   });

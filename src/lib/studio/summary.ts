@@ -23,9 +23,12 @@ export function summarize(
   };
   const before = vis(prev.config);
   const after = vis(next.config);
-  for (const [id, v] of after) {
+  // Union of before+after ids: a section un-hidden by REMOVING its config
+  // entry (absent from `after` = default visible) must count too.
+  for (const id of new Set([...before.keys(), ...after.keys()])) {
     const was = before.get(id) ?? true;
-    if (v !== was) parts.push(`${v ? "showed" : "hid"} ${sectionLabels[id] ?? id}`);
+    const now = after.get(id) ?? true;
+    if (now !== was) parts.push(`${now ? "showed" : "hid"} ${sectionLabels[id] ?? id}`);
   }
   const edited =
     Object.keys(next.textOverrides).filter((k) => next.textOverrides[k] !== prev.textOverrides[k]).length +
