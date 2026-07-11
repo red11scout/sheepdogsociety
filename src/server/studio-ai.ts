@@ -3,7 +3,7 @@
 import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
 import { aiGenerations, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -17,16 +17,8 @@ import type { Changeset } from "@/lib/studio/changeset";
 const MODEL = MODELS.default;
 const RECOMMEND_PROMPT_VERSION = "studio-recommend.v1";
 
-/** Auth.js v5's real `auth()` (src/auth.ts) resolves a `Session` with
- *  `user.id`; this module's tests mock `@/auth` directly with the
- *  auth-compat `{ userId }` shape instead (matching this file's own
- *  `vi.mock("@/auth", ...)` target). Read both shapes defensively so
- *  production (real Session) and tests (mocked flat shape) both work. */
-type AuthResultShape = { userId?: string | null; user?: { id?: string | null } } | null | undefined;
-
 async function requireAdmin(): Promise<string> {
-  const session = (await auth()) as unknown as AuthResultShape;
-  const userId = session?.userId ?? session?.user?.id;
+  const { userId } = await auth();
   if (!userId) throw new Error("Not signed in");
   const [me] = await db.select().from(users).where(eq(users.id, userId));
   if (!me || me.role !== "admin") throw new Error("Not an admin");

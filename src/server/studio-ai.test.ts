@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from "vitest";
 
-vi.mock("@/auth", () => ({ auth: vi.fn() }));
+vi.mock("@/lib/auth-compat", () => ({ auth: vi.fn() }));
 vi.mock("@/db", () => ({
   db: {
     select: vi.fn(),
@@ -10,7 +10,7 @@ vi.mock("@/db", () => ({
 vi.mock("ai", () => ({ generateObject: vi.fn() }));
 vi.mock("@/lib/studio/get", () => ({ getStudioConfig: vi.fn() }));
 
-import { auth } from "@/auth";
+import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
 import { generateObject } from "ai";
 import { getStudioConfig } from "@/lib/studio/get";
