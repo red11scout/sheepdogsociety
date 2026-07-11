@@ -30,6 +30,14 @@ function getAuthDb() {
 
 const { db: authDb, sql: authSql } = getAuthDb();
 
+// Never log emails or discriminating auth-failure reasons in production: that
+// leaks PII and gives an oracle distinguishing "not allowlisted" from "wrong
+// password". These traces are dev-only.
+const AUTH_DEBUG = process.env.NODE_ENV !== "production";
+function authDebug(...args: unknown[]): void {
+  if (AUTH_DEBUG) console.log("[auth]", ...args);
+}
+
 async function fetchPasswordHash(userId: string): Promise<string | null> {
   try {
     const rows = await authSql<
@@ -59,11 +67,11 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         const email = String(credentials?.email ?? "").trim().toLowerCase();
         const password = String(credentials?.password ?? "");
         if (!email || !password) {
-          console.log("[auth] missing email or password");
+          authDebug("missing email or password");
           return null;
         }
         if (!isAdminEmail(email)) {
-          console.log("[auth] email not on ADMIN_EMAILS allowlist:", email);
+          authDebug("email not on ADMIN_EMAILS allowlist:", email);
           return null;
         }
 
@@ -80,11 +88,11 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
           .limit(1);
 
         if (!user) {
-          console.log("[auth] no users row for allowlisted email:", email);
+          authDebug("no users row for allowlisted email:", email);
           return null;
         }
         if (user.role !== "admin") {
-          console.log("[auth] user is not an admin:", email);
+          authDebug("user is not an admin:", email);
           return null;
         }
 
@@ -110,7 +118,7 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
         }
 
         if (!valid) {
-          console.log("[auth] password mismatch for", email);
+          authDebug("password mismatch for", email);
           return null;
         }
 
