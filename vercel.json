@@ -3,11 +3,13 @@
   "crons": [
     { "path": "/api/cron/purge", "schedule": "0 4 * * *" },
     { "path": "/api/cron/publish-scheduled-letters", "schedule": "*/15 * * * *" },
-    { "path": "/api/cron/materialize-events", "schedule": "30 4 * * *" }
+    { "path": "/api/cron/materialize-events", "schedule": "30 4 * * *" },
+    { "path": "/api/cron/autopilot-letters", "schedule": "0 13 * * 1" }
   ],
   "functions": {
     "src/app/api/ai/**/route.ts": { "maxDuration": 60 },
     "src/app/api/admin/encouragements/**/route.ts": { "maxDuration": 120 },
-    "src/app/api/cron/publish-scheduled-letters/route.ts": { "maxDuration": 120 }
+    "src/app/api/cron/publish-scheduled-letters/route.ts": { "maxDuration": 120 },
+    "src/app/api/cron/autopilot-letters/route.ts": { "maxDuration": 300 }
   }
 }
