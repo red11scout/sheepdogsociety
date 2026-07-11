@@ -627,11 +627,33 @@ export async function runAutopilot(opts?: { dryRun?: boolean }): Promise<Autopil
     };
   }
 
-  // From here on, letters ARE persisted and WILL publish. Steps 10 and 11
-  // are wrapped so no failure in covers or bookkeeping can silently
-  // swallow step 12's visibility email: unreviewed letters on the
-  // calendar with no note to the shepherd is the one outcome this engine
-  // must never produce.
+  // From here on, letters ARE persisted and WILL publish. Step 12's
+  // visibility email goes out FIRST: the four sequential cover
+  // generations can eat minutes of wall clock, and a maxDuration kill
+  // mid-covers must never strand scheduled letters unannounced. Steps 10
+  // and 11 then run wrapped in try/catch, so neither an exception nor a
+  // timeout in covers or bookkeeping can swallow the notification.
+  // Unreviewed letters on the calendar with no note to the shepherd is
+  // the one outcome this engine must never produce.
+
+  // 12 (runs first). Visibility email to the shepherd. Best-effort,
+  // never blocking. The body never mentions covers, so sending before
+  // they exist changes nothing the shepherd reads.
+  const scheduled = created.letters.map((l) => {
+    const draft = survivors.find((s) => s.position === l.position);
+    const week = weeks[l.position - 1];
+    return {
+      id: l.id,
+      title: draft?.title ?? "",
+      scheduledFor: week.scheduledFor.toISOString(),
+      position: l.position,
+      dateLabel: formatChicagoDate(week.parts),
+    };
+  });
+  await sendEmail(
+    `The next four weeks are written: ${theme}, in the voice of ${voice.name}`,
+    buildVisibilityBody({ theme, voiceName: voice.name, scheduled, gaps, verificationSkipped })
+  );
 
   // 10. Covers: broadsheet style, landscape, final quality. Prompt names
   // the title, theme, and season only, never scripture text. Failures
@@ -689,23 +711,6 @@ export async function runAutopilot(opts?: { dryRun?: boolean }): Promise<Autopil
   } catch (err) {
     console.error("autopilot state update failed:", err);
   }
-
-  // 12. Visibility email to the shepherd. Best-effort, never blocking.
-  const scheduled = created.letters.map((l) => {
-    const draft = survivors.find((s) => s.position === l.position);
-    const week = weeks[l.position - 1];
-    return {
-      id: l.id,
-      title: draft?.title ?? "",
-      scheduledFor: week.scheduledFor.toISOString(),
-      position: l.position,
-      dateLabel: formatChicagoDate(week.parts),
-    };
-  });
-  await sendEmail(
-    `The next four weeks are written: ${theme}, in the voice of ${voice.name}`,
-    buildVisibilityBody({ theme, voiceName: voice.name, scheduled, gaps, verificationSkipped })
-  );
 
   return {
     ran: true,
