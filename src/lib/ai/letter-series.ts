@@ -4,6 +4,7 @@ import { z } from "zod";
 import { SYSTEM_PROMPT } from "./system-prompt";
 import { findVoice } from "./voices";
 import { scrubAiPayload } from "./scrub";
+import { findBannedLanguage } from "./banned";
 
 const MODEL = "claude-sonnet-4-5";
 export const SERIES_PLAN_PROMPT_VERSION = "letter-series-plan.v1";
@@ -46,6 +47,11 @@ export const seriesPlanSchema = z.object({
         .describe(
           "60-90 word 'Notes from the Watch' closing. Personal, brief, signed warmly."
         ),
+      callToAction: z
+        .string()
+        .describe(
+          "One concrete move for the week, 20-60 words, imperative, no em-dashes"
+        ),
     })
   ),
 });
@@ -58,7 +64,10 @@ export async function generateLetterSeries(input: {
   voiceId: string;
   voiceFreeform?: string;
   totalCount: number;
+  callToActionRequired?: boolean;
+  seasonContext?: string;
 }): Promise<SeriesPlan & { tokensIn?: number; tokensOut?: number }> {
+  const callToActionRequired = input.callToActionRequired ?? true;
   const voice = findVoice(input.voiceId);
   const voiceAddendum =
     voice?.systemAddendum ??
@@ -68,10 +77,14 @@ export async function generateLetterSeries(input: {
 
   const system = `${SYSTEM_PROMPT}\n\n${voiceAddendum}`.trim();
 
+  const seasonBlock = input.seasonContext
+    ? `\n\nSeason: ${input.seasonContext}\nFit the whole arc to this season — let it shape the angles the middle letters take and the note the closing letter lands on.`
+    : "";
+
   const userPrompt = `Plan a series of EXACTLY ${input.totalCount} weekly Letters for the Sheepdog Society on a single connected theme.
 
 Series title: ${input.title}
-Theme: ${input.theme}
+Theme: ${input.theme}${seasonBlock}
 
 Each letter is one week. The series should have a SHAPE: an opening that frames the theme, middle letters that take it apart from different angles (e.g. for "endurance": physical, vocational, marital, spiritual), and a closing letter that lands the whole thing in a way that sends the brother out steadier than he came in.
 
@@ -84,6 +97,9 @@ For EACH of the ${input.totalCount} letters, return:
 - scriptures: EXACTLY 2 or 3 real scripture references that genuinely fit. Standard book names. Each gets a one-sentence note (10+ words) on why it fits. Never fewer than 2, never more than 3.
 - guidance: 200-280 words of pastoral teaching, leaning on one of the scriptures above. Land with a concrete, specific move the brother can do this week.
 - notes: 60-90 word "Notes from the Watch" closing. Personal, brief, warm.
+- callToAction: one concrete move for the week, 20-60 words, imperative, no em-dashes.
+
+Each letter must carry one image or story that lands in the chest — one, not three, and never sentimental.
 
 Across the whole series: NO em-dashes, NO hashtags, no emoji. Plain prose. Real verses only. No fabricated quotations from any named theologian. Write like a man who has read his Bible his whole life talks at a kitchen table.`;
 
@@ -107,7 +123,11 @@ Across the whole series: NO em-dashes, NO hashtags, no emoji. Plain prose. Real 
     totalIn += result.usage?.inputTokens ?? 0;
     totalOut += result.usage?.outputTokens ?? 0;
 
-    const validation = validateSeriesPlan(result.object, input.totalCount);
+    const validation = validateSeriesPlan(
+      result.object,
+      input.totalCount,
+      callToActionRequired
+    );
     if (validation.ok) {
       const cleaned = scrubAiPayload(result.object);
       return {
@@ -125,7 +145,8 @@ Across the whole series: NO em-dashes, NO hashtags, no emoji. Plain prose. Real 
 
 function validateSeriesPlan(
   obj: SeriesPlan,
-  expectedCount: number
+  expectedCount: number,
+  callToActionRequired: boolean
 ): { ok: true } | { ok: false; error: string } {
   const got = obj.letters.length;
   if (got !== expectedCount) {
@@ -145,6 +166,26 @@ function validateSeriesPlan(
       return {
         ok: false,
         error: `Letter ${letter.position} ("${letter.title}") came back too short. Try again.`,
+      };
+    }
+    if (callToActionRequired) {
+      const cta = letter.callToAction ?? "";
+      if (cta.length < 20 || cta.length > 400) {
+        return {
+          ok: false,
+          error: `Letter ${letter.position} ("${letter.title}") came back with a call to action of ${cta.length} characters. It needs to be 20-400 characters. Try again.`,
+        };
+      }
+    }
+    const bannedHits = findBannedLanguage(
+      [letter.intro, letter.guidance, letter.notes, letter.callToAction ?? ""].join(
+        "\n"
+      )
+    );
+    if (bannedHits.length > 0) {
+      return {
+        ok: false,
+        error: `Letter ${letter.position} ("${letter.title}") used banned language: ${bannedHits.join(", ")}. Try again.`,
       };
     }
   }
