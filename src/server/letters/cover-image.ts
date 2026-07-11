@@ -2,12 +2,13 @@ import { put } from "@vercel/blob";
 
 // Appended to every prompt sent to OpenAI, regardless of style. Keeps output
 // safe, dignified, and free of stray text/watermarks for a Christian audience.
-export const HARD_SUFFIX =
+const HARD_SUFFIX =
   ". Natural and candid, never staged or stock-photo. Reverent and dignified, suitable for a Christian audience. No crosses or religious iconography unless explicitly requested. No stereotypical imagery. No text, lettering, watermarks, or signatures anywhere in the image.";
 
-// Re-exported so callers (e.g. the admin image-gen route) can validate an
-// incoming `style` key without duplicating the fragment list.
-export const STYLE_FRAGMENTS: Record<string, string> = {
+// Style fragments keyed by the `style` input; an unknown or missing style
+// contributes no fragment. Module-private: composeImagePrompt is the only
+// consumer, and callers pass style keys as plain strings.
+const STYLE_FRAGMENTS: Record<string, string> = {
   documentary: "Documentary photography, natural lighting, candid composition.",
   cinematic: "Cinematic golden-hour photography, shallow depth of field, warm tones.",
   engraving: "Black ink wood engraving, fine cross-hatching, classical biblical illustration, high contrast, no color.",

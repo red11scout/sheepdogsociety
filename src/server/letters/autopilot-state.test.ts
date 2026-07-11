@@ -14,14 +14,35 @@ describe("computeBlockDates", () => {
     expect(dates[0].toISOString()).toBe("2026-07-17T12:00:00.000Z");
   });
 
-  it("non-null anchor: dates land at anchor +7/+14/+21/+28 days", () => {
-    const anchor = new Date("2026-06-01T12:00:00.000Z");
-    const now = new Date("2026-06-01T15:00:00.000Z"); // ignored when anchor is present
+  it("future anchor: dates land at anchor +7/+14/+21/+28 days", () => {
+    const anchor = new Date("2026-06-15T12:00:00.000Z");
+    const now = new Date("2026-06-01T15:00:00.000Z"); // anchor is ahead of now, so it wins
     const dates = computeBlockDates(anchor, now);
     expect(dates[0].getTime()).toBe(anchor.getTime() + 7 * DAY_MS);
     expect(dates[1].getTime()).toBe(anchor.getTime() + 14 * DAY_MS);
     expect(dates[2].getTime()).toBe(anchor.getTime() + 21 * DAY_MS);
     expect(dates[3].getTime()).toBe(anchor.getTime() + 28 * DAY_MS);
+  });
+
+  it("past anchor is clamped: first date is 7 days after NOW, never in the past", () => {
+    // A stale anchor (weeks behind now) must not schedule letters into the
+    // past — they would publish instantly, unreviewed. The clamp treats a
+    // past anchor exactly like no anchor at all.
+    const anchor = new Date("2026-06-01T12:00:00.000Z");
+    const now = new Date("2026-07-10T12:00:00.000Z"); // publish-instant aligned
+    const dates = computeBlockDates(anchor, now);
+    expect(dates[0].getTime()).toBe(now.getTime() + 7 * DAY_MS);
+    expect(dates[0].toISOString()).toBe("2026-07-17T12:00:00.000Z");
+    for (const d of dates) {
+      expect(d.getTime()).toBeGreaterThan(now.getTime());
+    }
+  });
+
+  it("anchor exactly equal to now is clamped too (<=, not <)", () => {
+    const now = new Date("2026-07-10T12:00:00.000Z");
+    const anchor = new Date(now.getTime());
+    const dates = computeBlockDates(anchor, now);
+    expect(dates[0].getTime()).toBe(now.getTime() + 7 * DAY_MS);
   });
 
   it("dates are strictly ascending, exactly one week apart", () => {

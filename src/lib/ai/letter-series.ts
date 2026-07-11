@@ -169,6 +169,12 @@ function validateSeriesPlan(
         error: `Letter "${letter.title}" came back with a bad position (${letter.position}). Try again.`,
       };
     }
+    if (letter.title.length > 120) {
+      return {
+        ok: false,
+        error: `Letter ${letter.position} came back with a title of ${letter.title.length} characters. Titles need to fit in 120. Try again.`,
+      };
+    }
     if (letter.scriptures.length < 2 || letter.scriptures.length > 3) {
       return {
         ok: false,
@@ -189,11 +195,27 @@ function validateSeriesPlan(
           error: `Letter ${letter.position} ("${letter.title}") came back with a call to action of ${cta.length} characters. It needs to be 20-400 characters. Try again.`,
         };
       }
+      // The prompt asks for 20-60 words; char bounds alone let a 400-char
+      // ramble through. Gate the word count too.
+      const ctaWords = cta.trim().split(/\s+/).length;
+      if (ctaWords > 60) {
+        return {
+          ok: false,
+          error: `Letter ${letter.position} ("${letter.title}") came back with a call to action of ${ctaWords} words. It needs to be 60 words or fewer. Try again.`,
+        };
+      }
     }
+    // Banned-language gate over EVERY rendered surface: title and
+    // scripture notes render publicly just like the body sections do.
     const bannedHits = findBannedLanguage(
-      [letter.intro, letter.guidance, letter.notes, letter.callToAction ?? ""].join(
-        "\n"
-      )
+      [
+        letter.title,
+        letter.intro,
+        letter.guidance,
+        letter.notes,
+        letter.callToAction ?? "",
+        ...letter.scriptures.map((s) => s.note),
+      ].join("\n")
     );
     if (bannedHits.length > 0) {
       return {

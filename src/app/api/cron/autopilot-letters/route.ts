@@ -14,9 +14,13 @@ export const maxDuration = 300;
  * engine is disabled by default and killable from the admin Autopilot
  * card; this route only reports what the run did.
  *
- * Auth: Vercel Cron sends an Authorization: Bearer <CRON_SECRET> header.
- * We accept that, OR a query string ?key=<CRON_SECRET> for manual smoke
- * tests from a browser.
+ * Auth: header Bearer ONLY. Vercel Cron sends an Authorization:
+ * Bearer <CRON_SECRET> header, and a manual re-fire uses curl with the
+ * same header. No ?key= query-param fallback here: query strings leak
+ * into request logs, browser history, and referrers, and this endpoint
+ * can put four unreviewed letters on the calendar. (The older
+ * publish-scheduled-letters cron still accepts ?key=; this route
+ * deliberately does not.)
  */
 function authorized(req: Request): boolean {
   const secret = process.env.CRON_SECRET;
@@ -24,11 +28,7 @@ function authorized(req: Request): boolean {
     // No secret configured = nothing protects this endpoint, refuse.
     return false;
   }
-  const auth = req.headers.get("authorization");
-  if (auth === `Bearer ${secret}`) return true;
-  const url = new URL(req.url);
-  if (url.searchParams.get("key") === secret) return true;
-  return false;
+  return req.headers.get("authorization") === `Bearer ${secret}`;
 }
 
 export async function GET(req: Request) {

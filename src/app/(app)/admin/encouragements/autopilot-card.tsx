@@ -7,28 +7,29 @@ import { format } from "date-fns";
 import { setAutopilotEnabled } from "@/server/letters/autopilot-admin";
 import { cn } from "@/lib/utils";
 
-interface ScheduledLetterLite {
+interface LastBlockLetterLite {
   id: string;
   title: string;
-  scheduledFor: string | null;
 }
 
 interface AutopilotCardProps {
   enabled: boolean;
+  authorName: string | null;
   lastRunAt: string | null;
   lastBlockTheme: string;
   lastBlockVoice: string;
   lastBlockLetterIds: string[];
-  scheduledLetters: ScheduledLetterLite[];
+  lastBlockLetters: LastBlockLetterLite[];
 }
 
 export function AutopilotCard({
   enabled: initialEnabled,
+  authorName,
   lastRunAt,
   lastBlockTheme,
   lastBlockVoice,
   lastBlockLetterIds,
-  scheduledLetters,
+  lastBlockLetters,
 }: AutopilotCardProps) {
   const router = useRouter();
   const [enabled, setEnabled] = useState(initialEnabled);
@@ -90,6 +91,16 @@ export function AutopilotCard({
           : "Off. The Letter waits for your hand."}
       </p>
 
+      {authorName ? (
+        <p className="mt-2 text-xs text-stone/60">
+          Letters signed as: {authorName}
+        </p>
+      ) : (
+        <p className="mt-2 text-xs text-oxblood">
+          No author set — autopilot cannot run.
+        </p>
+      )}
+
       {revertedMessage && (
         <p className="mt-2 text-xs text-brass">{revertedMessage}</p>
       )}
@@ -117,15 +128,16 @@ export function AutopilotCard({
           {lastBlockLetterIds.length > 0 && (
             <ul className="mt-2 space-y-1">
               {lastBlockLetterIds.map((id) => {
-                const letter = scheduledLetters.find((l) => l.id === id);
+                const letter = lastBlockLetters.find((l) => l.id === id);
                 return (
                   <li key={id}>
                     <Link
                       href={`/admin/encouragements/${id}`}
                       className="link-editorial text-xs text-stone/70"
                     >
-                      {/* "View letter" fallback is expected right after a disable: titles come from
-                          scheduledLetters (the scheduled list), which just reverted to draft. */}
+                      {/* lastBlockLetters is fetched regardless of status, so titles
+                          survive a disable (drafts included). The "View letter"
+                          fallback only appears if the letter row was deleted. */}
                       {letter?.title ?? "View letter"}
                     </Link>
                   </li>

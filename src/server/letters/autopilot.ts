@@ -19,7 +19,7 @@
 import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
-import { and, desc, eq, isNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import { aiGenerations } from "@/db/schema";
 import {
@@ -47,7 +47,13 @@ import {
   type DraftLetter,
 } from "@/server/letters/series-core";
 import { generateCoverImage } from "@/server/letters/cover-image";
-import { getOrCreatePilotRow, computeBlockDates } from "@/server/letters/autopilot-state";
+import {
+  getOrCreatePilotRow,
+  computeBlockDates,
+  BLOCK_SIZE,
+  PUBLISH_HOUR,
+  pad2,
+} from "@/server/letters/autopilot-state";
 import { resend, FROM_TRANSACTIONAL } from "@/lib/email";
 
 const MODEL = "claude-sonnet-4-5";
@@ -56,8 +62,6 @@ export const AUTOPILOT_THEME_PROMPT_VERSION = "letter-autopilot-theme.v1";
 const SHEPHERD_EMAIL = "shepherd@acts2028sheepdogsociety.com";
 const KILL_SWITCH_LINE =
   "To stop the autopilot: /admin/encouragements, Autopilot card, one toggle.";
-const BLOCK_SIZE = 4;
-const PUBLISH_HOUR = 6; // 6am Central, same as the manual series wizard default.
 
 export interface AutopilotRunReport {
   ran: boolean; // false when disabled or enough letters scheduled
@@ -89,10 +93,6 @@ const MONTH_NAMES = [
 
 function formatChicagoDate(parts: { year: number; month: number; day: number }): string {
   return `${MONTH_NAMES[parts.month - 1]} ${parts.day}, ${parts.year}`;
-}
-
-function pad2(n: number): string {
-  return String(n).padStart(2, "0");
 }
 
 function seasonLine(week: WeekPlan): string {
@@ -145,11 +145,15 @@ async function logGeneration(entry: {
 }
 
 // ------------------------------------------------------------------
-// Emails. Both are best-effort: a failure is logged and never blocks
-// the run. Plain text, brand voice, no em-dashes.
+// Emails. Plain text, brand voice, no em-dashes. Returns whether the
+// send succeeded. Alert emails treat a failure as best-effort (logged,
+// never blocking: the run already stopped and nothing will publish).
+// The VISIBILITY email is different: it is the sole compensating
+// control for unreviewed publishing, so its caller checks the return
+// and reverts the persisted block when the send fails.
 // ------------------------------------------------------------------
 
-async function sendEmail(subject: string, text: string): Promise<void> {
+async function sendEmail(subject: string, text: string): Promise<boolean> {
   try {
     const { error } = await resend().emails.send({
       from: FROM_TRANSACTIONAL,
@@ -157,9 +161,14 @@ async function sendEmail(subject: string, text: string): Promise<void> {
       subject,
       text,
     });
-    if (error) console.error("autopilot email rejected", error);
+    if (error) {
+      console.error("autopilot email rejected", error);
+      return false;
+    }
+    return true;
   } catch (err) {
     console.error("autopilot email failed", err);
+    return false;
   }
 }
 
@@ -305,10 +314,10 @@ export async function runAutopilot(opts?: { dryRun?: boolean }): Promise<Autopil
     return skipped("disabled", dryRun);
   }
 
-  // Overlap guard (a): the weekly cron and a manual ?key= smoke test can
-  // race or double-fire. A real run inside the last 24 hours means this
-  // one stands down. Dry runs skip the guard: they persist nothing, so
-  // they cannot double-book the calendar.
+  // Overlap guard (a): the weekly cron and a manual re-fire (curl with
+  // the Bearer secret) can race or double-fire. A real run inside the
+  // last 24 hours means this one stands down. Dry runs skip the guard:
+  // they persist nothing, so they cannot double-book the calendar.
   if (
     !dryRun &&
     pilot.lastRunAt &&
@@ -555,23 +564,42 @@ export async function runAutopilot(opts?: { dryRun?: boolean }): Promise<Autopil
     };
   }
 
-  // Author rule (locked): the autopilot never guesses an author.
+  // Author rule (locked): the autopilot never guesses an author. The
+  // Autopilot card has no author control; default_author_id is seeded in
+  // production, so this alert only fires if that seed is lost.
   const authorId = pilot.defaultAuthorId;
   if (!authorId) {
     await sendEmail(
       "The letter autopilot could not finish this week",
       buildAlertBody(
-        "no default author is configured. Set one on the Autopilot card at /admin/encouragements and the next run will take it from there"
+        "no default author is configured. The site owner must set default_author_id on the letter_autopilot row in the database (the Autopilot card has no author control). That value is seeded in production, so this alert means the seed was lost"
       )
     );
     return skipped("no default author configured", dryRun);
   }
 
-  // Overlap guard (b): generation took minutes; re-check the queue right
-  // before writing. Another writer (a concurrent run or the admin wizard)
-  // may have scheduled letters in the meantime, and standing down beats a
-  // double-booked calendar. Alert-free by design: nothing is wrong, the
-  // queue is simply full.
+  // Overlap guard (b): generation took minutes; re-check right before
+  // writing. Two things can have changed underneath us, and both are
+  // alert-free stand-downs (nothing is wrong, the world just moved):
+  //
+  // 1. The kill switch. Disabling the autopilot REVERTS scheduled
+  //    letters to draft, which also clears the scheduled-count guard
+  //    below — so the count recheck alone would happily let an in-flight
+  //    run persist a fresh block right after the admin toggled Off. The
+  //    enabled flag must be re-read from the database; the `pilot`
+  //    snapshot from step 1 is minutes stale by now.
+  const [pilotNow] = await db
+    .select({ enabled: letterAutopilot.enabled })
+    .from(letterAutopilot)
+    .where(eq(letterAutopilot.id, pilot.id))
+    .limit(1);
+  if (!pilotNow?.enabled) {
+    return skipped("autopilot was disabled while generating", dryRun);
+  }
+
+  // 2. The queue. Another writer (a concurrent run or the admin wizard)
+  //    may have scheduled letters in the meantime, and standing down
+  //    beats a double-booked calendar.
   const recheck = await db
     .select({ id: weeklyEncouragements.id })
     .from(weeklyEncouragements)
@@ -632,9 +660,20 @@ export async function runAutopilot(opts?: { dryRun?: boolean }): Promise<Autopil
   // Unreviewed letters on the calendar with no note to the shepherd is
   // the one outcome this engine must never produce.
 
-  // 12 (runs first). Visibility email to the shepherd. Best-effort,
-  // never blocking. The body never mentions covers, so sending before
-  // they exist changes nothing the shepherd reads.
+  // 12 (runs first). Visibility email to the shepherd. LOAD-BEARING:
+  // this email is the sole compensating control for publishing without
+  // human review, so if it cannot be sent the block must not stay on the
+  // calendar. A failed send reverts every just-persisted letter to draft
+  // and the run reports itself as not-ran. Nothing publishes unreviewed
+  // when Resend is down.
+  //
+  // Accepted residual: a hard crash (process kill, OOM) in the roughly
+  // one-second window between the persist commit above and this send
+  // would leave the block scheduled with no email and no revert. That
+  // window cannot be closed without an outbox/two-phase design; it is
+  // accepted because the cron's 500, the missing summary email, and the
+  // Autopilot card's scheduled-letters list all surface the block within
+  // the same day, a week before anything publishes.
   const scheduled = created.letters.map((l) => {
     const draft = survivors.find((s) => s.position === l.position);
     const week = weeks[l.position - 1];
@@ -646,10 +685,42 @@ export async function runAutopilot(opts?: { dryRun?: boolean }): Promise<Autopil
       dateLabel: formatChicagoDate(week.parts),
     };
   });
-  await sendEmail(
+  const visibilitySent = await sendEmail(
     `The next four weeks are written: ${theme}, in the voice of ${voice.name}`,
     buildVisibilityBody({ theme, voiceName: voice.name, scheduled, gaps, verificationSkipped })
   );
+  if (!visibilitySent) {
+    const createdIds = created.letters.map((l) => l.id);
+    let reason = "visibility email failed — block reverted to drafts";
+    try {
+      await db
+        .update(weeklyEncouragements)
+        .set({ status: "draft", scheduledFor: null, updatedAt: new Date() })
+        .where(inArray(weeklyEncouragements.id, createdIds));
+      console.error(
+        `autopilot: visibility email failed; reverted the persisted block to drafts (letters: ${createdIds.join(", ")})`
+      );
+    } catch (revertErr) {
+      // Worst case: no email AND the revert failed. Say so honestly in
+      // the report and the logs; the letters are still a week from
+      // publishing and visible on the Autopilot card.
+      reason = "visibility email failed AND revert failed — letters remain scheduled unreviewed";
+      console.error(
+        `autopilot: visibility email failed AND the draft revert failed (letters: ${createdIds.join(", ")}):`,
+        revertErr
+      );
+    }
+    return {
+      ran: false,
+      reason,
+      theme,
+      voice: voice.name,
+      scheduled: scheduled.map(({ id, title, scheduledFor }) => ({ id, title, scheduledFor })),
+      gaps,
+      ...(verificationSkipped ? { verificationSkipped } : {}),
+      coversGenerated: 0,
+    };
+  }
 
   // 10. Covers: broadsheet style, landscape, final quality. Prompt names
   // the title, theme, and season only, never scripture text. Failures

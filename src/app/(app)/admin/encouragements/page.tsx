@@ -75,6 +75,7 @@ export default async function EncouragementsAdminPage() {
       {autopilot && (
         <AutopilotCard
           enabled={autopilot.pilot.enabled}
+          authorName={autopilot.authorName}
           lastRunAt={
             autopilot.pilot.lastRunAt
               ? autopilot.pilot.lastRunAt.toISOString()
@@ -92,11 +93,7 @@ export default async function EncouragementsAdminPage() {
               ? (autopilot.pilot.lastBlockLetterIds as string[])
               : []
           }
-          scheduledLetters={autopilot.scheduledLetters.map((l) => ({
-            id: l.id,
-            title: l.title,
-            scheduledFor: l.scheduledFor ? l.scheduledFor.toISOString() : null,
-          }))}
+          lastBlockLetters={autopilot.lastBlockLetters}
         />
       )}
 
