@@ -16,8 +16,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
-import { resources, users } from "@/db/schema";
-import { resourceSections } from "@/db/schema-new";
+import { resources, users, resourceSections } from "@/db/schema";
 import { eq, and, isNull, sql as drizzleSql } from "drizzle-orm";
 import { categorizeResource } from "@/lib/resources/categorize";
 

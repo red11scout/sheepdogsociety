@@ -10,9 +10,9 @@ import {
   contactSubmissions,
   locationRequests,
   locationInterests,
+  weeklyEncouragements,
 } from "@/db/schema";
 import { members } from "@/db/schema-members";
-import { weeklyEncouragements } from "@/db/schema-new";
 import { sql, gte, desc, isNull, and, eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 

@@ -21,12 +21,12 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { z } from "zod";
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "@/db";
-import { aiGenerations } from "@/db/schema";
 import {
+  aiGenerations,
   letterAutopilot,
   letterSeries,
   weeklyEncouragements,
-} from "@/db/schema-new";
+} from "@/db/schema";
 import { SYSTEM_PROMPT } from "@/lib/ai/system-prompt";
 import { THEOLOGIAN_VOICES, type TheologianVoice } from "@/lib/ai/voices";
 import { findBannedLanguage } from "@/lib/ai/banned";

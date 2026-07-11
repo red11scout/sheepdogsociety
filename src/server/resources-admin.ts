@@ -2,8 +2,7 @@
 
 import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
-import { resourceSections } from "@/db/schema-new";
-import { resources, users } from "@/db/schema";
+import { resources, users, resourceSections } from "@/db/schema";
 import { and, eq, isNull, asc, desc } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { categorizeResource } from "@/lib/resources/categorize";

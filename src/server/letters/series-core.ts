@@ -13,7 +13,7 @@
 // the lock the only guard.
 
 import { db } from "@/db";
-import { weeklyEncouragements, letterSeries } from "@/db/schema-new";
+import { weeklyEncouragements, letterSeries } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 
 export function slugify(text: string): string {

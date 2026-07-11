@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { weeklyEncouragements } from "@/db/schema-new";
+import { weeklyEncouragements } from "@/db/schema";
 import { and, eq, inArray, isNull, lte } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { broadcastEncouragement } from "@/server/encouragements";

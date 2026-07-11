@@ -9,6 +9,7 @@ import {
   pgEnum,
   uniqueIndex,
   index,
+  date,
 } from "drizzle-orm/pg-core";
 import { relations, sql } from "drizzle-orm";
 
@@ -1268,10 +1269,157 @@ export const groupInquiriesRelations = relations(
 const notDeletedPredicate = sql`deleted_at IS NULL`;
 
 // ============================================================
-// Phase D — additive schemas. Never edit existing exports above.
-// New tables live in their own files for cleaner diffs and rollback.
+// Phase D — additive schemas. members/pages/site-text still live in
+// their own files and are re-exported here so `@/db/schema` stays the
+// single import surface for the whole ORM graph.
 // ============================================================
 export * from "./schema-members";
 export * from "./schema-pages";
 export * from "./schema-site-text";
+
+// ============================================================
+// Weekly Encouragements — canonical Letter CMS (consolidated from the
+// former schema-new.ts, 2026-07-11). This is what /admin/encouragements,
+// the autopilot, and the public site read.
+// ============================================================
+export const weeklyEncouragements = pgTable(
+  "weekly_encouragements",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    issueNumber: integer("issue_number").notNull(),
+    title: text("title").notNull(),
+    slug: text("slug").notNull(),
+    publishDate: date("publish_date"),
+    status: text("status").notNull().default("draft"),
+    intro: text("intro").default(""),
+    updates: text("updates").default(""),
+    scriptures: jsonb("scriptures").default([]).notNull(),
+    guidance: text("guidance").default(""),
+    notes: text("notes").default(""),
+    callToAction: text("call_to_action").default(""),
+    coverImageUrl: text("cover_image_url").default(""),
+    coverImageAlt: text("cover_image_alt").default(""),
+    theme: text("theme").default(""),
+    voice: text("voice").default(""),
+    seriesId: uuid("series_id"),
+    seriesPosition: integer("series_position"),
+    scheduledFor: timestamp("scheduled_for"),
+    broadcastId: text("broadcast_id"),
+    broadcastAt: timestamp("broadcast_at"),
+    authorId: text("author_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    updatedAt: timestamp("updated_at").notNull().defaultNow(),
+    deletedAt: timestamp("deleted_at"),
+  },
+  (table) => [
+    uniqueIndex("we_slug_unique").on(table.slug),
+    index("we_status_idx").on(table.status),
+    index("we_publish_date_idx").on(table.publishDate),
+  ]
+);
+
+export type WeeklyEncouragement = typeof weeklyEncouragements.$inferSelect;
+export type WeeklyEncouragementInsert = typeof weeklyEncouragements.$inferInsert;
+
+// Scriptures is jsonb: array of { ref: string, note?: string, text?: string }
+export interface ScriptureRef {
+  ref: string;
+  note?: string;
+  text?: string;
+}
+
+// ============================================================
+// Resource Sections — structured categories for Resources
+// ============================================================
+export const resourceSections = pgTable(
+  "resource_sections",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    slug: text("slug").notNull(),
+    description: text("description").default(""),
+    icon: text("icon").default("scroll"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    deletedAt: timestamp("deleted_at"),
+  },
+  (table) => [uniqueIndex("rs_slug_unique").on(table.slug)]
+);
+
+export type ResourceSection = typeof resourceSections.$inferSelect;
+export type ResourceSectionInsert = typeof resourceSections.$inferInsert;
+
+// ============================================================
+// Letter Series — a themed batch of weekly encouragements published on a
+// recurring cadence. The cron at /api/cron/publish-scheduled-letters
+// publishes each letter when its scheduled_for window arrives.
+// ============================================================
+export const letterSeries = pgTable(
+  "letter_series",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    theme: text("theme").notNull(),
+    voice: text("voice").default(""),
+    totalCount: integer("total_count").notNull(),
+    cadence: text("cadence").notNull().default("weekly"), // weekly | biweekly | monthly | custom
+    startDate: date("start_date").notNull(),
+    publishHour: integer("publish_hour").notNull().default(6),
+    origin: text("origin").notNull().default("manual"), // manual | autopilot
+    createdBy: text("created_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    createdAt: timestamp("created_at").notNull().defaultNow(),
+    deletedAt: timestamp("deleted_at"),
+  },
+  (table) => [index("letter_series_created_idx").on(table.createdAt)]
+);
+
+export type LetterSeries = typeof letterSeries.$inferSelect;
+export type LetterSeriesInsert = typeof letterSeries.$inferInsert;
+
+// ============================================================
+// Letter Autopilot — single-row state for the autonomous weekly letter
+// generator (Phase C). Ships enabled=false; an admin flips it on once the
+// pipeline is reviewed.
+// ============================================================
+export const letterAutopilot = pgTable("letter_autopilot", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  enabled: boolean("enabled").notNull().default(false),
+  defaultAuthorId: text("default_author_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  voiceRotationIndex: integer("voice_rotation_index").notNull().default(0),
+  lastRunAt: timestamp("last_run_at"),
+  lastBlockTheme: text("last_block_theme").default(""),
+  lastBlockVoice: text("last_block_voice").default(""),
+  lastBlockLetterIds: jsonb("last_block_letter_ids").default([]).notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type LetterAutopilot = typeof letterAutopilot.$inferSelect;
+export type LetterAutopilotInsert = typeof letterAutopilot.$inferInsert;
+
+export const weeklyEncouragementsRelations = relations(
+  weeklyEncouragements,
+  ({ one }) => ({
+    author: one(users, {
+      fields: [weeklyEncouragements.authorId],
+      references: [users.id],
+    }),
+  })
+);
+
+export const letterSeriesRelations = relations(letterSeries, ({ one }) => ({
+  creator: one(users, {
+    fields: [letterSeries.createdBy],
+    references: [users.id],
+  }),
+}));
+
+// Design Studio tables (site_studio, studio_versions) stay in their own
+// schema-studio.ts and are re-exported below — that file is owned by the
+// active Studio work, so it is left untouched here to avoid a merge clash.
 export * from "./schema-studio";
