@@ -801,15 +801,18 @@ function ResourceRow({
   }
 
   // Field notes: AI-drafted study notes, gated behind admin approval
-  // before they render publicly. fnInsufficient is a client-only flag —
-  // the API doesn't persist "insufficient" (status stays "none"), so we
-  // remember the outcome locally until the next draft attempt or reload.
+  // before they render publicly. The server persists "insufficient" as its
+  // own status (a draft was attempted but the row lacks usable source
+  // material), but this row's props won't reflect that until the next
+  // reload — fnInsufficient is a client-only flag that shows the "Needs
+  // manual notes" chip immediately after the API call comes back.
   const fieldNotesStatus = resource.fieldNotesStatus ?? "none";
   const [fnState, setFnState] = useState<"idle" | "busy" | "error">("idle");
   const [fnError, setFnError] = useState("");
   const [fnInsufficient, setFnInsufficient] = useState(false);
   const [fnEditing, setFnEditing] = useState(false);
   const [fnDraftHtml, setFnDraftHtml] = useState(resource.fieldNotesHtml ?? "");
+  const needsManualNotes = fieldNotesStatus === "insufficient" || fnInsufficient;
 
   async function runFieldNotesDraft() {
     setFnState("busy");
@@ -861,7 +864,14 @@ function ResourceRow({
   }
 
   async function handleSaveFieldNotes() {
-    await onUpdate({ fieldNotesHtml: fnDraftHtml });
+    // Hand-written notes from "none"/"insufficient" enter the normal
+    // approve flow just like an AI draft would; saving an edit to an
+    // existing "draft"/"approved" row leaves its status untouched.
+    const patch: Partial<ResourceRow> =
+      fieldNotesStatus === "none" || fieldNotesStatus === "insufficient"
+        ? { fieldNotesHtml: fnDraftHtml, fieldNotesStatus: "draft" }
+        : { fieldNotesHtml: fnDraftHtml };
+    await onUpdate(patch);
     setFnEditing(false);
   }
 
@@ -1006,8 +1016,11 @@ function ResourceRow({
             </p>
 
             {/* Field notes: AI-drafted study notes. "none" prompts a draft,
-             *  "draft" needs an admin's eyes before it goes public,
-             *  "approved" is live on /resources/[slug]. */}
+             *  "insufficient" means a draft was attempted but the row lacks
+             *  usable source material (metadata too thin), "draft" needs an
+             *  admin's eyes before it goes public, "approved" is live on
+             *  /resources/[slug]. "none" and "insufficient" both offer a
+             *  manual "Write notes" path alongside the AI draft/retry. */}
             <div className="mt-2 flex flex-wrap items-center gap-2">
               {fieldNotesStatus === "approved" ? (
                 <span className="inline-flex h-5 items-center border border-olive/40 bg-olive/10 px-1.5 text-[0.5625rem] uppercase tracking-wider text-olive">
@@ -1017,7 +1030,7 @@ function ResourceRow({
                 <span className="inline-flex h-5 items-center border border-brass/40 bg-brass/10 px-1.5 text-[0.5625rem] uppercase tracking-wider text-brass">
                   Draft
                 </span>
-              ) : fnInsufficient ? (
+              ) : needsManualNotes ? (
                 <span className="inline-flex h-5 items-center border border-oxblood/40 bg-oxblood/10 px-1.5 text-[0.5625rem] uppercase tracking-wider text-oxblood">
                   Needs manual notes
                 </span>
@@ -1027,21 +1040,31 @@ function ResourceRow({
                 </span>
               )}
 
-              {fieldNotesStatus === "none" && (
-                <button
-                  type="button"
-                  onClick={runFieldNotesDraft}
-                  disabled={fnState === "busy"}
-                  className="text-xs font-medium text-brass hover:text-gold disabled:opacity-50"
-                >
-                  {fnState === "busy" ? "Drafting…" : "Draft notes"}
-                </button>
+              {/* While the notes editor is open, hide sibling actions so a
+               *  stray Approve/Redraft/Unpublish/Draft can't blow away
+               *  unsaved textarea content — same convention as row
+               *  title/description editing, which swaps the whole row for
+               *  Save/Cancel. */}
+              {(fieldNotesStatus === "none" || needsManualNotes) && !fnEditing && (
+                <>
+                  <button
+                    type="button"
+                    onClick={runFieldNotesDraft}
+                    disabled={fnState === "busy"}
+                    className="text-xs font-medium text-brass hover:text-gold disabled:opacity-50"
+                  >
+                    {fnState === "busy" ? "Drafting…" : "Draft notes"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={openFieldNotesEditor}
+                    className="text-xs text-stone/65 hover:text-bone"
+                  >
+                    Write notes
+                  </button>
+                </>
               )}
 
-              {/* While the notes editor is open, hide sibling actions so a
-               *  stray Approve/Redraft/Unpublish can't blow away unsaved
-               *  textarea content — same convention as row title/description
-               *  editing, which swaps the whole row for Save/Cancel. */}
               {fieldNotesStatus === "draft" && !fnEditing && (
                 <>
                   <button

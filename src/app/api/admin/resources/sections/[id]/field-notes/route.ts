@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
-import { users, resources } from "@/db/schema";
-import { and, eq, isNull, sql } from "drizzle-orm";
-import { generateFieldNotes } from "@/lib/resources/generate-field-notes";
+import { users, resources, aiGenerations } from "@/db/schema";
+import { and, asc, eq, isNull, sql } from "drizzle-orm";
+import { generateFieldNotes, FIELD_NOTES_PROMPT_VERSION } from "@/lib/resources/generate-field-notes";
 
 export const runtime = "nodejs";
 export const maxDuration = 300;
@@ -20,12 +20,17 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
   const { id } = await params;
+  // "insufficient" rows are excluded once persisted (they're parked for a
+  // manual write, not a retry target) — only true never-attempted rows are
+  // pending. orderBy gives deterministic forward progress across runs once
+  // a section exceeds BATCH_CAP.
   const pending = await db
     .select()
     .from(resources)
     .where(
       and(eq(resources.sectionId, id), eq(resources.fieldNotesStatus, "none"), isNull(resources.deletedAt))
     )
+    .orderBy(asc(resources.createdAt))
     .limit(BATCH_CAP);
 
   let drafted = 0;
@@ -34,15 +39,39 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
 
   for (const row of pending) {
     try {
-      const notes = await generateFieldNotes(row);
-      if (!notes) {
+      const result = await generateFieldNotes(row);
+      if (result.status === "insufficient") {
+        await db
+          .update(resources)
+          .set({ fieldNotesStatus: "insufficient" })
+          .where(eq(resources.id, row.id));
         insufficient++;
+        continue;
+      }
+      if (result.status === "failed") {
+        failed++;
         continue;
       }
       await db
         .update(resources)
-        .set({ fieldNotesHtml: notes.html, fieldNotesStatus: "draft", fieldNotesGeneratedAt: new Date() })
+        .set({ fieldNotesHtml: result.html, fieldNotesStatus: "draft", fieldNotesGeneratedAt: new Date() })
         .where(eq(resources.id, row.id));
+      try {
+        await db.insert(aiGenerations).values({
+          type: "draft",
+          prompt: `field-notes: ${row.title}`,
+          promptVersion: FIELD_NOTES_PROMPT_VERSION,
+          model: "claude-sonnet-4-5",
+          output: result.html.slice(0, 4000),
+          inputTokens: result.tokensIn,
+          outputTokens: result.tokensOut,
+          entityType: "resource",
+          entityId: row.id,
+          userId,
+        });
+      } catch (logErr) {
+        console.error("field-notes ai_generations log failed", row.id, logErr);
+      }
       drafted++;
     } catch (err) {
       console.error("field-notes batch item failed", row.id, err);

@@ -683,8 +683,10 @@ export const resources = pgTable(
     estimatedMinutes: integer("estimated_minutes"),
     aiCategorizedAt: timestamp("ai_categorized_at"),
     /** AI-drafted, admin-approved study notes (spec §A-FN). Only
-     *  status === "approved" renders publicly; "none" = never generated
-     *  or insufficient source material. */
+     *  status === "approved" renders publicly. Vocabulary: "none" (never
+     *  drafted), "insufficient" (drafting was attempted but the row lacks
+     *  usable source material — needs a manual write), "draft" (awaiting
+     *  admin approval), "approved" (live). */
     fieldNotesHtml: text("field_notes_html").default(""),
     fieldNotesStatus: text("field_notes_status").notNull().default("none"),
     fieldNotesGeneratedAt: timestamp("field_notes_generated_at"),

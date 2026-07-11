@@ -24,16 +24,23 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json({ error: "Approved notes are live. Unpublish before redrafting." }, { status: 409 });
   }
 
-  const notes = await generateFieldNotes(row);
-  if (!notes) {
-    return NextResponse.json({
-      status: (row.bodyText?.length ?? 0) > 0 || row.description || row.summary ? "failed" : "insufficient",
-    });
+  const result = await generateFieldNotes(row);
+
+  if (result.status === "insufficient") {
+    await db
+      .update(resources)
+      .set({ fieldNotesStatus: "insufficient" })
+      .where(eq(resources.id, id));
+    return NextResponse.json({ status: "insufficient" });
+  }
+
+  if (result.status === "failed") {
+    return NextResponse.json({ status: "failed" });
   }
 
   await db
     .update(resources)
-    .set({ fieldNotesHtml: notes.html, fieldNotesStatus: "draft", fieldNotesGeneratedAt: new Date() })
+    .set({ fieldNotesHtml: result.html, fieldNotesStatus: "draft", fieldNotesGeneratedAt: new Date() })
     .where(eq(resources.id, id));
 
   try {
@@ -42,10 +49,11 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
       prompt: `field-notes: ${row.title}`,
       promptVersion: FIELD_NOTES_PROMPT_VERSION,
       model: "claude-sonnet-4-5",
-      output: notes.html.slice(0, 4000),
-      inputTokens: notes.tokensIn,
-      outputTokens: notes.tokensOut,
+      output: result.html.slice(0, 4000),
+      inputTokens: result.tokensIn,
+      outputTokens: result.tokensOut,
       entityType: "resource",
+      entityId: id,
       userId,
     });
   } catch (err) {

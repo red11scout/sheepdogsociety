@@ -3,11 +3,17 @@
  * selectDraftingInput: "full" (grounded in the resource's own body text)
  * and "framing" (metadata-only — the model has NOT read the resource and
  * must not pretend to). "insufficient" never reaches the generation path
- * below; it's a hard no-draft short-circuit before any Claude call.
+ * below; it's a hard no-draft short-circuit before any Claude call, and
+ * callers persist it as fieldNotesStatus 'insufficient'.
+ *
+ * Returns a discriminated FieldNotesResult rather than a nullable value so
+ * callers can tell "no usable source material" (insufficient) apart from
+ * "we tried and it broke" (failed) — the former parks the row for a manual
+ * write, the latter is safe to retry as-is.
  *
  * Single retry budget: if the structural, banned-language, or scripture
- * gate fails, we regenerate once. Second failure -> no draft (fail
- * silent; the row stays at fieldNotesStatus 'none' for a manual retry).
+ * gate fails, we regenerate once. Second failure -> { status: "failed" }
+ * (the row stays wherever it was for a manual retry).
  */
 import { generateObject } from "ai";
 import { anthropic } from "@ai-sdk/anthropic";
@@ -50,6 +56,11 @@ const notesSchema = z.object({
 
 type Notes = z.infer<typeof notesSchema>;
 
+export type FieldNotesResult =
+  | { status: "drafted"; html: string; tokensIn: number; tokensOut: number }
+  | { status: "insufficient" }
+  | { status: "failed" };
+
 const FRAMING_RULE = `You have ONLY the metadata below — you have NOT read this work.
 You MUST NOT claim, imply, or invent anything about its specific contents,
 chapters, arguments, or stories. Even if you recognize the title, use NONE
@@ -68,9 +79,9 @@ export async function generateFieldNotes(row: {
   author: string | null;
   description: string | null;
   summary: string | null;
-}): Promise<{ html: string; tokensIn: number; tokensOut: number } | null> {
+}): Promise<FieldNotesResult> {
   const input = selectDraftingInput(row);
-  if (input.mode === "insufficient") return null;
+  if (input.mode === "insufficient") return { status: "insufficient" };
 
   const prompt = `Write field notes for a resource our men use in weekly Bible studies.
 
@@ -98,8 +109,9 @@ ${input.content}`;
       object = scrubAiPayload(result.object);
       totalIn += result.usage?.inputTokens ?? 0;
       totalOut += result.usage?.outputTokens ?? 0;
-    } catch {
-      return null;
+    } catch (err) {
+      console.error("field-notes generation error", err);
+      return { status: "failed" };
     }
 
     // Gate 1: structural shape. The schema can't enforce array/string
@@ -119,9 +131,11 @@ ${input.content}`;
     if (findBannedLanguage(prose).length > 0) continue;
 
     // Gate 3: every scripture reference must parse against the canon
-    // (catches hallucinated books/chapters locally, zero API calls).
+    // (catches hallucinated books/chapters locally, zero API calls). Spec
+    // floor is 3-5 references, so fewer than 3 valid ones consumes the retry
+    // rather than shipping a thin scripture section.
     const validScriptures = object.scriptures.filter((s) => parseReference(s.reference) !== null);
-    if (validScriptures.length < 2) continue;
+    if (validScriptures.length < 3) continue;
 
     const html = [
       ...object.paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`),
@@ -133,10 +147,10 @@ ${input.content}`;
       `<p>${escapeHtml(object.howToUse)}</p>`,
     ].join("\n");
 
-    return { html, tokensIn: totalIn, tokensOut: totalOut };
+    return { status: "drafted", html, tokensIn: totalIn, tokensOut: totalOut };
   }
 
-  return null;
+  return { status: "failed" };
 }
 
 function escapeHtml(s: string): string {
