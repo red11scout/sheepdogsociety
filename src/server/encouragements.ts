@@ -93,39 +93,51 @@ export async function createEncouragement(input: {
   const userId = await requireAdmin();
   const title = input.title.trim() || "Untitled";
 
-  const [{ next }] = await db
-    .select({
-      next: sql<number>`COALESCE(MAX(${weeklyEncouragements.issueNumber}), 0) + 1`,
-    })
-    .from(weeklyEncouragements);
+  const row = await db.transaction(async (tx) => {
+    // Serialize issue-number allocation across concurrent writers: READ
+    // COMMITTED lets two transactions read the same MAX(issue_number),
+    // and issue_number has no unique constraint. 815551 is the app-wide
+    // constant shared with series creation (letters/series-core.ts), so
+    // every issue-number allocator serializes against the others. The
+    // xact-scoped lock releases on commit/rollback automatically.
+    await tx.execute(sql`SELECT pg_advisory_xact_lock(815551)`);
 
-  const baseSlug = slugify(`issue-${next}-${title}`);
-  let slug = baseSlug;
-  let suffix = 1;
-  while (true) {
-    const [existing] = await db
-      .select({ id: weeklyEncouragements.id })
-      .from(weeklyEncouragements)
-      .where(eq(weeklyEncouragements.slug, slug));
-    if (!existing) break;
-    suffix += 1;
-    slug = `${baseSlug}-${suffix}`;
-  }
+    const [{ next }] = await tx
+      .select({
+        next: sql<number>`COALESCE(MAX(${weeklyEncouragements.issueNumber}), 0) + 1`,
+      })
+      .from(weeklyEncouragements);
 
-  const [row] = await db
-    .insert(weeklyEncouragements)
-    .values({
-      issueNumber: next,
-      title,
-      slug,
-      authorId: userId,
-      scriptures: [] as ScriptureRef[],
-      theme: input.theme?.trim() ?? "",
-      voice: input.voice?.trim() ?? "",
-      coverImageUrl: input.coverImageUrl ?? "",
-      coverImageAlt: input.coverImageAlt ?? "",
-    })
-    .returning();
+    const baseSlug = slugify(`issue-${next}-${title}`);
+    let slug = baseSlug;
+    let suffix = 1;
+    while (true) {
+      const [existing] = await tx
+        .select({ id: weeklyEncouragements.id })
+        .from(weeklyEncouragements)
+        .where(eq(weeklyEncouragements.slug, slug));
+      if (!existing) break;
+      suffix += 1;
+      slug = `${baseSlug}-${suffix}`;
+    }
+
+    const [created] = await tx
+      .insert(weeklyEncouragements)
+      .values({
+        issueNumber: next,
+        title,
+        slug,
+        authorId: userId,
+        scriptures: [] as ScriptureRef[],
+        theme: input.theme?.trim() ?? "",
+        voice: input.voice?.trim() ?? "",
+        coverImageUrl: input.coverImageUrl ?? "",
+        coverImageAlt: input.coverImageAlt ?? "",
+      })
+      .returning();
+
+    return created;
+  });
 
   revalidatePath("/admin/encouragements");
   return row;
