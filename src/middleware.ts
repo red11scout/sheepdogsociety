@@ -73,6 +73,22 @@ const { auth } = NextAuth(authConfig);
 export default auth((req) => {
   const { pathname } = req.nextUrl;
 
+  // Studio compare: the LIVE iframe carries ?studio=published — forward the
+  // request without the draftMode cookie so it renders as a true public
+  // request (published theme/config/text, normal cache). Inert without
+  // draftMode: no cookie, nothing to strip.
+  if (req.nextUrl.searchParams.get("studio") === "published") {
+    const headers = new Headers(req.headers);
+    const cookie = headers.get("cookie");
+    if (cookie?.includes("__prerender_bypass")) {
+      headers.set(
+        "cookie",
+        cookie.split("; ").filter((c) => !c.startsWith("__prerender_bypass")).join("; ")
+      );
+      return NextResponse.next({ request: { headers } });
+    }
+  }
+
   // Public routes pass through.
   if (isPublic(pathname)) {
     return NextResponse.next();
