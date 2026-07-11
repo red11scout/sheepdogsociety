@@ -576,6 +576,10 @@ export function Studio({
                                 setAssisting(m);
                                 const res = await assistField(e.key, fieldDraft, m);
                                 setAssisting(null);
+                                // Guard against the admin switching to a different
+                                // field while this call was in flight — only apply
+                                // the result if e.key is still the open field.
+                                if (openKey !== e.key) return;
                                 if (res.ok) setFieldDraft(res.draft);
                                 else fail(res.error);
                               }}
