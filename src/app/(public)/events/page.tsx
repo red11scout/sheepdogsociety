@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
@@ -9,6 +10,9 @@ import { format } from "date-fns";
 import { cadenceLabel, type SeriesCadence } from "@/lib/events/series";
 import { Kicker } from "@/components/public/kicker";
 import { StaggerReveal } from "@/components/motion/StaggerReveal";
+import { getSiteTextMap } from "@/lib/site-text/get";
+import { getStudioConfig } from "@/lib/studio/get";
+import { renderMerge } from "@/lib/studio/config";
 
 export const revalidate = 60;
 
@@ -141,19 +145,23 @@ function groupUpcoming(rows: UpcomingRow[]): UpcomingItem[] {
 }
 
 export default async function EventsPage() {
-  const [upcoming, past] = await Promise.all([getUpcoming(), getPast()]);
+  const [upcoming, past, t, config] = await Promise.all([
+    getUpcoming(),
+    getPast(),
+    getSiteTextMap(),
+    getStudioConfig(),
+  ]);
   const upcomingItems = groupUpcoming(upcoming);
 
-  return (
-    <>
-      {/* Hero */}
+  const sections: Record<string, React.ReactNode> = {
+    hero: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 pb-12 pt-16 md:px-10 md:pt-24">
           <Kicker left="Gatherings" right="Come once · Come often" />
           <h1 className="display-xl mt-10 text-display-xl">
-            Bring a brother.
+            {t["events.hero.headline1"]}
             <br />
-            <em>Bring a friend.</em>
+            <em>{t["events.hero.headline2"]}</em>
           </h1>
           <p className="mt-8 max-w-2xl font-pullquote text-lede italic text-muted-foreground">
             Weekly tables. Monthly breakfasts. Prayer nights. Camping. The
@@ -161,8 +169,8 @@ export default async function EventsPage() {
           </p>
         </div>
       </section>
-
-      {/* Upcoming — ruled ledger */}
+    ),
+    upcoming: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 pb-20 md:px-10 md:pb-28">
           <Kicker left="Upcoming" />
@@ -250,7 +258,7 @@ export default async function EventsPage() {
             <div className="mt-10 border border-dashed border-foreground/15 p-12 text-center">
               <Icon name="calendar" size={32} className="mx-auto text-foreground/30" />
               <p className="mt-4 font-pullquote text-xl italic text-muted-foreground">
-                No gatherings on the books yet.
+                {t["events.upcoming.empty"]}
               </p>
               <p className="mt-3 text-muted-foreground">
                 Check back soon, or{" "}
@@ -263,10 +271,9 @@ export default async function EventsPage() {
           )}
         </div>
       </section>
-
-      {/* Past gatherings — paper-card grid (the public gallery surface) */}
-      {past.length > 0 && (
-        <section className="bg-background text-foreground">
+    ),
+    "past-gatherings": past.length > 0 ? (
+      <section className="bg-background text-foreground">
           <div className="mx-auto max-w-7xl px-6 pb-20 md:px-10 md:pb-28">
             <Kicker left="Past gatherings" />
             <p className="mt-4 max-w-2xl font-pullquote text-lg italic text-muted-foreground">
@@ -338,7 +345,16 @@ export default async function EventsPage() {
             </StaggerReveal>
           </div>
         </section>
-      )}
+      ) : null,
+  };
+
+  return (
+    <>
+      {renderMerge("events", config)
+        .filter((s) => s.visible)
+        .map((s) => (
+          <Fragment key={s.id}>{sections[s.id]}</Fragment>
+        ))}
     </>
   );
 }

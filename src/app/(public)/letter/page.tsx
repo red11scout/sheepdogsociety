@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { listPublishedEncouragements } from "@/server/encouragements";
@@ -6,6 +7,9 @@ import { Kicker } from "@/components/public/kicker";
 import { StaggerReveal } from "@/components/motion/StaggerReveal";
 import { LetterCover } from "@/components/letters/LetterCover";
 import { format } from "date-fns";
+import { getSiteTextMap } from "@/lib/site-text/get";
+import { getStudioConfig } from "@/lib/studio/get";
+import { renderMerge } from "@/lib/studio/config";
 
 export const dynamic = "force-dynamic";
 
@@ -22,17 +26,17 @@ export default async function LetterIndexPage() {
   } catch {
     rows = [];
   }
+  const [t, config] = await Promise.all([getSiteTextMap(), getStudioConfig()]);
 
-  return (
-    <>
-      {/* Hero */}
+  const sections: Record<string, React.ReactNode> = {
+    hero: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 pb-12 pt-16 md:px-10 md:pt-24">
           <Kicker left="The Letter" right="Sunday mornings · Read in five minutes" />
           <h1 className="display-xl mt-10 text-display-xl">
-            One letter
+            {t["letter.hero.headline1"]}
             <br />
-            <em>a week.</em>
+            <em>{t["letter.hero.headline2"]}</em>
           </h1>
           <p className="mt-8 max-w-2xl font-pullquote text-lede italic text-muted-foreground">
             Scripture, guidance, a word from the Watch. Read it before the day
@@ -40,22 +44,21 @@ export default async function LetterIndexPage() {
           </p>
         </div>
       </section>
-
-      {/* Issue grid */}
+    ),
+    "issue-grid": (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 pb-20 md:px-10 md:pb-28">
           {rows.length === 0 ? (
             <div className="border border-dashed border-foreground/15 p-16 text-center">
               <Icon name="sparkles" size={48} className="mx-auto text-brass" />
               <h2 className="display-soft mt-8 text-2xl md:text-3xl">
-                The first encouragement is on the way.
+                {t["letter.empty.heading"]}
               </h2>
               {/* Copy fix, deliberate: the elevated index has no inline
                   signup form, so "below" would point at nothing. The
                   nearest form lives in the footer. */}
               <p className="mx-auto mt-4 max-w-md font-pullquote text-lg italic text-muted-foreground">
-                Brothers are writing it. Sign up in the footer to get it the
-                moment it lands.
+                {t["letter.empty.body"]}
               </p>
             </div>
           ) : (
@@ -127,6 +130,16 @@ export default async function LetterIndexPage() {
           )}
         </div>
       </section>
+    ),
+  };
+
+  return (
+    <>
+      {renderMerge("letter", config)
+        .filter((s) => s.visible)
+        .map((s) => (
+          <Fragment key={s.id}>{sections[s.id]}</Fragment>
+        ))}
     </>
   );
 }
