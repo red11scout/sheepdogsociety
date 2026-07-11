@@ -27,6 +27,7 @@ interface EncouragementEditorProps {
     scriptures: { ref: string; note?: string }[];
     guidance: string;
     notes: string;
+    callToAction?: string;
     coverImageUrl: string;
     coverImageAlt: string;
     theme: string;
@@ -52,6 +53,7 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
   const [scriptures, setScriptures] = useState(initial.scriptures);
   const [guidance, setGuidance] = useState(initial.guidance);
   const [notes, setNotes] = useState(initial.notes);
+  const [callToAction, setCallToAction] = useState(initial.callToAction ?? "");
   const [coverImageUrl, setCoverImageUrl] = useState(initial.coverImageUrl);
   const [coverImageAlt, setCoverImageAlt] = useState(initial.coverImageAlt);
   const [theme, setTheme] = useState(initial.theme);
@@ -85,6 +87,7 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
           scriptures,
           guidance,
           notes,
+          callToAction,
           coverImageUrl,
           coverImageAlt,
           publishDate: publishDate || null,
@@ -108,6 +111,7 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
     scriptures,
     guidance,
     notes,
+    callToAction,
     coverImageUrl,
     coverImageAlt,
     publishDate,
@@ -472,6 +476,19 @@ export function EncouragementEditor({ id, initial }: EncouragementEditorProps) {
           onChange={(e) => setNotes(e.target.value)}
           rows={4}
           placeholder="Stand watch, brothers..."
+          className="block w-full resize-none border border-stone/15 bg-transparent px-4 py-3 text-base leading-relaxed text-bone placeholder:text-stone/35 focus:border-brass focus:outline-none"
+        />
+      </Section>
+
+      <Section
+        title="One move this week"
+        hint="One concrete next step for the reader. Optional — leave blank to skip this section on the page and in the email."
+      >
+        <textarea
+          value={callToAction}
+          onChange={(e) => setCallToAction(e.target.value)}
+          rows={4}
+          placeholder="This week, call the brother who missed Tuesday..."
           className="block w-full resize-none border border-stone/15 bg-transparent px-4 py-3 text-base leading-relaxed text-bone placeholder:text-stone/35 focus:border-brass focus:outline-none"
         />
       </Section>

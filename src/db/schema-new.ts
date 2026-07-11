@@ -13,6 +13,7 @@ import {
   date,
   uniqueIndex,
   index,
+  boolean,
 } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { users } from "./schema";
@@ -34,6 +35,7 @@ export const weeklyEncouragements = pgTable(
     scriptures: jsonb("scriptures").default([]).notNull(),
     guidance: text("guidance").default(""),
     notes: text("notes").default(""),
+    callToAction: text("call_to_action").default(""),
     coverImageUrl: text("cover_image_url").default(""),
     coverImageAlt: text("cover_image_alt").default(""),
     theme: text("theme").default(""),
@@ -105,6 +107,7 @@ export const letterSeries = pgTable(
     cadence: text("cadence").notNull().default("weekly"), // weekly | biweekly | monthly | custom
     startDate: date("start_date").notNull(),
     publishHour: integer("publish_hour").notNull().default(6),
+    origin: text("origin").notNull().default("manual"), // manual | autopilot
     createdBy: text("created_by").references(() => users.id, {
       onDelete: "set null",
     }),
@@ -116,6 +119,31 @@ export const letterSeries = pgTable(
 
 export type LetterSeries = typeof letterSeries.$inferSelect;
 export type LetterSeriesInsert = typeof letterSeries.$inferInsert;
+
+// ============================================================
+// Letter Autopilot — single-row state for the autonomous weekly
+// letter generator (spec Phase C). Ships with enabled=false; an
+// admin flips it on once the pipeline is reviewed. Tracks voice
+// rotation and the last block's theme/voice/letter ids so the
+// cron can avoid immediate repeats and support a kill switch that
+// reverts only autopilot-origin letters back to draft.
+// ============================================================
+export const letterAutopilot = pgTable("letter_autopilot", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  enabled: boolean("enabled").notNull().default(false),
+  defaultAuthorId: text("default_author_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  voiceRotationIndex: integer("voice_rotation_index").notNull().default(0),
+  lastRunAt: timestamp("last_run_at"),
+  lastBlockTheme: text("last_block_theme").default(""),
+  lastBlockVoice: text("last_block_voice").default(""),
+  lastBlockLetterIds: jsonb("last_block_letter_ids").default([]).notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export type LetterAutopilot = typeof letterAutopilot.$inferSelect;
+export type LetterAutopilotInsert = typeof letterAutopilot.$inferInsert;
 
 // Relations
 export const weeklyEncouragementsRelations = relations(

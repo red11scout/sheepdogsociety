@@ -15,6 +15,10 @@ interface VoiceCard {
   hallmarks: string;
 }
 
+// Local shape, kept separate from the canonical DraftLetter in
+// server/letters/series-core.ts (do not restructure to share it across
+// the server/client boundary) — but it must stay a superset of every
+// field series-core.ts's createSeriesWithLettersCore reads.
 interface DraftLetter {
   position: number;
   title: string;
@@ -22,6 +26,7 @@ interface DraftLetter {
   scriptures: { ref: string; note: string }[];
   guidance: string;
   notes: string;
+  callToAction?: string;
 }
 
 interface ComposerProps {

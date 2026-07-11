@@ -48,6 +48,7 @@ export default async function EncouragementEditPage({
         scriptures,
         guidance: row.guidance ?? "",
         notes: row.notes ?? "",
+        callToAction: row.callToAction ?? "",
         coverImageUrl: row.coverImageUrl ?? "",
         coverImageAlt: row.coverImageAlt ?? "",
         theme: r.theme ?? "",

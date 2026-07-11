@@ -101,10 +101,10 @@ Cycles the 10 existing presets in `lib/ai/voices.ts` (Piper, Keller, Sproul, Mac
 New `/api/cron/autopilot-letters` (weekly; `vercel.json` entry with `maxDuration: 300`). When **fewer than 2 scheduled, non-deleted letters remain — counting ALL scheduled letters, manual or autopilot** (a long manual series naturally pauses autopilot; no double-sends possible) — and autopilot is enabled:
 
 1. Compute the block's dates: weekly, starting `max(scheduledFor) + 7d` across all scheduled letters (regardless of any manual series' own cadence); per-letter season contexts from C.1.
-2. Claude proposes a **theme of 1–3 words** (enforced by the `generateObject` schema, not post-hoc) fitting the block's seasons + next theologian.
+2. Claude proposes a **theme of 1–3 words** (validated **post-hoc**, not by schema — Anthropic structured output rejects size bounds, so every AI schema stays bounds-free and code re-checks with a retry; a repeat of any of the last 3 themes is rejected the same way) fitting the block's seasons + next theologian.
 3. Generate a 4-letter block via the extracted series core. Engine extensions — a discrete `callToAction` field per letter (one concrete move, ≤ 60 words, rendered as its own block in page + email) and a strengthened emotional-resonance instruction ("one image or story that lands in the chest") — **apply to all series generation, wizard included**; `callToAction` is nullable in schema and rendering, so existing letters and wizard flows are unaffected. "The wizard remains untouched" means its UI and flow do not change in this phase.
-4. Generate a cover image per letter (P2) with a new "Sheepdog broadsheet" style preset. **Best-effort per letter:** image failure = existing SVG `LetterCover` fallback, never a blocked letter, never a half-created series.
-5. Schedule; send the visibility email (C.5).
+4. Schedule via the series core; **send the visibility email (C.5) immediately after persisting**. The email is load-bearing: if it cannot be sent, the whole block reverts to drafts — nothing publishes unreviewed while Resend is down.
+5. Generate a cover image per letter (P2) with a new "Sheepdog broadsheet" style preset — **after** the email, so a function timeout mid-covers can't strand scheduled letters unannounced. **Best-effort per letter:** image failure = existing SVG `LetterCover` fallback, never a blocked letter, never a half-created series.
 
 **Migration:** `weekly_encouragements.call_to_action` (nullable text) + the `letter_autopilot` table.
 
@@ -113,15 +113,16 @@ New `/api/cron/autopilot-letters` (weekly; `vercel.json` entry with `maxDuration
 - **Existing, verified:** `generateObject` schema validation; count/length bounds; `scrubAiPayload` (dashes/hashtags). Structural for the series path: scriptures are reference-only jsonb — verse text is never generated or rendered, so no verse-verbatim check is needed.
 - **New — banned-word/cliché gate:** the lists in `system-prompt.ts` are prompt-only today; nothing checks output. Build a post-generation string gate over intro/guidance/notes/callToAction. Shared by autopilot, the wizard, and A-FN field notes.
 - **New — `verifyReference(ref)`:** (a) parse and bounds-check book/chapter/verse **locally first** against `src/lib/bible/books.ts` data (catches most hallucinated refs with zero API calls); (b) only then hit the ESV API via `getESVPassage` — an empty `passages` array means **unresolvable → regenerate**; (c) thrown errors / missing key / non-200 mean **verification unavailable → skip verification for this run and note it in the visibility email** — an ESV outage must not burn regeneration budgets or skip slots. (`ESV_API_KEY` is absent from Preview by design; the live-fire plan must account for this.)
-- **Budget:** all gates share a **single 2-attempt regeneration budget per letter**. Any gate failing on attempt 2 skips that slot.
+- **Budget (two tiers as built):** structural + banned-language gates consume a single 2-attempt budget for the **whole series** inside the generator; reference verification gets its own **single regeneration per failed slot**, regenerated at the slot's original position. Any gate still failing after its budget skips that slot.
 - **Skipped-slot semantics:** surviving letters keep their originally computed dates; a failed slot is a gap week, named explicitly in the "autopilot needs you" email so Jeremy can fill it manually. Failure mode is silence, not a bad letter.
 
 ### C.5 Visibility, status, and kill switch
 
-- On block generation: one email to Jeremy — subject names the theme and theologian — with links to all 4 letters at `/admin/letters/[id]`, behind the existing admin sign-in (the sign-in hop is accepted; **no unauthenticated draft URLs**).
+- On block generation: one email to Jeremy — subject names the theme and theologian — with links to all 4 letters at `/admin/encouragements/[id]` (the letters admin editor), behind the existing admin sign-in (the sign-in hop is accepted; **no unauthenticated draft URLs**).
 - **Autopilot status card** at the top of `/admin/encouragements`: enabled toggle, last run, last block (theme, theologian, 4 letter links), read from `letter_autopilot`. **No separate route** — B.2's "autopilot status" nav concept points here.
 - **Kill-switch semantics (option A):** disabling autopilot (a) stops the generation cron and (b) **flips unpublished autopilot-originated letters back to `draft`** so the publish cron cannot send them. Requires tagging autopilot-generated letters (via their series row / a source column) so manually scheduled letters are never collateral. Re-enabling does not auto-reschedule the drafted letters; the status card lists them for manual action.
 - Manual series creation via the existing wizard coexists (see C.3 collision rules).
+- **As-built safety extras (beyond this spec):** a `dryRun` mode runs the full engine — AI, gates, verification — with zero persistence and no email (used for live-fire); overlap guards — a 24-hour `lastRunAt` guard plus an app-wide advisory lock (`pg_advisory_xact_lock(815551)`) serializing every issue-number allocator (autopilot and wizard); a **pre-persist recheck** re-reads both the scheduled-letter count and the `enabled` flag so a mid-run disable or a concurrent wizard block stands the run down before anything is written; theme anti-repeat memory (last 3 themes stored on the pilot row); every AI step logs to `ai_generations`, dry runs tagged.
 
 ## Phase B — Admin for a Ten-Year-Old
 

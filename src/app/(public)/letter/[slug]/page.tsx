@@ -192,6 +192,18 @@ export default async function LetterPage({
         </section>
       )}
 
+      {/* One move this week */}
+      {row.callToAction && (
+        <section className="bg-background text-foreground">
+          <div className="mx-auto max-w-3xl px-6 py-16 md:px-12 md:py-24">
+            <Kicker left="One move this week" />
+            <div className="mt-8 whitespace-pre-wrap font-pullquote text-lg italic leading-relaxed text-muted-foreground md:text-xl">
+              {row.callToAction}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Footer CTAs */}
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-3xl px-6 py-20 text-center md:px-12 md:py-28">

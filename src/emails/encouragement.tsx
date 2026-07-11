@@ -18,6 +18,7 @@ export interface EncouragementEmailProps {
   scriptures: { ref: string; note?: string; text?: string }[];
   guidance: string | null;
   notes: string | null;
+  callToAction?: string;
   publicUrl: string;
   unsubscribeUrl?: string;
 }
@@ -46,6 +47,7 @@ export function EncouragementEmail({
   scriptures,
   guidance,
   notes,
+  callToAction,
   publicUrl,
   unsubscribeUrl,
 }: EncouragementEmailProps) {
@@ -157,6 +159,27 @@ export function EncouragementEmail({
                 § Notes from the Watch
               </Text>
               {notes.split(/\n\n+/).map((p, i) => (
+                <Text key={i} style={{ ...SERIF, margin: "0 0 12px", color: "#3a3a3a" }}>
+                  {p}
+                </Text>
+              ))}
+            </Section>
+          )}
+
+          {callToAction && (
+            <Section style={{ marginTop: "28px" }}>
+              <Text
+                style={{
+                  fontSize: "11px",
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  color: "#5a5a5a",
+                  margin: "0 0 8px",
+                }}
+              >
+                § One move this week
+              </Text>
+              {callToAction.split(/\n\n+/).map((p, i) => (
                 <Text key={i} style={{ ...SERIF, margin: "0 0 12px", color: "#3a3a3a" }}>
                   {p}
                 </Text>

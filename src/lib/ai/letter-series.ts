@@ -4,6 +4,7 @@ import { z } from "zod";
 import { SYSTEM_PROMPT } from "./system-prompt";
 import { findVoice } from "./voices";
 import { scrubAiPayload } from "./scrub";
+import { BANNED_PHRASES, BANNED_WORDS, findBannedLanguage } from "./banned";
 
 const MODEL = "claude-sonnet-4-5";
 export const SERIES_PLAN_PROMPT_VERSION = "letter-series-plan.v1";
@@ -23,7 +24,12 @@ export const SERIES_PLAN_PROMPT_VERSION = "letter-series-plan.v1";
 export const seriesPlanSchema = z.object({
   letters: z.array(
     z.object({
-      position: z.number().int(),
+      // Plain number, NOT .int(): zod v4 emits safe-integer minimum/maximum
+      // for .int(), and Anthropic structured output rejects integer
+      // min/max ("properties maximum, minimum are not supported" — found
+      // by the Phase C dry-run). Integrality is checked in
+      // validateSeriesPlan instead.
+      position: z.number(),
       title: z.string(),
       intro: z
         .string()
@@ -46,6 +52,11 @@ export const seriesPlanSchema = z.object({
         .describe(
           "60-90 word 'Notes from the Watch' closing. Personal, brief, signed warmly."
         ),
+      callToAction: z
+        .string()
+        .describe(
+          "One concrete move for the week, 20-60 words, imperative, no em-dashes"
+        ),
     })
   ),
 });
@@ -58,7 +69,10 @@ export async function generateLetterSeries(input: {
   voiceId: string;
   voiceFreeform?: string;
   totalCount: number;
+  callToActionRequired?: boolean;
+  seasonContext?: string;
 }): Promise<SeriesPlan & { tokensIn?: number; tokensOut?: number }> {
+  const callToActionRequired = input.callToActionRequired ?? true;
   const voice = findVoice(input.voiceId);
   const voiceAddendum =
     voice?.systemAddendum ??
@@ -68,10 +82,14 @@ export async function generateLetterSeries(input: {
 
   const system = `${SYSTEM_PROMPT}\n\n${voiceAddendum}`.trim();
 
+  const seasonBlock = input.seasonContext
+    ? `\n\nSeason: ${input.seasonContext}\nFit the whole arc to this season — let it shape the angles the middle letters take and the note the closing letter lands on.`
+    : "";
+
   const userPrompt = `Plan a series of EXACTLY ${input.totalCount} weekly Letters for the Sheepdog Society on a single connected theme.
 
 Series title: ${input.title}
-Theme: ${input.theme}
+Theme: ${input.theme}${seasonBlock}
 
 Each letter is one week. The series should have a SHAPE: an opening that frames the theme, middle letters that take it apart from different angles (e.g. for "endurance": physical, vocational, marital, spiritual), and a closing letter that lands the whole thing in a way that sends the brother out steadier than he came in.
 
@@ -84,8 +102,13 @@ For EACH of the ${input.totalCount} letters, return:
 - scriptures: EXACTLY 2 or 3 real scripture references that genuinely fit. Standard book names. Each gets a one-sentence note (10+ words) on why it fits. Never fewer than 2, never more than 3.
 - guidance: 200-280 words of pastoral teaching, leaning on one of the scriptures above. Land with a concrete, specific move the brother can do this week.
 - notes: 60-90 word "Notes from the Watch" closing. Personal, brief, warm.
+- callToAction: one concrete move for the week, 20-60 words, imperative, no em-dashes.
 
-Across the whole series: NO em-dashes, NO hashtags, no emoji. Plain prose. Real verses only. No fabricated quotations from any named theologian. Write like a man who has read his Bible his whole life talks at a kitchen table.`;
+Each letter must carry one image or story that lands in the chest — one, not three, and never sentimental.
+
+Across the whole series: NO em-dashes, NO hashtags, no emoji. Plain prose. Real verses only. No fabricated quotations from any named theologian. Write like a man who has read his Bible his whole life talks at a kitchen table.
+
+HARD RULE — a machine gate rejects the whole series if ANY of these words or phrases appear anywhere (titles, prose, scripture notes, calls to action), in any casing or grammatical form that matches the word exactly. Do not use them: ${[...BANNED_WORDS, ...BANNED_PHRASES].join(", ")}. Where you would reach for one, choose a plainer word ("get up" not the r-word above, "take hold" not the r-word, "carry" not the l-word).`;
 
   // Two-attempt loop. The model occasionally drops a letter or returns
   // a single scriptures entry on the first pass; one silent retry hides
@@ -107,7 +130,11 @@ Across the whole series: NO em-dashes, NO hashtags, no emoji. Plain prose. Real 
     totalIn += result.usage?.inputTokens ?? 0;
     totalOut += result.usage?.outputTokens ?? 0;
 
-    const validation = validateSeriesPlan(result.object, input.totalCount);
+    const validation = validateSeriesPlan(
+      result.object,
+      input.totalCount,
+      callToActionRequired
+    );
     if (validation.ok) {
       const cleaned = scrubAiPayload(result.object);
       return {
@@ -125,7 +152,8 @@ Across the whole series: NO em-dashes, NO hashtags, no emoji. Plain prose. Real 
 
 function validateSeriesPlan(
   obj: SeriesPlan,
-  expectedCount: number
+  expectedCount: number,
+  callToActionRequired: boolean
 ): { ok: true } | { ok: false; error: string } {
   const got = obj.letters.length;
   if (got !== expectedCount) {
@@ -135,6 +163,20 @@ function validateSeriesPlan(
     };
   }
   for (const letter of obj.letters) {
+    // Schema can't carry .int() (zod v4 emits integer min/max bounds that
+    // Anthropic structured output rejects) — enforce integrality here.
+    if (!Number.isInteger(letter.position) || letter.position < 1) {
+      return {
+        ok: false,
+        error: `Letter "${letter.title}" came back with a bad position (${letter.position}). Try again.`,
+      };
+    }
+    if (letter.title.length > 120) {
+      return {
+        ok: false,
+        error: `Letter ${letter.position} came back with a title of ${letter.title.length} characters. Titles need to fit in 120. Try again.`,
+      };
+    }
     if (letter.scriptures.length < 2 || letter.scriptures.length > 3) {
       return {
         ok: false,
@@ -145,6 +187,42 @@ function validateSeriesPlan(
       return {
         ok: false,
         error: `Letter ${letter.position} ("${letter.title}") came back too short. Try again.`,
+      };
+    }
+    if (callToActionRequired) {
+      const cta = letter.callToAction ?? "";
+      if (cta.length < 20 || cta.length > 400) {
+        return {
+          ok: false,
+          error: `Letter ${letter.position} ("${letter.title}") came back with a call to action of ${cta.length} characters. It needs to be 20-400 characters. Try again.`,
+        };
+      }
+      // The prompt asks for 20-60 words; char bounds alone let a 400-char
+      // ramble through. Gate the word count too.
+      const ctaWords = cta.trim().split(/\s+/).length;
+      if (ctaWords > 60) {
+        return {
+          ok: false,
+          error: `Letter ${letter.position} ("${letter.title}") came back with a call to action of ${ctaWords} words. It needs to be 60 words or fewer. Try again.`,
+        };
+      }
+    }
+    // Banned-language gate over EVERY rendered surface: title and
+    // scripture notes render publicly just like the body sections do.
+    const bannedHits = findBannedLanguage(
+      [
+        letter.title,
+        letter.intro,
+        letter.guidance,
+        letter.notes,
+        letter.callToAction ?? "",
+        ...letter.scriptures.map((s) => s.note),
+      ].join("\n")
+    );
+    if (bannedHits.length > 0) {
+      return {
+        ok: false,
+        error: `Letter ${letter.position} ("${letter.title}") used banned language: ${bannedHits.join(", ")}. Try again.`,
       };
     }
   }
