@@ -103,6 +103,9 @@ ${input.content}`;
     if (object.paragraphs.length < 2 || object.paragraphs.length > 3) continue;
     if (object.paragraphs.some((p) => p.length < 40 || p.length > 600)) continue;
     if (object.scriptures.length < 3 || object.scriptures.length > 5) continue;
+    // 40-char cap on references: parseReference tolerates trailing junk,
+    // so an over-long "reference" is a side channel for verse text.
+    if (object.scriptures.some((s) => s.reference.length > 40)) continue;
     if (object.scriptures.some((s) => s.note.length < 10 || s.note.length > 200)) continue;
     if (object.howToUse.length < 60 || object.howToUse.length > 500) continue;
 

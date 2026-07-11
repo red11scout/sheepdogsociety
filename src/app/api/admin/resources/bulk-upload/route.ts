@@ -18,7 +18,9 @@ import { generateFieldNotes } from "@/lib/resources/generate-field-notes";
 import { uniqueResourceSlug } from "@/lib/resources/slug";
 
 export const runtime = "nodejs";
-export const maxDuration = 60;
+// 300s (was 60): the per-file field-notes sonnet call stacks on top of
+// categorize for multi-file uploads. Matches the retag route's precedent.
+export const maxDuration = 300;
 
 const MAX_BYTES = 25 * 1024 * 1024;
 const DOCX_MIME =

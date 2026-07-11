@@ -18,6 +18,11 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params;
   const [row] = await db.select().from(resources).where(eq(resources.id, id));
   if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (row.deletedAt) return NextResponse.json({ error: "Not found" }, { status: 404 });
+  if (row.fieldNotesStatus === "approved") {
+    // Approved notes are live on the public site; unpublish first.
+    return NextResponse.json({ error: "Approved notes are live. Unpublish before redrafting." }, { status: 409 });
+  }
 
   const notes = await generateFieldNotes(row);
   if (!notes) {
