@@ -24,7 +24,12 @@ export const SERIES_PLAN_PROMPT_VERSION = "letter-series-plan.v1";
 export const seriesPlanSchema = z.object({
   letters: z.array(
     z.object({
-      position: z.number().int(),
+      // Plain number, NOT .int(): zod v4 emits safe-integer minimum/maximum
+      // for .int(), and Anthropic structured output rejects integer
+      // min/max ("properties maximum, minimum are not supported" — found
+      // by the Phase C dry-run). Integrality is checked in
+      // validateSeriesPlan instead.
+      position: z.number(),
       title: z.string(),
       intro: z
         .string()
@@ -156,6 +161,14 @@ function validateSeriesPlan(
     };
   }
   for (const letter of obj.letters) {
+    // Schema can't carry .int() (zod v4 emits integer min/max bounds that
+    // Anthropic structured output rejects) — enforce integrality here.
+    if (!Number.isInteger(letter.position) || letter.position < 1) {
+      return {
+        ok: false,
+        error: `Letter "${letter.title}" came back with a bad position (${letter.position}). Try again.`,
+      };
+    }
     if (letter.scriptures.length < 2 || letter.scriptures.length > 3) {
       return {
         ok: false,
