@@ -61,7 +61,11 @@ export default async function GivingPage() {
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
           <Kicker left="Why we give" />
           <div className="mt-10 grid gap-12 md:grid-cols-[2fr_3fr] md:gap-20">
-            <h2 className="display-xl text-display-lg">{t["giving.why.title"]}</h2>
+            <h2 className="display-xl text-display-lg">
+              {t["giving.why.headline1"]}
+              <br />
+              <em>{t["giving.why.headline2"]}</em>
+            </h2>
             <div className="space-y-6 text-base leading-relaxed text-muted-foreground md:text-lg">
               <p>
                 Sheepdog Society is free for every man who walks through the
@@ -131,7 +135,11 @@ export default async function GivingPage() {
       <section id="partners" className="scroll-mt-24 bg-background text-foreground">
         <div className="mx-auto max-w-5xl px-6 py-28 text-center md:px-12 md:py-40">
           <span className="section-mark text-brass">§ Sheepdog Partners</span>
-          <h2 className="display-xl mt-6 text-display-lg">{t["giving.partners.title"]}</h2>
+          <h2 className="display-xl mt-6 text-display-lg">
+            {t["giving.partners.headline1"]}
+            <br />
+            <em>{t["giving.partners.headline2"]}</em>
+          </h2>
           <p className="mx-auto mt-8 max-w-xl font-pullquote text-xl italic leading-relaxed text-muted-foreground md:text-2xl">
             Our partners believe in the Sheepdog mission and stand with us
             through prayer, resources, and giving.
