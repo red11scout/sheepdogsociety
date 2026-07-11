@@ -101,6 +101,12 @@ export function AdminSidebar({
           hint: "Men who clicked 'I'm interested' on a group's page. Mark contacted or resolved as you follow up.",
         },
         {
+          href: "/admin/prayer",
+          label: "Prayer",
+          icon: "hands",
+          hint: "Prayer requests from the brotherhood. Review, mark answered, and keep watch.",
+        },
+        {
           href: "/admin/events",
           label: "Events",
           icon: "calendar",

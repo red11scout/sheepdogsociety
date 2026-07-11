@@ -2,13 +2,14 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Sheepdog Society",
+    name: "Acts 2028 Sheepdog Society",
     short_name: "Sheepdog",
-    description: "Men of Faith Community",
+    description:
+      "A brotherhood of Christian men, anchored in Acts 20:28. We meet weekly around Scripture and stand watch over one another.",
     start_url: "/",
     display: "standalone",
-    background_color: "#0F172A",
-    theme_color: "#3B82F6",
+    background_color: "#F2EBDD", // bone — matches the light site
+    theme_color: "#C8932A", // brass — the signature accent
     icons: [
       {
         src: "/icon-192.png",

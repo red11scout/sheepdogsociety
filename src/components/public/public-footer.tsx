@@ -111,6 +111,11 @@ export function PublicFooter() {
                 </Link>
               </li>
               <li>
+                <Link href="/partnerships" className="text-foreground/80 transition-colors hover:text-brass">
+                  Partnerships
+                </Link>
+              </li>
+              <li>
                 <Link href="/faq" className="text-foreground/80 transition-colors hover:text-brass">
                   FAQ
                 </Link>
