@@ -294,11 +294,12 @@ export function AdminDashboard({ greetingName = "brother" }: AdminDashboardProps
                 key={letter.id}
                 href={`/admin/letters/${letter.id}`}
                 className={cn(
-                  "group/row grid grid-cols-[80px_1fr_120px_110px] items-center gap-4 px-6 py-4 transition-colors hover:bg-iron/60",
+                  "group/row flex flex-col gap-2 px-4 py-4 transition-colors hover:bg-iron/60 md:grid md:grid-cols-[80px_1fr_120px_110px] md:items-center md:gap-4 md:px-6",
                   i > 0 && "border-t border-stone/10"
                 )}
               >
-                <span className="section-mark text-stone/45">
+                {/* Desktop-only: issue number cell (grid col 1) */}
+                <span className="hidden section-mark text-stone/45 md:block">
                   No. {letter.issueNumber}
                 </span>
                 <div className="min-w-0">
@@ -311,8 +312,26 @@ export function AdminDashboard({ greetingName = "brother" }: AdminDashboardProps
                     </p>
                   )}
                 </div>
-                <StatusPill status={letter.status} />
-                <span className="text-right text-xs text-stone/55">
+                {/* Mobile-only: one meta line — issue number, status, date */}
+                <div className="flex flex-wrap items-center gap-2 text-xs text-stone/55 md:hidden">
+                  <span className="section-mark text-stone/45">
+                    No. {letter.issueNumber}
+                  </span>
+                  <StatusPill status={letter.status} />
+                  <span>
+                    {new Date(letter.updatedAt).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
+                  </span>
+                </div>
+                {/* Desktop-only: status pill (grid col 3) — md:contents so the
+                    pill itself is the grid child, stretched to the column */}
+                <div className="hidden md:contents">
+                  <StatusPill status={letter.status} />
+                </div>
+                {/* Desktop-only: updated date (grid col 4) */}
+                <span className="hidden text-right text-xs text-stone/55 md:block">
                   {new Date(letter.updatedAt).toLocaleDateString("en-US", {
                     month: "short",
                     day: "numeric",

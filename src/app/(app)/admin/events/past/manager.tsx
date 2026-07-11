@@ -275,7 +275,7 @@ function RecapEditor({
             type="button"
             onClick={() => fileRef.current?.click()}
             disabled={uploading}
-            className="inline-flex h-8 items-center gap-1.5 border border-brass/40 bg-brass/10 px-3 text-[0.6875rem] uppercase tracking-wider text-brass transition-colors hover:bg-brass/20 disabled:opacity-60"
+            className="inline-flex min-h-11 items-center gap-1.5 border border-brass/40 bg-brass/10 px-3 text-[0.6875rem] uppercase tracking-wider text-brass transition-colors hover:bg-brass/20 disabled:opacity-60"
           >
             <Icon name="plus" size={11} />
             {uploading ? "Uploading..." : "Add photos"}
@@ -324,7 +324,7 @@ function RecapEditor({
                   <button
                     type="button"
                     onClick={() => removePhoto(i)}
-                    className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center bg-iron/85 text-bone opacity-0 backdrop-blur-sm transition-opacity hover:bg-oxblood group-hover/photo:opacity-100"
+                    className="absolute right-2 top-2 inline-flex h-7 w-7 items-center justify-center bg-iron/85 text-bone opacity-100 backdrop-blur-sm transition-opacity hover:bg-oxblood md:opacity-0 md:group-hover/photo:opacity-100"
                     aria-label="Remove photo"
                     title="Remove photo"
                   >

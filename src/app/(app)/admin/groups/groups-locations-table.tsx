@@ -252,6 +252,13 @@ export function GroupsLocationsTable({ initialRows, dbError }: Props) {
   const allSelectedOnPage =
     selected.size > 0 && filtered.every((r) => selected.has(r.groupId));
 
+  // Row being edited, if any. Resolved from `rows` (not `filtered`) so an
+  // open edit survives a filter change that hides the row.
+  const editingRow =
+    editing && editing !== "_new"
+      ? rows.find((r) => r.groupId === editing) ?? null
+      : null;
+
   return (
     <div className="mx-auto max-w-[1600px] px-6 py-10 md:px-12 md:py-14">
       <AdminPageIntro
@@ -259,7 +266,7 @@ export function GroupsLocationsTable({ initialRows, dbError }: Props) {
         title="Where men meet."
         description="One row per group. Approving a group automatically puts it on the public map. Toggle active state and on-map visibility inline; edit address, lat/lng, and meeting day by clicking Edit. Bulk actions for the busy weeks."
         hint="Each group meets at one location. Members assigned to a group inherit its location for routing email/SMS. Approving auto-flips 'On Map' to On so the pin shows up on /locations right away. You can still toggle On Map off later to soft-hide an approved group without un-approving it."
-        primary={{ label: "New group", href: "#", icon: "plus" }}
+        primary={{ label: "Add group", href: "#", icon: "plus" }}
       />
 
       {/* Filter bar */}
@@ -321,7 +328,7 @@ export function GroupsLocationsTable({ initialRows, dbError }: Props) {
           className="lift inline-flex h-9 items-center gap-1.5 border border-bone bg-bone px-3 text-xs font-medium uppercase tracking-wider text-iron transition-colors hover:bg-stone"
         >
           <Icon name="plus" size={12} />
-          New group
+          Add group
         </button>
       </div>
 
@@ -330,6 +337,22 @@ export function GroupsLocationsTable({ initialRows, dbError }: Props) {
         <div className="mb-4">
           <EditForm
             initial={null}
+            onCancel={() => setEditing(null)}
+            onSave={(input) => saveRow(input)}
+          />
+        </div>
+      )}
+
+      {/* Row edit form — hoisted out of the table so exactly ONE EditForm
+          mounts across the desktop table and the mobile card list. Its ~20
+          useState fields initialize on mount, so a mid-edit viewport change
+          keeps the same draft instead of swapping instances. Keyed by group
+          id so switching rows resets the draft. */}
+      {editingRow && (
+        <div className="mb-4">
+          <EditForm
+            key={editingRow.groupId}
+            initial={editingRow}
             onCancel={() => setEditing(null)}
             onSave={(input) => saveRow(input)}
           />
@@ -406,8 +429,32 @@ export function GroupsLocationsTable({ initialRows, dbError }: Props) {
         </p>
       )}
 
-      {/* Table */}
-      <div className="overflow-x-auto border border-stone/15">
+      {/* 375px card list (< md) — the SAME filtered rows and handlers as the
+          table below; only the presentation changes at the breakpoint. */}
+      <div className="space-y-3 md:hidden">
+        {filtered.length === 0 ? (
+          <p className="border border-stone/15 px-6 py-12 text-center text-xs text-stone/60">
+            No groups match. Adjust filters or add a new group.
+          </p>
+        ) : (
+          filtered.map((r) => (
+            <GroupCard
+              key={r.groupId}
+              row={r}
+              selected={selected.has(r.groupId)}
+              onToggleSelect={() => toggleSelect(r.groupId)}
+              onApprove={(s) => handleApproval(r.groupId, s)}
+              onActive={(a) => handleActive(r.groupId, a)}
+              onMap={(m) => handleMap(r.groupId, m)}
+              onEdit={() => setEditing(editing === r.groupId ? null : r.groupId)}
+              onDelete={() => handleDelete(r.groupId)}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Table (≥ md) */}
+      <div className="hidden overflow-x-auto border border-stone/15 md:block">
         <table className="w-full text-xs">
           <thead className="border-b border-stone/15 bg-iron/40 text-stone/65">
             <tr>
@@ -447,15 +494,12 @@ export function GroupsLocationsTable({ initialRows, dbError }: Props) {
                   key={r.groupId}
                   row={r}
                   selected={selected.has(r.groupId)}
-                  editing={editing === r.groupId}
                   onToggleSelect={() => toggleSelect(r.groupId)}
                   onApprove={(s) => handleApproval(r.groupId, s)}
                   onActive={(a) => handleActive(r.groupId, a)}
                   onMap={(m) => handleMap(r.groupId, m)}
                   onEdit={() => setEditing(editing === r.groupId ? null : r.groupId)}
                   onDelete={() => handleDelete(r.groupId)}
-                  onSave={(input) => saveRow(input)}
-                  onCancel={() => setEditing(null)}
                 />
               ))
             )}
@@ -502,37 +546,22 @@ function SortableTh({
 function GroupRow({
   row,
   selected,
-  editing,
   onToggleSelect,
   onApprove,
   onActive,
   onMap,
   onEdit,
   onDelete,
-  onSave,
-  onCancel,
 }: {
   row: AdminGroupLocationRow;
   selected: boolean;
-  editing: boolean;
   onToggleSelect: () => void;
   onApprove: (s: "pending" | "approved" | "rejected") => void;
   onActive: (a: boolean) => void;
   onMap: (m: boolean) => void;
   onEdit: () => void;
   onDelete: () => void;
-  onSave: (input: UpsertGroupLocationInput) => void;
-  onCancel: () => void;
 }) {
-  if (editing) {
-    return (
-      <tr>
-        <td colSpan={14} className="bg-iron/30 px-3 py-3">
-          <EditForm initial={row} onCancel={onCancel} onSave={onSave} />
-        </td>
-      </tr>
-    );
-  }
   return (
     <tr className={cn("hover:bg-iron/30", selected && "bg-brass/5")}>
       <td className="px-3 py-2">
@@ -545,34 +574,10 @@ function GroupRow({
       </td>
       <td className="px-3 py-2 font-mono text-[0.6875rem] text-stone/55">{row.shortGroupId}</td>
       <td className="px-3 py-2">
-        <select
-          value={row.approvalStatus}
-          onChange={(e) => onApprove(e.target.value as "pending" | "approved" | "rejected")}
-          className={cn(
-            "h-6 border bg-transparent px-1.5 text-[0.6875rem] uppercase tracking-wider focus:outline-none",
-            APPROVAL_TONE[row.approvalStatus] ?? APPROVAL_TONE.pending
-          )}
-        >
-          {APPROVAL_OPTIONS.map((s) => (
-            <option key={s} value={s} className="bg-iron text-bone">
-              {s}
-            </option>
-          ))}
-        </select>
+        <ApprovalSelect value={row.approvalStatus} onApprove={onApprove} className="h-6" />
       </td>
       <td className="px-3 py-2">
-        <button
-          type="button"
-          onClick={() => onActive(!row.isActive)}
-          className={cn(
-            "h-6 border px-2 text-[0.6875rem] uppercase tracking-wider transition-colors",
-            row.isActive
-              ? "border-olive/40 bg-olive/10 text-olive hover:bg-olive/20"
-              : "border-stone/30 bg-stone/10 text-stone/65 hover:bg-stone/20"
-          )}
-        >
-          {row.isActive ? "On" : "Off"}
-        </button>
+        <ActiveToggle isActive={row.isActive} onActive={onActive} className="h-6" />
       </td>
       <td className="px-3 py-2 text-bone">
         <span className="inline-flex items-center gap-2">
@@ -614,18 +619,7 @@ function GroupRow({
           : "—"}
       </td>
       <td className="px-3 py-2">
-        <button
-          type="button"
-          onClick={() => onMap(!row.displayedOnMap)}
-          className={cn(
-            "h-6 border px-2 text-[0.6875rem] uppercase tracking-wider transition-colors",
-            row.displayedOnMap
-              ? "border-brass/40 bg-brass/10 text-brass hover:bg-brass/20"
-              : "border-stone/30 bg-stone/10 text-stone/65 hover:bg-stone/20"
-          )}
-        >
-          {row.displayedOnMap ? "On" : "Off"}
-        </button>
+        <MapToggle displayedOnMap={row.displayedOnMap} onMap={onMap} className="h-6" />
       </td>
       <td className="px-3 py-2 text-stone/85">{row.meetingDay ?? ""}</td>
       <td className="px-3 py-2 text-stone/85">{row.meetingTime ?? ""}</td>
@@ -651,6 +645,173 @@ function GroupRow({
         </div>
       </td>
     </tr>
+  );
+}
+
+/* Shared row/card controls. The table cell and the mobile card render the
+   exact same markup; only the size class differs — h-6 in the dense table,
+   h-11 on the card so every tap target clears 44px. */
+
+function ApprovalSelect({
+  value,
+  onApprove,
+  className,
+}: {
+  value: string;
+  onApprove: (s: "pending" | "approved" | "rejected") => void;
+  className?: string;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onApprove(e.target.value as "pending" | "approved" | "rejected")}
+      className={cn(
+        "border bg-transparent px-1.5 text-[0.6875rem] uppercase tracking-wider focus:outline-none",
+        APPROVAL_TONE[value] ?? APPROVAL_TONE.pending,
+        className
+      )}
+    >
+      {APPROVAL_OPTIONS.map((s) => (
+        <option key={s} value={s} className="bg-iron text-bone">
+          {s}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function ActiveToggle({
+  isActive,
+  onActive,
+  className,
+}: {
+  isActive: boolean;
+  onActive: (a: boolean) => void;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onActive(!isActive)}
+      className={cn(
+        "border px-2 text-[0.6875rem] uppercase tracking-wider transition-colors",
+        isActive
+          ? "border-olive/40 bg-olive/10 text-olive hover:bg-olive/20"
+          : "border-stone/30 bg-stone/10 text-stone/65 hover:bg-stone/20",
+        className
+      )}
+    >
+      {isActive ? "On" : "Off"}
+    </button>
+  );
+}
+
+function MapToggle({
+  displayedOnMap,
+  onMap,
+  className,
+}: {
+  displayedOnMap: boolean;
+  onMap: (m: boolean) => void;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onMap(!displayedOnMap)}
+      className={cn(
+        "border px-2 text-[0.6875rem] uppercase tracking-wider transition-colors",
+        displayedOnMap
+          ? "border-brass/40 bg-brass/10 text-brass hover:bg-brass/20"
+          : "border-stone/30 bg-stone/10 text-stone/65 hover:bg-stone/20",
+        className
+      )}
+    >
+      {displayedOnMap ? "On" : "Off"}
+    </button>
+  );
+}
+
+/* < md card — full triage parity with GroupRow: bulk-select checkbox,
+   approval select (same handleApproval upstream, so the approved →
+   displayedOnMap optimistic flip carries over), Active + On-map toggles,
+   Edit, Delete. Same handlers, same shared controls, sized for thumbs. */
+function GroupCard({
+  row,
+  selected,
+  onToggleSelect,
+  onApprove,
+  onActive,
+  onMap,
+  onEdit,
+  onDelete,
+}: {
+  row: AdminGroupLocationRow;
+  selected: boolean;
+  onToggleSelect: () => void;
+  onApprove: (s: "pending" | "approved" | "rejected") => void;
+  onActive: (a: boolean) => void;
+  onMap: (m: boolean) => void;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <article className={cn("border border-stone/15 p-4", selected && "bg-brass/5")}>
+      <div className="flex items-start gap-3">
+        {/* Bulk-select checkbox, card corner — 44px tap target via the label */}
+        <label className="flex h-11 w-11 shrink-0 items-center justify-center">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={onToggleSelect}
+            className="h-3.5 w-3.5 accent-brass"
+            aria-label={`Select ${row.groupName}`}
+          />
+        </label>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-bone">{row.groupName}</p>
+          <p className="truncate text-xs text-stone/70">
+            {[row.city, row.state].filter(Boolean).join(", ") || "—"}
+          </p>
+          <p className="truncate text-xs text-stone/55">{row.meetingDay || "—"}</p>
+        </div>
+        {/* Status pill: the table's status cell renders the approval select
+            styled as a pill — reused verbatim here as pill AND action. */}
+        <ApprovalSelect
+          value={row.approvalStatus}
+          onApprove={onApprove}
+          className="h-11 shrink-0"
+        />
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          <span className="text-[0.625rem] uppercase tracking-wider text-stone/55">
+            Active
+          </span>
+          <ActiveToggle isActive={row.isActive} onActive={onActive} className="h-11 px-3" />
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[0.625rem] uppercase tracking-wider text-stone/55">
+            Map
+          </span>
+          <MapToggle displayedOnMap={row.displayedOnMap} onMap={onMap} className="h-11 px-3" />
+        </div>
+        <button
+          type="button"
+          onClick={onEdit}
+          className="inline-flex h-11 items-center gap-1.5 border border-stone/30 px-3 text-[0.6875rem] uppercase tracking-wider text-stone/85 transition-colors hover:border-brass hover:text-brass"
+        >
+          <Icon name="pen" size={11} /> Edit
+        </button>
+        <button
+          type="button"
+          onClick={onDelete}
+          className="inline-flex h-11 items-center gap-1.5 border border-oxblood/40 px-3 text-[0.6875rem] uppercase tracking-wider text-oxblood transition-colors hover:bg-oxblood/20"
+        >
+          <Icon name="trash" size={11} /> Delete
+        </button>
+      </div>
+    </article>
   );
 }
 

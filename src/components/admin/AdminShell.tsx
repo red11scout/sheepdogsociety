@@ -82,6 +82,7 @@ export function AdminShell({
               pendingCount={pendingCount}
               pendingTestimonies={pendingTestimonies}
               pendingLocationRequests={pendingLocationRequests}
+              pendingLocationInterests={pendingLocationInterests}
             />
           </div>
         </div>

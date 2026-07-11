@@ -5,9 +5,10 @@ import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { AdminPageHeader } from "@/components/admin/admin-page-header";
+import { Input } from "@/components/ui/input";
+import { AdminPageIntro } from "@/components/admin/AdminPageIntro";
 import { ConfirmDialog } from "@/components/admin/confirm-dialog";
-import { Download, Trash2, ToggleLeft, ToggleRight } from "lucide-react";
+import { Download, Trash2, ToggleLeft, ToggleRight, Search } from "lucide-react";
 
 type Subscriber = {
   id: string;
@@ -82,18 +83,27 @@ export default function AdminNewsletterPage() {
 
   return (
     <div className="mx-auto max-w-5xl p-6">
-      <AdminPageHeader
-        title="Newsletter Management"
-        description="Manage newsletter subscribers"
-        searchValue={search}
-        onSearchChange={setSearch}
-        searchPlaceholder="Search by email..."
-      >
-        <Button variant="outline" size="sm" onClick={exportCsv}>
+      <AdminPageIntro
+        kicker="Subscribers"
+        title="Everyone who signed up for the Letter."
+        description="See who's subscribed, turn a subscription on or off, or export the whole list."
+      />
+
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1 sm:max-w-xs">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search by email..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+        </div>
+        <Button variant="outline" size="sm" className="min-h-11" onClick={exportCsv}>
           <Download className="mr-1.5 h-4 w-4" />
           Export CSV
         </Button>
-      </AdminPageHeader>
+      </div>
 
       {/* Stats Bar */}
       <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-2">
@@ -129,10 +139,10 @@ export default function AdminNewsletterPage() {
         <div className="mt-6 space-y-3">
           {filtered.map((subscriber) => (
             <Card key={subscriber.id}>
-              <CardContent className="flex items-center justify-between gap-4 p-4">
+              <CardContent className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="font-semibold">{subscriber.email}</span>
+                    <span className="min-w-0 break-words font-semibold">{subscriber.email}</span>
                     {subscriber.firstName && (
                       <span className="text-sm text-muted-foreground">
                         {subscriber.firstName}
@@ -149,10 +159,11 @@ export default function AdminNewsletterPage() {
                     {format(new Date(subscriber.subscribedAt), "MMM d, yyyy")}
                   </p>
                 </div>
-                <div className="flex shrink-0 items-center gap-1">
+                <div className="flex flex-wrap shrink-0 items-center gap-1">
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="min-h-11"
                     title={subscriber.isActive ? "Deactivate" : "Activate"}
                     onClick={() => toggleActive(subscriber)}
                   >
@@ -165,6 +176,7 @@ export default function AdminNewsletterPage() {
                   <Button
                     variant="ghost"
                     size="icon"
+                    className="min-h-11"
                     onClick={() => setDeleteTarget(subscriber)}
                   >
                     <Trash2 className="h-4 w-4 text-destructive" />

@@ -1,14 +1,21 @@
+import type { Metadata } from "next";
 import { Icon } from "@/components/icons/Icon";
 import { Kicker } from "@/components/public/kicker";
 import { StaggerReveal } from "@/components/motion/StaggerReveal";
+import { getSiteTextMap } from "@/lib/site-text/get";
 
-export const metadata = {
-  title: "About — Sheepdog Society",
-  description:
-    "A brotherhood of men rooted in honorable Christian values, driven to be prepared in every aspect of life.",
-};
+export const revalidate = 300;
 
-export default function AboutPage() {
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getSiteTextMap();
+  return {
+    title: t["about.meta.title"],
+    description: t["about.meta.description"],
+  };
+}
+
+export default async function AboutPage() {
+  const t = await getSiteTextMap();
   return (
     <>
       {/* Hero */}
@@ -16,13 +23,12 @@ export default function AboutPage() {
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
           <Kicker left="About · The Watch" />
           <h1 className="display-xl mt-10 max-w-4xl text-display-xl">
-            A brotherhood,
+            {t["about.hero.headline1"]}
             <br />
-            <em>rooted and ready.</em>
+            <em>{t["about.hero.headline2"]}</em>
           </h1>
           <p className="mt-10 max-w-2xl font-pullquote text-lede italic leading-relaxed text-muted-foreground">
-            Men of faith, honorable values, prepared in every aspect of life. We
-            protect our families. We sharpen each other. We follow Christ.
+            {t["about.hero.paragraph"]}
           </p>
         </div>
       </section>
@@ -37,11 +43,7 @@ export default function AboutPage() {
             </h2>
           </div>
           <p className="font-pullquote text-xl leading-relaxed text-muted-foreground md:text-2xl">
-            We are a brotherhood of like-minded men, rooted in honorable
-            Christian values, driven to be prepared in every aspect of life. We
-            protect our faith, our families, ourselves, and anyone in need. We
-            educate, communicate, and demonstrate faith through leadership and
-            fellowship, with boldness, authority, strength, and grace.
+            {t["about.mission.body"]}
           </p>
         </div>
       </section>
@@ -64,11 +66,7 @@ export default function AboutPage() {
               </blockquote>
               <p className="section-mark text-brass">Acts 20:28 &middot; ESV</p>
               <p className="text-base leading-relaxed md:text-lg">
-                A call for every man to keep watch, shepherd, train, and be
-                ready. We are called by Christ to be the shepherds over our
-                flock, our church, our families, our wives, our kids. This is
-                not a passive calling. It demands vigilance, courage, and
-                faithfulness.
+                {t["about.foundation.body"]}
               </p>
             </div>
           </div>
@@ -86,16 +84,8 @@ export default function AboutPage() {
               <em>not a spider.</em>
             </h2>
             <div className="space-y-6 text-base leading-relaxed text-muted-foreground md:text-lg">
-              <p>
-                Our leadership revolves around no single man. It revolves around
-                Jesus Christ. We follow a decentralized model where every man is
-                empowered and confident to lead.
-              </p>
-              <p>
-                Cut a leg off a starfish, it grows back. That is us. No single
-                point of failure. Every group stands on its own, connected by
-                shared faith and shared mission.
-              </p>
+              <p>{t["about.leadership.p1"]}</p>
+              <p>{t["about.leadership.p2"]}</p>
             </div>
           </div>
         </div>
@@ -113,20 +103,20 @@ export default function AboutPage() {
               {
                 icon: "scroll" as const,
                 roman: "I",
-                title: "Scripture is our guide.",
-                copy: "The Bible is our foundation. We study it, discuss it, and live it out together. Not as scholars, but as men seeking truth.",
+                title: t["about.believe.1.title"],
+                copy: t["about.believe.1.copy"],
               },
               {
                 icon: "flame" as const,
                 roman: "II",
-                title: "Grace transforms.",
-                copy: "By God's grace, wolves become sheepdogs. Our strength is redeemed, not to destroy, but to protect and serve.",
+                title: t["about.believe.2.title"],
+                copy: t["about.believe.2.copy"],
               },
               {
                 icon: "brothers" as const,
                 roman: "III",
-                title: "Brotherhood sharpens.",
-                copy: "Iron sharpens iron. We are stronger together, carrying burdens, challenging complacency, building each other up.",
+                title: t["about.believe.3.title"],
+                copy: t["about.believe.3.copy"],
               },
             ].map((item) => (
               <article
@@ -165,23 +155,23 @@ export default function AboutPage() {
             {[
               {
                 roman: "I",
-                heading: "Safe brotherhood.",
-                copy: "What is shared stays confidential. This is a place where men can be real.",
+                heading: t["about.culture.1.heading"],
+                copy: t["about.culture.1.copy"],
               },
               {
                 roman: "II",
-                heading: "No conflict.",
-                copy: "We steer away from controversy, complicated subjects, and church politics. We focus on everyday issues men face.",
+                heading: t["about.culture.2.heading"],
+                copy: t["about.culture.2.copy"],
               },
               {
                 roman: "III",
-                heading: "Christ-centered.",
-                copy: "Every discussion points back to Jesus. He is our leader, our model, our hope.",
+                heading: t["about.culture.3.heading"],
+                copy: t["about.culture.3.copy"],
               },
               {
                 roman: "IV",
-                heading: "Keep it simple.",
-                copy: "We want any man, young or old, to feel confident walking in and participating. No barriers.",
+                heading: t["about.culture.4.heading"],
+                copy: t["about.culture.4.copy"],
               },
             ].map((item) => (
               <li

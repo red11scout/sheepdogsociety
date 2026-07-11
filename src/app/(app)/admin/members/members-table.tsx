@@ -371,8 +371,32 @@ export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
         </p>
       )}
 
-      {/* Table */}
-      <div className="overflow-x-auto border border-stone/15">
+      {/* 375px card list (< md) — the SAME filtered rows and handlers as the
+          table below; only the presentation changes at the breakpoint. */}
+      <div className="space-y-3 md:hidden">
+        {filtered.length === 0 ? (
+          <p className="border border-stone/15 px-6 py-12 text-center text-xs text-stone/60">
+            No members match. Adjust filters or wait for the first signup.
+          </p>
+        ) : (
+          filtered.map((r) => (
+            <MemberCard
+              key={r.id}
+              row={r}
+              groupOptions={groupOptions}
+              selected={selected.has(r.id)}
+              onToggleSelect={() => toggleSelect(r.id)}
+              onApprove={(s) => handleApproval(r.id, s)}
+              onActive={(a) => handleActive(r.id, a)}
+              onGroup={(g) => handleGroup(r.id, g)}
+              onDelete={() => handleDelete(r.id)}
+            />
+          ))
+        )}
+      </div>
+
+      {/* Table (≥ md) */}
+      <div className="hidden overflow-x-auto border border-stone/15 md:block">
         <table className="w-full text-xs">
           <thead className="border-b border-stone/15 bg-iron/40 text-stone/65">
             <tr>
@@ -507,34 +531,10 @@ function MemberRow({
         {row.shortId}
       </td>
       <td className="px-3 py-2">
-        <select
-          value={row.approvalStatus}
-          onChange={(e) => onApprove(e.target.value as "pending" | "approved" | "rejected")}
-          className={cn(
-            "h-6 border bg-transparent px-1.5 text-[0.6875rem] uppercase tracking-wider focus:outline-none",
-            APPROVAL_TONE[row.approvalStatus] ?? APPROVAL_TONE.pending
-          )}
-        >
-          {APPROVAL_OPTIONS.map((s) => (
-            <option key={s} value={s} className="bg-iron text-bone">
-              {s}
-            </option>
-          ))}
-        </select>
+        <ApprovalSelect value={row.approvalStatus} onApprove={onApprove} className="h-6" />
       </td>
       <td className="px-3 py-2">
-        <button
-          type="button"
-          onClick={() => onActive(!row.isActive)}
-          className={cn(
-            "h-6 border px-2 text-[0.6875rem] uppercase tracking-wider transition-colors",
-            row.isActive
-              ? "border-olive/40 bg-olive/10 text-olive hover:bg-olive/20"
-              : "border-stone/30 bg-stone/10 text-stone/65 hover:bg-stone/20"
-          )}
-        >
-          {row.isActive ? "Active" : "Inactive"}
-        </button>
+        <ActiveToggle isActive={row.isActive} onActive={onActive} className="h-6" />
       </td>
       <td className="px-3 py-2 text-stone/85">{row.role}</td>
       <td className="px-3 py-2 text-bone">{row.firstName ?? "—"}</td>
@@ -556,18 +556,12 @@ function MemberRow({
       </td>
       <td className="px-3 py-2 text-stone/85">{row.signalAccount ?? ""}</td>
       <td className="px-3 py-2">
-        <select
-          value={row.groupId ?? ""}
-          onChange={(e) => onGroup(e.target.value || null)}
-          className="h-6 max-w-[140px] border border-stone/20 bg-transparent px-1.5 text-[0.6875rem] text-bone focus:border-brass focus:outline-none"
-        >
-          <option value="" className="bg-iron text-bone">— none —</option>
-          {groupOptions.map((g) => (
-            <option key={g.id} value={g.id} className="bg-iron text-bone">
-              {g.name}
-            </option>
-          ))}
-        </select>
+        <GroupSelect
+          value={row.groupId}
+          groupOptions={groupOptions}
+          onGroup={onGroup}
+          className="h-6 max-w-[140px]"
+        />
       </td>
       <td className="px-3 py-2 text-stone/65">{row.locationName ?? "—"}</td>
       <td className="px-3 py-2 text-stone/55">
@@ -584,5 +578,169 @@ function MemberRow({
         </button>
       </td>
     </tr>
+  );
+}
+
+/* Shared row/card controls. The table cell and the mobile card render the
+   exact same markup; only the size class differs — h-6 in the dense table,
+   h-11 on the card so every tap target clears 44px. */
+
+function ApprovalSelect({
+  value,
+  onApprove,
+  className,
+}: {
+  value: string;
+  onApprove: (s: "pending" | "approved" | "rejected") => void;
+  className?: string;
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onApprove(e.target.value as "pending" | "approved" | "rejected")}
+      className={cn(
+        "border bg-transparent px-1.5 text-[0.6875rem] uppercase tracking-wider focus:outline-none",
+        APPROVAL_TONE[value] ?? APPROVAL_TONE.pending,
+        className
+      )}
+    >
+      {APPROVAL_OPTIONS.map((s) => (
+        <option key={s} value={s} className="bg-iron text-bone">
+          {s}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function ActiveToggle({
+  isActive,
+  onActive,
+  className,
+}: {
+  isActive: boolean;
+  onActive: (a: boolean) => void;
+  className?: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={() => onActive(!isActive)}
+      className={cn(
+        "border px-2 text-[0.6875rem] uppercase tracking-wider transition-colors",
+        isActive
+          ? "border-olive/40 bg-olive/10 text-olive hover:bg-olive/20"
+          : "border-stone/30 bg-stone/10 text-stone/65 hover:bg-stone/20",
+        className
+      )}
+    >
+      {isActive ? "Active" : "Inactive"}
+    </button>
+  );
+}
+
+function GroupSelect({
+  value,
+  groupOptions,
+  onGroup,
+  className,
+}: {
+  value: string | null;
+  groupOptions: { id: string; name: string }[];
+  onGroup: (g: string | null) => void;
+  className?: string;
+}) {
+  return (
+    <select
+      value={value ?? ""}
+      onChange={(e) => onGroup(e.target.value || null)}
+      className={cn(
+        "border border-stone/20 bg-transparent px-1.5 text-[0.6875rem] text-bone focus:border-brass focus:outline-none",
+        className
+      )}
+    >
+      <option value="" className="bg-iron text-bone">— none —</option>
+      {groupOptions.map((g) => (
+        <option key={g.id} value={g.id} className="bg-iron text-bone">
+          {g.name}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+/* < md card — full triage parity with MemberRow: bulk-select checkbox,
+   approval select, active toggle, group assignment, soft-delete. Same
+   handlers, same shared controls, sized for thumbs. */
+function MemberCard({
+  row,
+  groupOptions,
+  selected,
+  onToggleSelect,
+  onApprove,
+  onActive,
+  onGroup,
+  onDelete,
+}: {
+  row: AdminMemberRow;
+  groupOptions: { id: string; name: string }[];
+  selected: boolean;
+  onToggleSelect: () => void;
+  onApprove: (s: "pending" | "approved" | "rejected") => void;
+  onActive: (a: boolean) => void;
+  onGroup: (g: string | null) => void;
+  onDelete: () => void;
+}) {
+  return (
+    <article className={cn("border border-stone/15 p-4", selected && "bg-brass/5")}>
+      <div className="flex items-start gap-3">
+        {/* Bulk-select checkbox, card corner — 44px tap target via the label */}
+        <label className="flex h-11 w-11 shrink-0 items-center justify-center">
+          <input
+            type="checkbox"
+            checked={selected}
+            onChange={onToggleSelect}
+            className="h-3.5 w-3.5 accent-brass"
+            aria-label={`Select ${row.email}`}
+          />
+        </label>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-bone">
+            {[row.firstName, row.lastName].filter(Boolean).join(" ") ||
+              row.nickname ||
+              "—"}
+          </p>
+          <p className="truncate text-xs text-stone/70">{row.email}</p>
+        </div>
+        {/* Status pill: the table's status cell renders the approval select
+            styled as a pill — reused verbatim here as pill AND action. */}
+        <ApprovalSelect
+          value={row.approvalStatus}
+          onApprove={onApprove}
+          className="h-11 shrink-0"
+        />
+      </div>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <ActiveToggle isActive={row.isActive} onActive={onActive} className="h-11 px-3" />
+        <div className="flex min-w-[180px] flex-1 items-center gap-1.5">
+          <span className="text-[0.625rem] uppercase tracking-wider text-stone/55">
+            Group
+          </span>
+          <GroupSelect
+            value={row.groupId}
+            groupOptions={groupOptions}
+            onGroup={onGroup}
+            className="h-11 min-w-0 flex-1"
+          />
+        </div>
+        <button
+          type="button"
+          onClick={onDelete}
+          className="inline-flex h-11 items-center gap-1.5 border border-oxblood/40 px-3 text-[0.6875rem] uppercase tracking-wider text-oxblood transition-colors hover:bg-oxblood/20"
+        >
+          <Icon name="trash" size={11} /> Soft-delete
+        </button>
+      </div>
+    </article>
   );
 }
