@@ -1,7 +1,11 @@
+import { Fragment } from "react";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Icon } from "@/components/icons/Icon";
 import { Kicker } from "@/components/public/kicker";
+import { getSiteTextMap } from "@/lib/site-text/get";
+import { getStudioConfig } from "@/lib/studio/get";
+import { renderMerge } from "@/lib/studio/config";
 
 export const metadata: Metadata = {
   title: "What to expect — Sheepdog Society",
@@ -72,17 +76,18 @@ const FAQ = [
   },
 ] as const;
 
-export default function WhatToExpectPage() {
-  return (
-    <>
-      {/* Hero */}
+export default async function WhatToExpectPage() {
+  const [t, config] = await Promise.all([getSiteTextMap(), getStudioConfig()]);
+
+  const sections: Record<string, React.ReactNode> = {
+    hero: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-5xl px-6 py-24 md:px-12 md:py-40">
           <Kicker left="Before you come" />
           <h1 className="display-xl mt-10 text-display-xl">
-            Come hungry.
+            {t["wte.hero.headline1"]}
             <br />
-            <em>Bring nothing else.</em>
+            <em>{t["wte.hero.headline2"]}</em>
           </h1>
           <p className="mt-10 max-w-2xl font-pullquote text-lede italic text-muted-foreground">
             You do not need to have your life in order. You do not need to know
@@ -90,8 +95,8 @@ export default function WhatToExpectPage() {
           </p>
         </div>
       </section>
-
-      {/* The rhythm of a table */}
+    ),
+    rhythm: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-5xl px-6 py-24 md:px-12 md:py-32">
           <Kicker left="The rhythm" />
@@ -124,8 +129,8 @@ export default function WhatToExpectPage() {
           </div>
         </div>
       </section>
-
-      {/* Verse plate: the page's one dark interlude */}
+    ),
+    "verse-plate": (
       <section className="ember-band">
         <div className="mx-auto max-w-4xl px-6 py-24 md:px-12 md:py-32">
           <Kicker left="The Charge" />
@@ -140,8 +145,8 @@ export default function WhatToExpectPage() {
           </p>
         </div>
       </section>
-
-      {/* FAQ */}
+    ),
+    faq: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-3xl px-6 py-24 md:px-12 md:py-32">
           <Kicker left="Plain answers" />
@@ -163,13 +168,13 @@ export default function WhatToExpectPage() {
           </dl>
         </div>
       </section>
-
-      {/* CTA */}
+    ),
+    cta: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-4xl px-6 py-24 md:px-12 md:py-32">
           <Kicker left="Next step" />
           <h2 className="display-xl mt-10 text-display-lg">
-            There is a chair.
+            {t["wte.cta.title"]}
             <br />
             <em>Sit in it.</em>
           </h2>
@@ -191,6 +196,16 @@ export default function WhatToExpectPage() {
           </div>
         </div>
       </section>
+    ),
+  };
+
+  return (
+    <>
+      {renderMerge("what-to-expect", config)
+        .filter((s) => s.visible)
+        .map((s) => (
+          <Fragment key={s.id}>{sections[s.id]}</Fragment>
+        ))}
     </>
   );
 }

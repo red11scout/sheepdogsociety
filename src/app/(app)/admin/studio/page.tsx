@@ -10,6 +10,24 @@ import { Studio } from "./studio";
 
 export const dynamic = "force-dynamic";
 
+// The one hardcoded map from Studio pageId to its live route and its
+// SITE_TEXT_KEYS group name — both were 1:1 by accident on the homepage,
+// so DS-1 never needed this map.
+const PAGES: { id: string; label: string; path: string; textGroup: string }[] = [
+  { id: "home", label: "Homepage", path: "/", textGroup: "Homepage" },
+  { id: "about", label: "About", path: "/about", textGroup: "About" },
+  { id: "join", label: "Join", path: "/join", textGroup: "Join" },
+  { id: "faq", label: "FAQ", path: "/faq", textGroup: "FAQ" },
+  { id: "contact", label: "Contact", path: "/contact", textGroup: "Contact" },
+  { id: "giving", label: "Giving", path: "/giving", textGroup: "Giving" },
+  { id: "what-to-expect", label: "What to Expect", path: "/what-to-expect", textGroup: "What to Expect" },
+  { id: "how-we-gather", label: "How We Gather", path: "/how-we-gather", textGroup: "How We Gather" },
+  { id: "events", label: "Events", path: "/events", textGroup: "Events" },
+  { id: "letter", label: "The Letter", path: "/letter", textGroup: "The Letter" },
+  { id: "stories", label: "Stories", path: "/stories", textGroup: "Stories" },
+  { id: "resources", label: "Resources", path: "/resources", textGroup: "" },
+];
+
 // The (app)/admin layout gates admin already; no second gate here.
 export default async function StudioPage() {
   let dbError = false;
@@ -28,14 +46,27 @@ export default async function StudioPage() {
   }
   const versions = dbError ? [] : await listVersions();
   const stored = Object.fromEntries(textRows.map((r) => [r.key, r]));
-  const entries = SITE_TEXT_KEYS.filter((e) => e.group === "Homepage").map((e) => ({
-    key: e.key,
-    label: e.label,
-    multiline: e.multiline,
-    defaultValue: e.defaultValue,
-    stored: stored[e.key]?.value ?? null,
-    draftValue: stored[e.key]?.draftValue ?? null,
-  }));
+  type TextEntry = {
+    key: string;
+    label: string;
+    multiline: boolean;
+    defaultValue: string;
+    stored: string | null;
+    draftValue: string | null;
+  };
+  const entriesByGroup: Record<string, TextEntry[]> = {};
+  for (const p of PAGES) {
+    entriesByGroup[p.id] = p.textGroup
+      ? SITE_TEXT_KEYS.filter((e) => e.group === p.textGroup).map((e) => ({
+          key: e.key,
+          label: e.label,
+          multiline: e.multiline,
+          defaultValue: e.defaultValue,
+          stored: stored[e.key]?.value ?? null,
+          draftValue: stored[e.key]?.draftValue ?? null,
+        }))
+      : [];
+  }
   const draftEnabled = (await draftMode()).isEnabled;
 
   return (
@@ -55,7 +86,8 @@ export default async function StudioPage() {
           initialDraft={draft}
           published={published}
           initialVersions={versions}
-          textEntries={entries}
+          pages={PAGES}
+          entriesByGroup={entriesByGroup}
           draftEnabled={draftEnabled}
         />
       )}

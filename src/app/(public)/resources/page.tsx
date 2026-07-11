@@ -1,6 +1,8 @@
 import { listSectionsAndResourcesForPublic } from "@/server/resources-admin";
 import { detectProvider, youtubeThumbnailFromUrl } from "@/lib/resources/enrich";
 import { ResourcesBrowser } from "./browser";
+import { getStudioConfig } from "@/lib/studio/get";
+import { renderMerge } from "@/lib/studio/config";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +27,11 @@ export default async function ResourcesPage() {
     // Migration may not be applied yet — render empty state.
   }
 
-  return (
+  const config = await getStudioConfig();
+  const merged = renderMerge("resources", config);
+  const browserVisible = merged.find((s) => s.id === "browser")?.visible ?? true;
+
+  return browserVisible ? (
     <ResourcesBrowser
       sections={sections.map((s) => ({
         id: s.id,
@@ -71,5 +77,5 @@ export default async function ResourcesPage() {
         };
       })}
     />
-  );
+  ) : null;
 }

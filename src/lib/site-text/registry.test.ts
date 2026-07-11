@@ -14,10 +14,11 @@ describe("SITE_TEXT_KEYS", () => {
       expect(e.defaultValue.trim().length).toBeGreaterThan(0);
     }
   });
-  it("groups are exactly Homepage and About", () => {
-    expect(new Set(SITE_TEXT_KEYS.map((e) => e.group))).toEqual(
-      new Set(["Homepage", "About"])
-    );
+  it("covers every DS-2 group", () => {
+    const groups = new Set(SITE_TEXT_KEYS.map((e) => e.group));
+    for (const g of ["Join", "FAQ", "Contact", "Giving", "What to Expect", "How We Gather", "Events", "The Letter", "Stories"]) {
+      expect(groups.has(g as never)).toBe(true);
+    }
   });
   it("DEFAULTS mirrors the registry", () => {
     for (const e of SITE_TEXT_KEYS) {

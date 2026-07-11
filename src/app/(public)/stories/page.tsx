@@ -1,5 +1,6 @@
 export const dynamic = "force-dynamic";
 
+import { Fragment } from "react";
 import Link from "next/link";
 import { db } from "@/db";
 import { testimonies, users } from "@/db/schema";
@@ -7,6 +8,9 @@ import { eq, desc } from "drizzle-orm";
 import { format } from "date-fns";
 import { Icon } from "@/components/icons/Icon";
 import { Kicker } from "@/components/public/kicker";
+import { getSiteTextMap } from "@/lib/site-text/get";
+import { getStudioConfig } from "@/lib/studio/get";
+import { renderMerge } from "@/lib/studio/config";
 
 export const metadata = {
   title: "Stories — Sheepdog Society",
@@ -37,26 +41,29 @@ async function getStories() {
 }
 
 export default async function StoriesPage() {
-  const stories = await getStories();
+  const [stories, t, config] = await Promise.all([
+    getStories(),
+    getSiteTextMap(),
+    getStudioConfig(),
+  ]);
 
-  return (
-    <>
-      {/* Hero */}
+  const sections: Record<string, React.ReactNode> = {
+    hero: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 pb-12 pt-16 md:px-10 md:pt-24">
           <Kicker left="Stories" right="Told plain" />
           <h1 className="display-xl mt-10 text-display-xl">
-            Wolves transformed.
+            {t["stories.hero.headline1"]}
             <br />
-            <em>Sheepdogs sent.</em>
+            <em>{t["stories.hero.headline2"]}</em>
           </h1>
           <p className="mt-8 max-w-2xl font-pullquote text-lede italic text-muted-foreground">
             Real stories from brothers across the Sheepdog Society.
           </p>
         </div>
       </section>
-
-      {/* Ruled ledger of stories */}
+    ),
+    "stories-ledger": (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-4xl px-6 pb-20 md:px-10 md:pb-28">
           {stories.length > 0 ? (
@@ -87,20 +94,20 @@ export default async function StoriesPage() {
             <div className="border border-dashed border-foreground/15 p-16 text-center">
               <Icon name="flame" size={48} strokeWidth={2} className="mx-auto text-brass" />
               <h3 className="display-soft mt-8 text-2xl md:text-3xl">
-                Stories on the way.
+                {t["stories.empty.heading"]}
               </h3>
               <p className="mx-auto mt-4 max-w-md font-pullquote text-lg italic text-muted-foreground">
-                Brothers are writing them now.
+                {t["stories.empty.body"]}
               </p>
             </div>
           )}
         </div>
       </section>
-
-      {/* CTA */}
+    ),
+    cta: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-4xl border-t border-foreground/15 px-6 py-20 text-center md:px-10 md:py-28">
-          <h2 className="display-xl text-display-md">Have a story?</h2>
+          <h2 className="display-xl text-display-md">{t["stories.cta.title"]}</h2>
           <p className="mx-auto mt-6 max-w-xl font-pullquote text-lede italic text-muted-foreground">
             Send it to us. We share what God has done.
           </p>
@@ -115,6 +122,16 @@ export default async function StoriesPage() {
           </div>
         </div>
       </section>
+    ),
+  };
+
+  return (
+    <>
+      {renderMerge("stories", config)
+        .filter((s) => s.visible)
+        .map((s) => (
+          <Fragment key={s.id}>{sections[s.id]}</Fragment>
+        ))}
     </>
   );
 }

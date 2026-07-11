@@ -2,7 +2,18 @@ export interface SiteTextEntry {
   key: string;
   /** Plain-English name Jeremy sees, e.g. "Homepage — Hero headline (line 1)" */
   label: string;
-  group: "Homepage" | "About";
+  group:
+    | "Homepage"
+    | "About"
+    | "Join"
+    | "FAQ"
+    | "Contact"
+    | "Giving"
+    | "What to Expect"
+    | "How We Gather"
+    | "Events"
+    | "The Letter"
+    | "Stories";
   defaultValue: string;
   /** true → textarea; false → single-line input */
   multiline: boolean;
@@ -113,6 +124,77 @@ export const SITE_TEXT_KEYS = [
   { key: "about.meta.description", label: "About — search result description", group: "About", multiline: true,
     defaultValue:
       "A brotherhood of men rooted in honorable Christian values, driven to be prepared in every aspect of life." },
+  // ── Join ──────────────────────────────────────────────────
+  { key: "join.principles.title", label: "Principles — section title", group: "Join", multiline: false,
+    defaultValue: "Five core principles" },
+  // ── FAQ ───────────────────────────────────────────────────
+  { key: "faq.cta.title", label: "Closing CTA — title", group: "FAQ", multiline: false,
+    defaultValue: "Still have a question?" },
+  { key: "faq.cta.body", label: "Closing CTA — body", group: "FAQ", multiline: true,
+    defaultValue: "Send us a note. We read every one." },
+  // ── Contact ───────────────────────────────────────────────
+  { key: "contact.hero.headline1", label: "Hero headline — line 1", group: "Contact", multiline: false,
+    defaultValue: "Send a note." },
+  { key: "contact.hero.headline2", label: "Hero headline — line 2 (italic)", group: "Contact", multiline: false,
+    defaultValue: "We read every one." },
+  { key: "contact.hero.paragraph", label: "Hero paragraph (before the email link)", group: "Contact", multiline: true,
+    defaultValue: "Use the form below, or write us straight at" },
+  // ── Giving ────────────────────────────────────────────────
+  { key: "giving.hero.headline1", label: "Hero headline — line 1", group: "Giving", multiline: false,
+    defaultValue: "Fuel the brotherhood." },
+  { key: "giving.hero.headline2", label: "Hero headline — line 2 (italic)", group: "Giving", multiline: false,
+    defaultValue: "Support the mission." },
+  { key: "giving.why.headline1", label: "Why we give — headline line 1", group: "Giving", multiline: false,
+    defaultValue: "Always free" },
+  { key: "giving.why.headline2", label: "Why we give — headline line 2 (italic)", group: "Giving", multiline: false,
+    defaultValue: "for every man." },
+  { key: "giving.ways.title", label: "Ways to give — section title", group: "Giving", multiline: false,
+    defaultValue: "Three ways to invest." },
+  { key: "giving.partners.headline1", label: "Partners CTA — headline line 1", group: "Giving", multiline: false,
+    defaultValue: "Churches. Organizations." },
+  { key: "giving.partners.headline2", label: "Partners CTA — headline line 2 (italic)", group: "Giving", multiline: false,
+    defaultValue: "Brothers." },
+  // ── What to Expect ────────────────────────────────────────
+  { key: "wte.hero.headline1", label: "Hero headline — line 1", group: "What to Expect", multiline: false,
+    defaultValue: "Come hungry." },
+  { key: "wte.hero.headline2", label: "Hero headline — line 2 (italic)", group: "What to Expect", multiline: false,
+    defaultValue: "Bring nothing else." },
+  { key: "wte.cta.title", label: "Closing CTA — title", group: "What to Expect", multiline: false,
+    defaultValue: "There is a chair." },
+  // ── How We Gather ─────────────────────────────────────────
+  { key: "hwg.hero.headline1", label: "Hero headline — line 1", group: "How We Gather", multiline: false,
+    defaultValue: "Four rhythms." },
+  { key: "hwg.hero.headline2", label: "Hero headline — line 2 (italic)", group: "How We Gather", multiline: false,
+    defaultValue: "One brotherhood." },
+  { key: "hwg.cta.title", label: "Closing CTA — title", group: "How We Gather", multiline: false,
+    defaultValue: "Find a group, or plant one." },
+  // ── Events ────────────────────────────────────────────────
+  { key: "events.hero.headline1", label: "Hero headline — line 1", group: "Events", multiline: false,
+    defaultValue: "Bring a brother." },
+  { key: "events.hero.headline2", label: "Hero headline — line 2 (italic)", group: "Events", multiline: false,
+    defaultValue: "Bring a friend." },
+  { key: "events.upcoming.empty", label: "Upcoming list — empty state", group: "Events", multiline: true,
+    defaultValue: "No gatherings on the books yet." },
+  // ── The Letter ────────────────────────────────────────────
+  { key: "letter.hero.headline1", label: "Hero headline — line 1", group: "The Letter", multiline: false,
+    defaultValue: "One letter" },
+  { key: "letter.hero.headline2", label: "Hero headline — line 2 (italic)", group: "The Letter", multiline: false,
+    defaultValue: "a week." },
+  { key: "letter.empty.heading", label: "Issue grid — empty state heading", group: "The Letter", multiline: false,
+    defaultValue: "The first encouragement is on the way." },
+  { key: "letter.empty.body", label: "Issue grid — empty state body", group: "The Letter", multiline: true,
+    defaultValue: "Brothers are writing it. Sign up in the footer to get it the moment it lands." },
+  // ── Stories ───────────────────────────────────────────────
+  { key: "stories.hero.headline1", label: "Hero headline — line 1", group: "Stories", multiline: false,
+    defaultValue: "Wolves transformed." },
+  { key: "stories.hero.headline2", label: "Hero headline — line 2 (italic)", group: "Stories", multiline: false,
+    defaultValue: "Sheepdogs sent." },
+  { key: "stories.empty.heading", label: "Stories ledger — empty state heading", group: "Stories", multiline: false,
+    defaultValue: "Stories on the way." },
+  { key: "stories.empty.body", label: "Stories ledger — empty state body", group: "Stories", multiline: true,
+    defaultValue: "Brothers are writing them now." },
+  { key: "stories.cta.title", label: "Closing CTA — title", group: "Stories", multiline: false,
+    defaultValue: "Have a story?" },
 ] as const satisfies readonly SiteTextEntry[];
 
 export type SiteTextKey = (typeof SITE_TEXT_KEYS)[number]["key"];
