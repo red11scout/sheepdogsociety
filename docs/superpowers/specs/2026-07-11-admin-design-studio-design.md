@@ -1,6 +1,7 @@
-# Admin Design Studio — Design Spec
+# Admin Design Studio — Design Spec (rev 2)
 
-**Date:** 2026-07-11 · **Approved by Drew:** 2026-07-11 ("love it. get it after") after 4 shaping decisions: curated studio (not block builder) · all public pages · AI = per-field assist + describe-it changesets, draft-only · five hand-designed themes.
+**Date:** 2026-07-11 · **Approved by Drew** at design level after 4 shaping decisions: curated studio (not block builder) · all public pages · AI = per-field assist + describe-it changesets, draft-only · five hand-designed themes.
+**Rev 2:** folds in the 3-lens adversarial review (27 findings, 4 Blockers) — every mechanism below was verified against the installed next@16.1.6, globals.css, and the real pages.
 
 **Goal:** Jeremy changes the site's text, layout, and look from one Studio page — with AI help, device/mode preview, side-by-side compare against live, and full undo — without being able to break the site, the brand, or Scripture.
 
@@ -12,90 +13,108 @@ Nothing touches the live site until Apply. Discard-draft is always one click. Ev
 
 ## Route + page anatomy
 
-`/admin/studio` (admin layout gates it; sidebar: Site Content group, first item, icon `sparkles` or closest existing). Three zones:
+`/admin/studio` (admin layout gates it; sidebar: Site Content group, first item). Three zones:
 
-- **Left rail (controls):** Theme picker · Page selector + section list (show/hide toggles, up/down reorder) · Text fields for the selected page (site-text editor rows, draft-aware).
-- **Preview pane:** iframe of the real site with the draft applied. Toggles: device (mobile 375 / desktop) · mode (light / dark) · **Compare** (splits into live | draft, same page/device/mode).
-- **Helper strip:** AI recommendations list · "Tell me what you want" box (describe-it) · **Stuck?** panel (playbook cards + first-run walkthrough) · Versions drawer · Apply / Discard buttons with plain-English confirms.
+- **Left rail (controls):** Theme picker · Page selector + section list (show/hide toggles, up/down reorder; locked sections greyed with the reason) · Text fields for the selected page (site-text rows, draft-aware).
+- **Preview pane:** iframe of the real site with the draft applied. Toggles: device (mobile 375 / desktop) · mode (light / dark) · **Compare** (splits into live | draft, same page/device/mode, synchronized scroll).
+- **Helper strip:** AI recommendations · "Tell me what you want" box (describe-it) · **Stuck?** panel · Versions drawer · Apply / Discard with plain-English confirms.
 
-All UI copy hand-written in Jeremy's voice (system-prompt rules; no banned words; no em-dashes where commas work). Every control gets a HintTooltip; AdminPageIntro explains the page in one sentence.
+All UI copy hand-written in Jeremy's voice (system-prompt rules). HintTooltips everywhere; AdminPageIntro explains the page in one sentence.
 
 ## Data model (migration 0020)
 
 - **`site_studio`** — single row (letter_autopilot precedent, ORDER BY id, seeded on first read):
   `id`, `draft` jsonb, `published` jsonb, `updated_at` timestamptz, `updated_by` FK users SET NULL.
-  Config shape (both columns): `{ themeId: string, pages: { [pageId]: { sections: [{ id: string, visible: boolean }] } } }` — array order = render order. Absent page/section entries mean "registry default" (all visible, registry order), so an empty config renders today's site.
-- **`site_text.draft_value`** — nullable text column. Draft semantics mirror the shipped value semantics: NULL = no draft edit for this key; empty/whitespace draft = "reset to default" staged. Apply promotes every non-NULL draft_value into value (empty → delete row, same as today's blank-save), then NULLs all draft_values.
-- **`studio_versions`** — `id`, `snapshot` jsonb `{ config, textOverrides }` (the FULL published state after that Apply: config + every site_text row), `summary` text (auto-written one-liner: "Switched to Harvest, hid photo strip, edited 3 lines"), `created_at`, `created_by` FK SET NULL. Keep the newest 50 (delete older inside the Apply transaction).
+  Config shape (both columns): `{ themeId: string, pages: { [pageId]: { sections: [{ id: string, visible: boolean }] } } }` — array order = render order. An empty/absent config renders today's site exactly.
+- **`site_text.draft_value`** — nullable text. NULL = no draft edit. Empty/whitespace draft = staged "reset to default". **Carrier rows:** a draft edit on a key with NO existing row INSERTs `value: ''` (publicly invisible — resolveSiteText treats blank as default) with label/groupName copied from the registry. **Promote** (inside Apply) is two set-based statements: `DELETE WHERE draft_value IS NOT NULL AND btrim(draft_value) = '' ` (staged resets + abandoned carriers — but only where `btrim(value) = ''` too; a staged reset over a real override becomes `value=''` deletion… see precise rule below), then `UPDATE SET value = draft_value, draft_value = NULL, updated_at, updated_by WHERE draft_value IS NOT NULL`. Precise reset rule: promoting a blank draft_value deletes the row (that IS the reset); promoting non-blank sets value; afterwards no row carries a non-NULL draft_value and no orphan `value=''` rows remain.
+- **`studio_versions`** — `id bigint GENERATED ALWAYS AS IDENTITY` (ALL ordering, undo arithmetic, and pruning key on id DESC — never created_at, which ties), `snapshot` jsonb `{ config, textOverrides }`, `summary` text (auto one-liner), `created_at`, `created_by` FK SET NULL. `textOverrides` = site_text key/value rows only (overrides, never resolved registry defaults — defaults live in code and may legitimately change later).
 
-**Apply is one transaction:** snapshot current published state → write draft config to published → promote text drafts → insert version row → prune to 50. Then `updateTag("studio")` + `updateTag("site-text")` + `revalidatePath` for affected pages. (Next 16: `updateTag`, never `revalidateTag` — read-your-own-writes; established in Phase B.)
+**Snapshot model (unambiguous):** the newest version row always equals the CURRENT published state.
+**Apply transaction:** `SELECT pg_advisory_xact_lock(815552)` (new app constant — 815551 belongs to letter series; Apply and Restore both take it) → if studio_versions is empty, insert a baseline version capturing the pre-apply published state (summary "Before the first Studio change") → write draft config to published → promote text drafts → build snapshot from the NEW published state → insert version row → prune to newest 50 by id. Then `updateTag("studio")` + `updateTag("site-text")` + **`revalidatePath("/", "layout")`** — one layout-scoped call regenerates every route's HTML (several governed pages are fully static with no revalidate timer; per-page enumeration is the failure mode, not the design).
+**Apply, Discard, and Restore are Server Actions** (updateTag is Server-Action-only — Phase B lesson). Only the draftMode enable/disable endpoints are route handlers (the browser must hit a route for the cookie).
 
-**Restore** loads a version's snapshot into the DRAFT (config + text draft_values) for preview; going live is still an explicit Apply (which itself snapshots — so redo is free).
+**Restore** = full diff against current published state, staged into the DRAFT: for every current registry key — snapshot has an override → stage it as draft_value (carrier row if needed); currently overridden but absent from snapshot → stage a reset (`draft_value = ''`). Config restored into draft config wholesale, then passed through the render-merge rule (below), dropping stale ids with a per-item note (same idiom as changeset validation). Going live is still an explicit Apply — which snapshots first, so redo is free. The Restore confirm states plainly: "This loads the old version into your draft. Your unsaved draft changes go away."
+
+**Live editor interaction:** `/admin/site-text` remains a second write path. Its blank-save and reset change from row DELETE to `UPDATE value = ''` when `draft_value IS NOT NULL` (never destroy a pending draft; delete only when both are blank). Last-write-wins between the live editor and a Studio Apply is accepted and named in the Stuck? panel. DS-2 revisits folding the site-text editor into the Studio.
 
 ## Themes
 
-`src/lib/studio/themes.ts` — registry of exactly 5 themes, each: `{ id, name, blurb, light: Record<CVar, string>, dark: Record<CVar, string> }` where CVar = the existing `--c-*` custom-property names (iron, bone, cream, ink, navy, brass, gold, olive, oxblood, stone, brass-deep + the semantic background/foreground set). `pasture-iron` (id of the current look) is values-identical to today's globals.css and is the default when config.themeId is absent.
+**The var surface (the half-true claim, corrected):** globals.css indirects only the 11 `--c-*` palette names through `@theme inline`; the dominant surface colors — `--background, --foreground, --card, --card-foreground, --popover, --popover-foreground, --muted, --muted-foreground, --primary, --primary-foreground, --secondary, --secondary-foreground, --accent, --accent-foreground, --destructive, --border, --input, --ring, --bronze, --bronze-foreground` — are raw oklch at `:root`/`.dark`. A theme therefore defines **both groups**, explicitly enumerated in the theme record: `{ id, name, blurb, light: Record<ThemeVar, string>, dark: Record<ThemeVar, string> }` where ThemeVar = the 11 `--c-*` names + the 20 semantic names above. Sidebar/chart vars are admin-only and excluded.
 
-- globals.css already indirects every color through `var(--c-*)` under `@theme inline` — the load-bearing fact that makes themes cheap. The published theme renders as a `<style>` block (root layout, server-rendered from cached config) that overrides `--c-*` at `:root` (light) and `.dark`/`[data-theme=dark]` (dark) — matching however globals.css scopes dark values today (verify at plan time and mirror exactly). `pasture-iron` renders NO override block (zero risk to today's site).
-- Typography is fixed. Furniture (@utility classes) untouched. Only color variables change.
-- **Contrast gate extended:** `scripts/check-contrast.mjs` grows to iterate all 5 themes × both modes over its existing pair list; CI/local gate fails if any theme fails AA. A theme that fails cannot ship — the registry is code, so the gate runs at build/PR time, not runtime.
+- **Registry + data split:** color records live in `src/lib/studio/themes-data.mjs` (plain module — `scripts/check-contrast.mjs` is plain node and must import it natively); `src/lib/studio/themes.ts` wraps it with types/names/blurbs. Exactly 5 themes; `pasture-iron` is values-identical to today's globals.css and renders NO override block.
+- **Injection point:** the override `<style>` block is emitted by **`src/app/(public)/layout.tsx`** — never the root layout (which wraps admin/auth; a `:root` override there would repaint the admin with ungated contrast, and a DB read there runs during every static prerender). Selectors: scope through the public wrapper (marker attribute on the (public) layout's wrapper, e.g. `body:has([data-site-theme])` for light and `.dark body:has([data-site-theme])` for dark — verified no public component portals to document.body). Plain `<style>` (no React `precedence` prop) so it renders after the head stylesheet and wins the tie. Dark selector is `.dark` only — ThemeProvider uses `attribute="class"`; `[data-theme=dark]` is dead code here.
+- The Bible reader lives inside (public) and gets themed — colors only; Scripture text is never touched.
+- `getStudioConfig()` mirrors getSiteTextMap's try/catch: DB error → default config (pasture-iron + registry defaults). Builds and outages fail soft.
+- **Theme-constant surfaces (by design):** the ember bands (`@utility ember-band`, literal hex) and letter cover art are content/Scripture furniture and do NOT re-theme. Every one of the 5 themes must be designed to harmonize with the fixed ember palette (#1c1610 ground / copper kicker) — a design-time acceptance check per theme, not a code change. Stated in the theme picker's hint so it never reads as a bug.
+- Typography fixed. Furniture (@utility) untouched. **Contrast gate:** check-contrast.mjs builds each theme's var map as `{ ...parsedGlobalsBaseline, ...theme[mode] }` and runs the existing PAIRS list for all 5 themes × both modes; any failure fails the build.
 
 ## Section registries + page wiring
 
 `src/lib/studio/sections.ts` — per public page: `{ pageId, label, sections: [{ id, label, hint, locked?: true }] }`.
 
-- Pages covered: home, about, join, what-to-expect, how-we-gather, faq, contact, giving, plus FRAMING sections of events/letter/stories/resources indexes (headline + intro copy blocks; the dynamic lists themselves are single locked sections).
-- **Locked (always-on, never reorderable):** every Scripture/ember band, every page hero, the dynamic-content sections (event list, letter list, resource browser, group map). Locked sections render in the section list greyed with the reason in the hint ("Scripture stays.").
-- Each governed page reads `getStudioConfig()` (cached, tag `studio`) and renders its sections by config order/visibility, defaulting to registry order. Implementation shape per page: sections extracted into a `const SECTIONS: Record<sectionId, ReactNode>`-style map or ordered array the page assembles — smallest structural change that allows ordering, decided per page at plan time.
-- Text coverage: SITE_TEXT_KEYS grows from 38 keys (Homepage/About) to every governed page's copy (groups per page). Scripture is never a key (standing rule). Dynamic/DB content is never a key.
+- Pages: home, about, join, what-to-expect, how-we-gather, faq, contact, giving + the framing copy of events/letter/stories/resources indexes. **Each dynamic list is its own locked section** (events has two: upcoming + past).
+- **Locked:** every Scripture/ember band, every page hero, every dynamic-content section (lists, browser, map, forms). Page realities, verified: home/about/faq/events extract cleanly into top-level sections; **join** is mostly a text-keys page (hero locked, paths+signup form locked-dynamic, principles list is its one governable section); **FAQ** Q&As become keyed text groups in DS-2 (each Q and A a key, group "FAQ"; the accordion is one section).
+- **Render-merge rule (used identically on studio read, public render, and restore):** config order/visibility applies only to section ids it names; registry sections missing from the config render visible at their registry position; config ids not in the registry are dropped; locked sections are forced visible regardless of config; unknown themeId falls back to pasture-iron.
+- Text coverage: SITE_TEXT_KEYS grows to every governed page (groups per page). Scripture is never a key. Dynamic/DB content is never a key.
+- Per-page bar: render-identical with empty config (DOM-diff, modulo build hashes).
 
 ## Draft preview + compare
 
-- **Draft visibility uses Next's `draftMode()`** (built-in, cookie-scoped, bypasses ISR for draft requests only — public ISR caching is untouched for everyone else). `POST /api/admin/studio/preview` (requireAdmin) enables it; disable on studio exit and via a "stop preview" chip. When draftMode is enabled, `getStudioConfig()`/`getSiteTextMap()` read draft-merged state (config: draft column; text: draft_value ?? value).
-- **Preview pane** iframes the real page URL. Device toggle = iframe width (375 / 1280). Mode toggle = query param `?studio-mode=dark|light`, honored by a tiny client helper ONLY when draftMode is enabled (never affects real visitors); it forces the next-themes attribute inside the iframe document.
-- **Compare** = two synchronized-scroll iframes. Both carry the admin's draftMode cookie, so the LIVE side opts out explicitly with `?studio=published` — when draftMode is enabled AND this param is present, loaders serve published state. Param is inert without draftMode (public requests can't use it to see drafts, and it never fragments the public cache).
+- **Draft visibility = Next `draftMode()`** (cookie-scoped `__prerender_bypass`; bypasses ISR/static cache only for the draft holder). Enable/disable via route handlers under `/api/admin/studio/preview` (requireAdmin).
+- **Loader pattern (anti-poisoning, guard rail 5b):** `draftMode()` is checked OUTSIDE any cache scope — never inside an unstable_cache closure. Draft branch = direct uncached DB read (config draft column; site_text `draft_value ?? value` merge). Published branch = the existing unstable_cache reads, untouched. Reading `draftMode().isEnabled` is prerender-safe (returns false, no dynamic bailout), so ISR/static prerendering is unaffected.
+- **Preview pane** iframes the real page URL; device toggle = iframe width. **Mode toggle:** `?studio-mode=dark|light`, honored by a `<StudioModeForcer/>` client helper that the (public) layout renders ONLY when `(await draftMode()).isEnabled` — it reads location.search in an effect and toggles the `dark` class + `style.colorScheme` on the iframe's documentElement directly. It must NEVER call next-themes setTheme or touch localStorage (storage events would flip every open tab, including the Studio itself, and overwrite Jeremy's real preference).
+- **Compare:** two synchronized iframes; both naturally carry the draft cookie, so the LIVE side uses `?studio=published`, implemented in **middleware**: when the URL carries the param, the request is forwarded with the `__prerender_bypass` cookie stripped from the Cookie header — the live iframe is then a true public request end to end (published theme, config, text, served from the normal cache). No loader or page ever reads the param; layouts never see searchParams (verified — this killed the rev-1 design). Inert without draftMode: no cookie, nothing to strip.
+- **Draft ribbon:** while draftMode is enabled, every public page renders a fixed "Draft preview — not live · Stop preview" ribbon (server-conditional on draftMode; only the cookie-holding admin ever sees it). This closes the "I opened the site from my bookmark and it shows changes I never applied" trap.
 
 ## AI layer (draft-only, always)
 
-Three endpoints under `/api/admin/studio/` (requireAdmin, all log to ai_generations, model claude-sonnet-4-5, house `anthropic` import):
+Three Server-Action/route entry points under the studio module (requireAdmin, ai_generations logging, model claude-sonnet-4-5, house `anthropic` import):
 
-1. **`recommend`** — input: page id + its current text/sections/theme. Output: suggestion list, each `{ what, why, changeset? }` (why is one plain sentence). Deterministic pre-checks seed it (headline word count, section count, empty text overrides) so the panel is useful even before the model responds.
-2. **`assist`** — per-field rewrite/tighten/warm-up. Returns draft text + one-line why. Existing editor-assist idiom.
-3. **`describe`** — Jeremy's free-text goal → a full **changeset**: `{ themeId?, sectionChanges: [{pageId, sectionId, visible?, position?}], textEdits: [{key, value, why}] }`. Schema is BOUNDS-FREE (Anthropic structured output rejects all size bounds — house rule) with post-hoc validation: every key/pageId/sectionId/themeId must exist in its registry, locked sections untouchable, banned-language gate over every drafted string, length caps enforced in code. Valid changeset writes into the draft; invalid parts are dropped with a per-item note shown to Jeremy ("skipped two suggestions that touched locked sections").
+1. **recommend** — page context in → suggestion list `{ what, why, changeset? }`, seeded by deterministic pre-checks (headline word count, section count, empty overrides).
+2. **assist** — per-field rewrite/tighten/warm-up; returns draft text + one-line why.
+3. **describe** — free-text goal → changeset `{ themeId?, sectionChanges: [{pageId, sectionId, visible?, position?}], textEdits: [{key, value, why}] }`. Schema BOUNDS-FREE (house rule); post-hoc validation: every id must exist in its registry · locked sections untouchable · **materialize the page's full section order (registry+config merge) before applying position patches, then bounds-check positions** · duplicate {pageId, sectionId} entries reject the changeset · empty/whitespace textEdits.value is invalid and dropped (resets are a human action) · accepted items capped at 20, remainder dropped · findBannedLanguage over every drafted string · length caps in code. Valid parts write into the draft; every dropped item is listed to Jeremy with a reason.
 
 AI never Applies. The Apply button is Jeremy's alone.
 
 ## Guides / get-unstuck layer
 
-- AdminPageIntro + HintTooltips everywhere (house pattern).
-- **Stuck? panel** — 6 static playbook cards: My change isn't on the live site (you haven't hit Apply) · I don't like my changes (Discard draft) · I applied and regret it (Versions → Restore) · The preview looks broken (refresh preview / stop-start preview) · What does each theme look like (theme picker previews instantly in the pane) · What can't I change (locked sections, Scripture, fonts — and why).
-- **First-run walkthrough:** a dismissible 4-step card strip (pick a theme → toggle a section → edit a line → Apply) shown until dismissed (flag in site_studio config).
+- AdminPageIntro + HintTooltips (house pattern).
+- **Stuck? panel — 7 cards:** change isn't live (you haven't hit Apply) · don't like the draft (Discard) · applied and regret it (Versions → Restore) · preview looks broken (stop/start preview) · what do themes look like (picker previews instantly) · what can't change and why (locked sections, Scripture, fonts, ember bands) · **"the site shows a Draft ribbon"** (you're in preview on this browser — Stop preview returns it to live; other people always see live).
+- **First-run walkthrough:** dismissible 4-step strip (pick theme → toggle section → edit a line → Apply); dismissal flag in site_studio config.
 
 ## Guard rails (invariants)
 
-1. Scripture: never an editable key, never a hideable section.
-2. Themes: only the 5 registry themes; all AA-gated at build time; no free-form colors anywhere.
-3. AI writes only to draft; every AI string passes findBannedLanguage; changesets validate against registries post-hoc.
-4. Apply/Restore/prune are single transactions; Apply uses updateTag (never revalidateTag).
-5. draftMode gates all draft reads; `?studio=published` is inert without it; preview endpoints requireAdmin.
-6. Locked sections: not hideable, not reorderable, not AI-touchable.
-7. An empty/absent config renders today's site exactly (pasture-iron + registry defaults) — the studio shipping changes nothing until Jeremy acts.
+1. Scripture: never an editable key, never a hideable section; ember bands theme-constant.
+2. Themes: only the 5 registry themes, all AA-gated at build time across both var groups; no free-form colors.
+3. AI writes only to draft; all AI strings pass findBannedLanguage; changesets validate post-hoc per the describe contract.
+4. Apply/Restore are Server Actions in single transactions serialized by `pg_advisory_xact_lock(815552)`; cache flush is exactly updateTag("studio") + updateTag("site-text") + revalidatePath("/", "layout").
+5. draftMode gates all draft reads; the draftMode() check lives OUTSIDE every cache scope (5b); `?studio=published` is a middleware cookie-strip, inert without draftMode; preview endpoints requireAdmin; the draft ribbon renders whenever draftMode is on.
+6. Locked sections: not hideable, not reorderable, not AI-touchable; render-merge forces them visible.
+7. Empty/absent config + no drafts renders today's site DOM-identically; pasture-iron emits no override block.
+
+## DS-1 acceptance (the definition of "loop proven")
+
+1. **PARITY** — empty config, no drafts: homepage HTML is DOM-identical to the pre-studio baseline (curl + diff modulo build hashes); `npm run check:contrast` passes 5 themes × 2 modes.
+2. **ISOLATION** — draft theme+text active in browser A (draftMode on): 10 consecutive homepage requests from a clean browser B serve published output with zero draft markers (no override style block, no draft copy, no ribbon).
+3. **LOOP** — change theme + one text line + hide one section: preview reflects all three in both devices and both modes; compare shows live≠draft; Apply lands them on the public site within seconds (fresh browser check).
+4. **UNDO** — restore the pre-change version, Apply: public site matches the original state exactly (HTML diff), and the Versions drawer shows the full history.
+5. **SAFETY** — locked sections cannot be hidden/moved via UI or a describe changeset; Scripture appears in no registry; `?studio=published` on a public browser without draftMode changes nothing.
 
 ## Build order (each its own plan → PR → live verification)
 
-- **DS-1 (prove the loop):** migration 0020, themes registry + contrast-gate extension, studio config plumbing (cached reads, draftMode, apply/discard/versions), homepage section registry + wiring, the Studio page with theme picker + homepage sections + existing homepage text keys, preview (device/mode) + compare, Apply/undo end to end. Ships fully usable for the homepage.
-- **DS-2 (coverage):** section registries + text keys for the remaining public pages; page wiring; studio page selector grows.
-- **DS-3 (AI):** recommend / assist / describe endpoints + helper strip UI + changeset validation.
-- **DS-4 (polish + hardening):** guides/walkthrough final pass, 375px admin pass on the studio itself, live-fire drills (restore under concurrent edits, draft-cookie expiry, theme swap on slow connections), docs.
+- **DS-1 (prove the loop, homepage only):** migration 0020 · themes-data + registry + contrast-gate extension · config plumbing (cached published reads, draft branch, render-merge) · (public)-layout theme block + StudioModeForcer + draft ribbon · middleware cookie-strip · homepage section registry + wiring · Studio page (theme picker, homepage sections, homepage text keys) · preview + compare · Apply/Discard/Restore + versions. Meets all 5 acceptance checks.
+- **DS-2 (coverage):** registries + text keys for all remaining pages (FAQ keyed Q&As; join reality per above); page wiring; site-text editor draft-safety change; page selector grows.
+- **DS-3 (AI):** recommend / assist / describe + helper strip + changeset validation.
+- **DS-4 (polish + hardening):** guides final pass, studio 375px pass, live-fire drills (cache-poisoning drill from acceptance #2 re-run under load, restore-under-concurrent-edit, cookie expiry mid-session), docs.
 
 ## Out of scope (explicit)
 
-Block/page builder (rejected again — curated studio won); font/typography changes; per-section custom colors or free-form styling; image upload/management; editing member-area, admin, Bible reader, or letter bodies; AI-minted themes (the 5 are hand-designed; revisit only after usage); scheduled/timed theme changes.
+Block/page builder · font/typography changes · per-section custom colors · AI-minted themes · image upload/management · member-area/admin/letter-body editing · scheduled theme changes · re-theming ember bands or cover art.
 
 ## Risks
 
-1. **Draft/ISR interplay** — draftMode is the sanctioned mechanism, but the loaders' draft-merge logic must never leak into cached public renders; DS-1 live-fire includes a cache-poisoning drill (draft on in one browser, public checks from another).
-2. **Section extraction churn** — reordering requires restructuring each page's JSX into addressable sections; per-page diffs kept minimal and each page independently verifiable (render-identical with empty config is the bar).
-3. **Compare-pane cookie sharing** — solved by explicit `?studio=published` opt-out; the drill for this is in DS-1.
-4. **Scope creep toward page-builder** — the registries are the fence; anything needing a new section type is a code PR, by design.
-5. **Concurrent admins** — single-row draft means two admins share one draft; acceptable (Jeremy is effectively the only editor); noted in the Stuck? panel.
+1. **Draft/ISR interplay** — mitigated by the pinned loader pattern (5b) + middleware strip; acceptance #2 is the drill.
+2. **Section extraction churn** — per-page DOM-parity bar; join/FAQ realities pre-named so nobody discovers them mid-plan.
+3. **Semantic-token theme design** — 31 vars × 2 modes × 5 themes is real design work; the contrast gate catches readability, but harmony with the fixed ember palette is a human design check per theme.
+4. **Scope creep toward page-builder** — the registries are the fence; new section types are code PRs by design.
+5. **Concurrent admins** — one shared draft (named in Stuck?); Apply/Restore races serialized by the advisory lock.
