@@ -804,3 +804,482 @@
   /* Page break helper for content authors */
   .page-break { page-break-after: always; }
 }
+
+/* ====================================================================
+   THE NIGHT WATCH — visual elevation (design/night-watch).
+   Append-only. Nothing above this line is modified. Every token here is
+   NEW (never overrides an existing --c-* or oklch value), so the contrast
+   gate and all 5 Design Studio themes are untouched. The story: warm gold
+   is FLAME at night (dark) and BRASS at first light (light) — the same
+   material, two times of day. Values echo the existing brass/gold family.
+==================================================================== */
+
+/* New additive tokens. --flame powers the living flame, gold-leaf text
+   shimmer, and ambient glow. Defined per mode so they track the theme. */
+:root {
+  --flame: #9a6b1f;         /* burnished brass — AA-safe on parchment */
+  --flame-bright: #c08a2e;  /* highlight / shimmer peak */
+  --glow: rgba(154, 107, 31, 0.08);
+
+  /* Shared motion system (brief §5.0) — two easings, three durations. */
+  --nw-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --nw-ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
+  --nw-fast: 180ms;
+  --nw-med: 450ms;
+  --nw-slow: 900ms;
+}
+.dark {
+  --flame: #e5a54b;         /* lampstand gold, lit */
+  --flame-bright: #f6c87a;  /* blue-white-adjacent peak */
+  --glow: rgba(229, 165, 75, 0.16);
+}
+
+/* -------- Gold-leaf shimmer (brief §5.3) --------------------------------
+   Applied to the italic <em> hero words ("brothers.", "Sit in it.").
+   Base state is solid flame (final position); .is-lit sweeps the gradient
+   ONCE when the word scrolls into view. Single sweep = illumination, not a
+   looping car-dealership shine. Fallback: solid --flame where
+   background-clip:text is unsupported. */
+.shimmer-gold {
+  background: linear-gradient(
+    105deg,
+    var(--flame) 42%,
+    var(--flame-bright) 50%,
+    var(--flame) 58%
+  );
+  background-size: 250% 100%;
+  background-position: 0 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: var(--flame);
+  -webkit-text-fill-color: transparent;
+}
+.shimmer-gold.is-lit {
+  animation: nwShimmerSweep var(--nw-slow) var(--nw-ease-out) 1;
+}
+@keyframes nwShimmerSweep {
+  from { background-position: 150% 0; }
+  to { background-position: 0 0; }
+}
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  .shimmer-gold {
+    -webkit-text-fill-color: currentColor;
+    color: var(--flame);
+    background: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-gold { animation: none; background-position: 0 0; }
+}
+
+/* -------- Hero entrance choreography (brief §5.1) -----------------------
+   Staggered fade-up on first paint. Pure CSS (no JS): eyebrow → headline →
+   body → buttons → flame ignites last. Elements carry .nw-enter plus a
+   delay class. Content is visible by default; the animation only plays
+   where motion is allowed, so no-JS and reduced-motion see the final
+   state instantly (never hidden). */
+@media (prefers-reduced-motion: no-preference) {
+  .nw-enter {
+    opacity: 0;
+    animation: nwEntranceRise var(--nw-med) var(--nw-ease-out) both;
+  }
+  .nw-enter.d0 { animation-delay: 0ms; }
+  .nw-enter.d1 { animation-delay: 90ms; }
+  .nw-enter.d2 { animation-delay: 180ms; }
+  .nw-enter.d3 { animation-delay: 270ms; }
+  .nw-enter.d4 { animation-delay: 380ms; }
+}
+@keyframes nwEntranceRise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* -------- The living flame (brief §4) ----------------------------------
+   Pure SVG + CSS, no JS animation loop, aria-hidden, absolutely
+   positionable so it can never shift layout (CLS 0). Multiple flicker
+   animations on prime-number durations so the loop is never visible.
+   DARK: lit — flutter + glow + blue-white core. LIGHT: trimmed — a
+   static brass flame mark, no glow, no flicker (the toggle's story). */
+.nw-flame {
+  position: relative;
+  display: inline-block;
+  pointer-events: none;
+  line-height: 0;
+}
+.nw-flame__glow {
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  width: 220%;
+  height: 220%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, var(--glow), transparent 68%);
+  opacity: 0;
+  z-index: 0;
+}
+.nw-flame__svg { position: relative; z-index: 1; overflow: visible; }
+.nw-flame__outer { fill: var(--flame); transform-origin: 50% 100%; }
+.nw-flame__inner { fill: var(--flame-bright); transform-origin: 50% 100%; }
+.nw-flame__core { fill: #fbe8c2; opacity: 0; transform-origin: 50% 100%; }
+
+/* Lit only in dark mode. */
+.dark .nw-flame__glow {
+  opacity: 1;
+  animation: nwGlowPulse 4s var(--nw-ease-inout) infinite;
+}
+.dark .nw-flame__core { opacity: 0.9; }
+.dark .nw-flame__outer { animation: nwFlickerOuter 3.3s ease-in-out infinite; }
+.dark .nw-flame__inner { animation: nwFlickerInner 2.1s ease-in-out infinite; }
+.dark .nw-flame__svg { animation: nwSway 5.7s ease-in-out infinite; }
+
+@keyframes nwFlickerOuter {
+  0%, 100% { transform: scaleY(1) scaleX(1); opacity: 1; }
+  30% { transform: scaleY(1.06) scaleX(0.97); opacity: 0.94; }
+  55% { transform: scaleY(0.97) scaleX(1.02); opacity: 1; }
+  80% { transform: scaleY(1.03) scaleX(0.99); opacity: 0.97; }
+}
+@keyframes nwFlickerInner {
+  0%, 100% { transform: scaleY(1); opacity: 0.95; }
+  40% { transform: scaleY(1.1); opacity: 1; }
+  70% { transform: scaleY(0.93); opacity: 0.9; }
+}
+@keyframes nwSway {
+  0%, 100% { transform: skewX(0deg); }
+  33% { transform: skewX(1.6deg); }
+  66% { transform: skewX(-1.4deg); }
+}
+@keyframes nwGlowPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.97); opacity: 0.85; }
+  50% { transform: translate(-50%, -50%) scale(1.04); opacity: 1; }
+}
+/* Still variant — a lit but motionless flame mark. Used for the six
+   outer flames of the Letter card's seven-flame echo (only the centre
+   one lives); and anywhere a calm brass mark is wanted. */
+.nw-flame--still .nw-flame__glow { animation: none; opacity: 0; }
+.dark .nw-flame--still .nw-flame__glow { opacity: 0; }
+.nw-flame--still .nw-flame__outer,
+.nw-flame--still .nw-flame__inner,
+.nw-flame--still .nw-flame__svg { animation: none; }
+
+/* The ignite: flame fades up as the last hero entrance beat. */
+@media (prefers-reduced-motion: no-preference) {
+  .nw-flame--ignite {
+    animation: nwIgnite 700ms var(--nw-ease-out) 380ms both;
+  }
+}
+@keyframes nwIgnite {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dark .nw-flame__glow,
+  .dark .nw-flame__outer,
+  .dark .nw-flame__inner,
+  .dark .nw-flame__svg { animation: none; }
+}
+
+/* -------- Verse illumination (brief §5.4) ------------------------------
+   A soft lamplight glow that fades in behind the Acts 20:28 ember band
+   when it scrolls into view. Decorative, aria-hidden; the Word itself
+   never animates — the light moves, the verse stands still. Faded in via
+   the existing <Reveal> (opacity only), so no-JS shows it at rest. */
+.nw-verse-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    60% 50% at 50% 60%,
+    color-mix(in oklab, var(--flame) 22%, transparent),
+    transparent 70%
+  );
+  z-index: 0;
+}
+
+/* -------- Ambient film grain (brief §5.7) ------------------------------
+   Fixed, full-viewport SVG-turbulence noise at 2-3% (a touch more in
+   dark) to kill the flat-digital feel and make the gold read as light on
+   material. pointer-events off; mounted only inside the public shell. */
+.nw-grain {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.dark .nw-grain { opacity: 0.08; }
+@media (max-width: 640px) {
+  /* Degrade on mid-tier mobile — lighter, no blend cost spikes. */
+  .nw-grain { opacity: 0.04; }
+}
+
+/* -------- Micro-interactions (brief §5.6) ------------------------------
+   Warm glow lift on the primary iron buttons (kept iron, not recolored —
+   the broadsheet's deliberate choice — but now they catch flame-light on
+   hover). Opt-in via .nw-cta so no existing button changes unless tagged. */
+.nw-cta {
+  transition:
+    filter var(--nw-fast) var(--nw-ease-out),
+    box-shadow var(--nw-fast) var(--nw-ease-out),
+    transform var(--nw-fast) var(--nw-ease-out);
+}
+.nw-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 28px var(--glow);
+}
+.nw-cta:active { transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+  .nw-cta, .nw-cta:hover, .nw-cta:active {
+    transform: none;
+    transition: none;
+  }
+}
+
+/* ====================================================================
+   CINEMATIC ATMOSPHERE — the "living hero" pass (design/night-watch).
+   A full-bleed environment behind the hero: a volumetric light field
+   (dawn from below in light, lamplight from above at night), drifting
+   embers on a GPU-cheap canvas, a framing vignette, and a headline that
+   focuses in like a film title. Reverent and weighty, never flashy.
+   Additive; no existing token touched.
+==================================================================== */
+
+.nw-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+/* Volumetric light field. Light = a warm dawn rising from the horizon;
+   dark = lamplight pooling from above. Drifts slowly so the room feels
+   alive without ever looping visibly. */
+.nw-hero-light {
+  position: absolute;
+  inset: -12%;
+  z-index: -4;
+  pointer-events: none;
+  background:
+    radial-gradient(54% 48% at 50% 114%, color-mix(in oklab, var(--flame) 30%, transparent), transparent 68%),
+    radial-gradient(42% 36% at 80% 90%, color-mix(in oklab, var(--flame) 18%, transparent), transparent 72%),
+    radial-gradient(30% 26% at 22% 96%, color-mix(in oklab, var(--flame) 12%, transparent), transparent 74%);
+  opacity: 0.72;
+  will-change: transform;
+  animation: nwLightDrift 24s ease-in-out infinite alternate;
+}
+.dark .nw-hero-light {
+  background:
+    /* the lamp core — a hot, tight pool up and to the right */
+    radial-gradient(26% 26% at 74% 2%, color-mix(in oklab, var(--flame-bright) 42%, transparent), transparent 62%),
+    radial-gradient(50% 46% at 70% 4%, color-mix(in oklab, var(--flame) 40%, transparent), transparent 68%),
+    radial-gradient(72% 64% at 24% -10%, color-mix(in oklab, var(--flame) 20%, transparent), transparent 72%);
+  opacity: 1;
+}
+@keyframes nwLightDrift {
+  0% { transform: translate3d(-1.5%, -1%, 0) scale(1); }
+  100% { transform: translate3d(2%, 1.5%, 0) scale(1.06); }
+}
+
+/* Ember/dust canvas sits above the light field, below content. */
+.nw-atmos {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Framing vignette — mostly a night device; it closes the composition
+   and pushes the eye to the headline. Barely present in daylight. */
+.nw-hero-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(
+    128% 106% at 50% 40%,
+    transparent 48%,
+    color-mix(in oklab, var(--color-iron) 50%, transparent) 100%
+  );
+  opacity: 0.2;
+}
+.dark .nw-hero-vignette {
+  background: radial-gradient(
+    120% 100% at 62% 8%,
+    transparent 42%,
+    color-mix(in oklab, #05070c 78%, transparent) 100%
+  );
+  opacity: 0.78;
+}
+
+/* Headline focuses in like a film title — blur + spread + rise resolving
+   to crisp. Replaces the plain fade for the hero H1. */
+@media (prefers-reduced-motion: no-preference) {
+  .nw-focus-in {
+    animation: nwFocusIn 1300ms var(--nw-ease-out) both;
+  }
+}
+@keyframes nwFocusIn {
+  0% {
+    opacity: 0;
+    filter: blur(24px);
+    letter-spacing: 0.08em;
+    transform: translateY(26px) scale(0.965);
+  }
+  55% { opacity: 1; }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    letter-spacing: -0.018em;
+    transform: translateY(0) scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nw-hero-light { animation: none; }
+}
+
+/* -------- The verse chapel (Acts 20:28) --------------------------------
+   The theological center becomes a lit alcove: a warm pool of lamplight
+   breathing at the middle, edges closed down to near-black. Walking into
+   it on scroll should feel like stepping into a dark chapel where one
+   light is burning. The Word never animates — the light moves. */
+.nw-chapel { position: relative; isolation: isolate; }
+.nw-chapel-glow {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 92%;
+  height: 84%;
+  z-index: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--flame) 24%, transparent),
+    transparent 72%
+  );
+  filter: blur(24px);
+  animation: nwChapelBreath 9s ease-in-out infinite;
+}
+.nw-chapel-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(78% 64% at 50% 48%, transparent 38%, #050607 100%);
+  opacity: 0.72;
+}
+@keyframes nwChapelBreath {
+  0%, 100% { opacity: 0.72; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nw-chapel-glow { animation: none; }
+}
+
+/* -------- Light & material system -------------------------------------
+   Key surfaces stop being flat: a physical depth shadow, a hairline light
+   edge along the top, and on hover they rise and catch warm light. Plus a
+   sheen — a bar of light that sweeps across the surface once on hover,
+   the way light crosses glass or a framed print on a table. */
+.nw-surface {
+  position: relative;
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, #fff 6%, transparent),
+    0 18px 42px -26px color-mix(in oklab, var(--color-iron) 92%, transparent);
+  transition:
+    box-shadow 0.35s var(--nw-ease-out),
+    transform 0.35s var(--nw-ease-out);
+}
+.nw-surface:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--flame) 34%, transparent),
+    0 30px 64px -22px color-mix(in oklab, var(--flame) 30%, transparent),
+    0 18px 42px -26px color-mix(in oklab, var(--color-iron) 92%, transparent);
+}
+.dark .nw-surface {
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, #fff 9%, transparent),
+    0 26px 64px -30px #000;
+}
+.dark .nw-surface:hover {
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--flame-bright) 42%, transparent),
+    0 34px 76px -20px color-mix(in oklab, var(--flame) 42%, transparent),
+    0 26px 64px -30px #000;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nw-surface, .nw-surface:hover { transform: none; }
+}
+
+.nw-sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+}
+.nw-sheen::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -70%;
+  width: 45%;
+  height: 200%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    color-mix(in oklab, #fff 24%, transparent),
+    transparent
+  );
+  transform: translateX(0) skewX(-12deg);
+  opacity: 0;
+}
+.nw-card:hover .nw-sheen::before {
+  animation: nwSheen 950ms var(--nw-ease-out);
+}
+@keyframes nwSheen {
+  0% { opacity: 0; transform: translateX(0) skewX(-12deg); }
+  28% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(460%) skewX(-12deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nw-card:hover .nw-sheen::before { animation: none; }
+}
+
+/* The scripture ticker as an engraved brass lintel — a warm-tinted band
+   with an embossed edge and a soft fade at both ends, so the verse names
+   read like an inscription over a doorway rather than a stock ticker. */
+.nw-lintel {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  border-color: color-mix(in oklab, var(--flame) 24%, transparent) !important;
+  background: color-mix(in oklab, var(--flame) 4%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, #fff 6%, transparent),
+    inset 0 -1px 0 color-mix(in oklab, #000 24%, transparent);
+}
+
+/* -------- Ambient (interior page heroes) -------------------------------
+   The same environment as the homepage, dialed down so shorter interior
+   heroes keep the mood but never fight the text. A readability scrim sits
+   just under the content and guarantees the heading + lede keep contrast
+   over the atmosphere in BOTH themes. */
+.nw-hero-light--soft { opacity: 0.34; }
+.dark .nw-hero-light--soft { opacity: 0.55; }
+.nw-hero-vignette--soft { opacity: 0.1; }
+.dark .nw-hero-vignette--soft { opacity: 0.5; }
+
+.nw-hero-scrim {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--background) 46%, transparent) 0%,
+    transparent 36%,
+    transparent 64%,
+    color-mix(in oklab, var(--background) 34%, transparent) 100%
+  );
+}

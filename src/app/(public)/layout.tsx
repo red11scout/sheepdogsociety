@@ -34,6 +34,10 @@ export default async function PublicLayout({
     .dark body:has([data-site-theme]) { ${cssVars(theme.dark)} }
   `}</style>
       )}
+      {/* Ambient film grain — makes the gold read as light on material.
+          Fixed, decorative, non-interactive; sits below the z-50 nav so
+          chrome stays crisp. Degrades on small screens (see .nw-grain). */}
+      <div className="nw-grain" aria-hidden="true" />
       {isEnabled && <DraftRibbon />}
       {isEnabled && <StudioModeForcer />}
       <PublicNav />

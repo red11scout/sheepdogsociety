@@ -11,7 +11,7 @@ import { ScriptureMarquee } from "@/components/motion/ScriptureMarquee";
 export function PublicFooter() {
   return (
     <footer className="border-t border-foreground/15 bg-background text-foreground">
-      <ScriptureMarquee />
+      <ScriptureMarquee className="nw-lintel" />
       <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-24">
         {/* Crest bookend */}
         <div className="flex flex-col items-center gap-3 text-center">

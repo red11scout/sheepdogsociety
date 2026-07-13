@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Kicker } from "@/components/public/kicker";
 import { BiblePicker } from "@/components/bible/bible-picker";
+import { Ambient } from "@/components/motion/Ambient";
 import { booksByGenre } from "@/lib/bible/books";
 
 export const metadata: Metadata = {
@@ -20,18 +21,21 @@ export default function BibleLandingPage() {
   return (
     <>
       {/* Hero */}
-      <section className="mx-auto max-w-7xl px-6 pt-16 md:px-10 md:pt-24">
-        <Kicker left="The Bible" right="English Standard Version" />
-        <h1 className="display-xl mt-8 max-w-4xl text-display-xl">
-          Open the <em>Word</em>.
-        </h1>
-        <p className="dropcap mt-8 max-w-2xl text-lede leading-relaxed text-muted-foreground">
-          The whole Bible, plain and unhurried. No account, no clutter,
-          nothing between you and the text. Pick a book below, or jump
-          straight to a chapter.
-        </p>
-        <div className="mt-8">
-          <BiblePicker variant="hero" />
+      <section className="nw-hero relative bg-background text-foreground">
+        <Ambient soft />
+        <div className="relative z-10 mx-auto max-w-7xl px-6 pt-16 md:px-10 md:pt-24">
+          <Kicker left="The Bible" right="English Standard Version" />
+          <h1 className="display-xl mt-8 max-w-4xl text-display-xl">
+            Open the <em>Word</em>.
+          </h1>
+          <p className="dropcap mt-8 max-w-2xl text-lede leading-relaxed text-muted-foreground">
+            The whole Bible, plain and unhurried. No account, no clutter,
+            nothing between you and the text. Pick a book below, or jump
+            straight to a chapter.
+          </p>
+          <div className="mt-8">
+            <BiblePicker variant="hero" />
+          </div>
         </div>
       </section>
 

@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 
 import { Fragment } from "react";
+import { Ambient } from "@/components/motion/Ambient";
 import Link from "next/link";
 import { db } from "@/db";
 import { testimonies, users } from "@/db/schema";
@@ -49,7 +50,8 @@ export default async function StoriesPage() {
 
   const sections: Record<string, React.ReactNode> = {
     hero: (
-      <section className="bg-background text-foreground">
+      <section className="nw-hero bg-background text-foreground">
+          <Ambient soft />
         <div className="mx-auto max-w-7xl px-6 pb-12 pt-16 md:px-10 md:pt-24">
           <Kicker left="Stories" right="Told plain" />
           <h1 className="display-xl mt-10 text-display-xl">

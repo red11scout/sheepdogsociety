@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/icons/Icon";
+import { Ambient } from "@/components/motion/Ambient";
 import { BOOKS, parseReference } from "@/lib/bible/books";
 
 interface SectionLite {
@@ -182,7 +183,8 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
       {/* Hero — tighter padding on mobile so the search bar reaches the
        *  viewport quickly. The whole point of /resources is "find a thing
        *  fast"; a 60% viewport-height hero gets in the way. */}
-      <section className="relative overflow-hidden bg-background text-foreground">
+      <section className="nw-hero relative overflow-hidden bg-background text-foreground">
+        <Ambient soft />
         {/* Decorative texture is desktop-only — mobile stays plain
             (Drew, 2026-07-09: streamline the mobile resources surface). */}
         <div className="aurora aurora--soft hidden md:block" aria-hidden />

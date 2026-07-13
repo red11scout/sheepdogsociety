@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils";
+import { Ambient } from "@/components/motion/Ambient";
 
 interface VersePlateProps {
   variant?: "hero" | "full";
@@ -14,6 +15,7 @@ export function VersePlate({ variant = "hero", className }: VersePlateProps) {
         className
       )}
     >
+      <Ambient soft />
       <div className="dotted-grid absolute inset-0 opacity-[0.04]" aria-hidden />
       <div className="relative mx-auto flex h-full max-w-6xl flex-col justify-center px-6 md:px-12">
         <div className="flex items-center gap-4">

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Ambient } from "@/components/motion/Ambient";
 import Link from "next/link";
 import { db } from "@/db";
 import { locations } from "@/db/schema";
@@ -50,7 +51,8 @@ export default async function GroupsPage() {
   return (
     <>
       {/* Hero */}
-      <section className="bg-background text-foreground">
+      <section className="nw-hero bg-background text-foreground">
+          <Ambient soft />
         <div className="mx-auto max-w-7xl px-6 pb-12 pt-16 md:px-10 md:pt-24">
           <Kicker left="The outposts" right="Come as you are" />
           <div className="mt-10 grid gap-12 md:grid-cols-[3fr_2fr] md:items-end md:gap-20">

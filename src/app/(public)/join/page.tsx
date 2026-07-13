@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { Ambient } from "@/components/motion/Ambient";
 import type { Metadata } from "next";
 import Link from "next/link";
 import { db } from "@/db";
@@ -99,7 +100,8 @@ export default async function JoinPage({
 
   const sections: Record<string, React.ReactNode> = {
     hero: (
-      <section className="bg-background text-foreground">
+      <section className="nw-hero bg-background text-foreground">
+          <Ambient soft />
         <div className="mx-auto max-w-4xl px-6 py-16 md:px-10 md:py-24">
           <Kicker left="Sit at the table" right="No application · No interview" />
           <h1 className="display-xl mt-10 text-display-xl">
