@@ -1060,17 +1060,20 @@
   z-index: 0;
   pointer-events: none;
   background:
-    radial-gradient(52% 46% at 50% 112%, color-mix(in oklab, var(--flame) 20%, transparent), transparent 70%),
-    radial-gradient(40% 34% at 80% 88%, color-mix(in oklab, var(--flame) 12%, transparent), transparent 72%);
-  opacity: 0.6;
+    radial-gradient(54% 48% at 50% 114%, color-mix(in oklab, var(--flame) 30%, transparent), transparent 68%),
+    radial-gradient(42% 36% at 80% 90%, color-mix(in oklab, var(--flame) 18%, transparent), transparent 72%),
+    radial-gradient(30% 26% at 22% 96%, color-mix(in oklab, var(--flame) 12%, transparent), transparent 74%);
+  opacity: 0.72;
   will-change: transform;
   animation: nwLightDrift 24s ease-in-out infinite alternate;
 }
 .dark .nw-hero-light {
   background:
-    radial-gradient(46% 42% at 70% 6%, color-mix(in oklab, var(--flame) 34%, transparent), transparent 68%),
-    radial-gradient(66% 58% at 26% -8%, color-mix(in oklab, var(--flame) 16%, transparent), transparent 72%);
-  opacity: 0.9;
+    /* the lamp core — a hot, tight pool up and to the right */
+    radial-gradient(26% 26% at 74% 2%, color-mix(in oklab, var(--flame-bright) 42%, transparent), transparent 62%),
+    radial-gradient(50% 46% at 70% 4%, color-mix(in oklab, var(--flame) 40%, transparent), transparent 68%),
+    radial-gradient(72% 64% at 24% -10%, color-mix(in oklab, var(--flame) 20%, transparent), transparent 72%);
+  opacity: 1;
 }
 @keyframes nwLightDrift {
   0% { transform: translate3d(-1.5%, -1%, 0) scale(1); }
@@ -1093,27 +1096,34 @@
   z-index: 2;
   pointer-events: none;
   background: radial-gradient(
-    130% 108% at 50% 42%,
-    transparent 52%,
-    color-mix(in oklab, var(--color-iron) 42%, transparent) 100%
+    128% 106% at 50% 40%,
+    transparent 48%,
+    color-mix(in oklab, var(--color-iron) 50%, transparent) 100%
   );
-  opacity: 0.18;
+  opacity: 0.2;
 }
-.dark .nw-hero-vignette { opacity: 0.62; }
+.dark .nw-hero-vignette {
+  background: radial-gradient(
+    120% 100% at 62% 8%,
+    transparent 42%,
+    color-mix(in oklab, #05070c 78%, transparent) 100%
+  );
+  opacity: 0.78;
+}
 
 /* Headline focuses in like a film title — blur + spread + rise resolving
    to crisp. Replaces the plain fade for the hero H1. */
 @media (prefers-reduced-motion: no-preference) {
   .nw-focus-in {
-    animation: nwFocusIn 1100ms var(--nw-ease-out) both;
+    animation: nwFocusIn 1300ms var(--nw-ease-out) both;
   }
 }
 @keyframes nwFocusIn {
   0% {
     opacity: 0;
-    filter: blur(16px);
-    letter-spacing: 0.05em;
-    transform: translateY(12px) scale(0.99);
+    filter: blur(24px);
+    letter-spacing: 0.08em;
+    transform: translateY(26px) scale(0.965);
   }
   55% { opacity: 1; }
   100% {

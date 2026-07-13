@@ -30,23 +30,29 @@ export function HeroAtmosphere() {
     let raf = 0;
     let running = false;
 
-    type P = { x: number; y: number; r: number; vx: number; vy: number; t: number; ts: number };
+    type P = { x: number; y: number; r: number; vx: number; vy: number; t: number; ts: number; b: boolean };
     let parts: P[] = [];
 
     const isDark = () => document.documentElement.classList.contains("dark");
 
-    const make = (): P => ({
-      x: Math.random() * w,
-      y: Math.random() * h,
-      r: Math.random() * 1.5 + 0.4,
-      vx: (Math.random() - 0.5) * 0.12,
-      vy: -(Math.random() * 0.22 + 0.04),
-      t: Math.random() * Math.PI * 2,
-      ts: Math.random() * 0.03 + 0.012,
-    });
+    const make = (): P => {
+      const bright = Math.random() < 0.2;
+      return {
+        x: Math.random() * w,
+        y: Math.random() * h,
+        r: bright ? Math.random() * 1.4 + 1.5 : Math.random() * 1.3 + 0.4,
+        vx: (Math.random() - 0.5) * 0.14,
+        vy: -(Math.random() * 0.24 + 0.05),
+        t: Math.random() * Math.PI * 2,
+        ts: Math.random() * 0.03 + 0.012,
+        b: bright,
+      };
+    };
 
     const seed = () => {
-      const n = Math.min(72, Math.max(24, Math.round(w / 20)));
+      // Density floors on mobile so the atmosphere sings at 375px, caps on
+      // large screens so it never turns to soup.
+      const n = Math.min(96, Math.max(44, Math.round(w / 12)));
       parts = Array.from({ length: n }, make);
     };
 
@@ -67,8 +73,8 @@ export function HeroAtmosphere() {
       ctx.clearRect(0, 0, w, h);
       ctx.globalCompositeOperation = "lighter";
       const dark = isDark();
-      const rgb = dark ? "255, 205, 120" : "176, 138, 70";
-      const base = dark ? 0.55 : 0.3;
+      const rgb = dark ? "255, 205, 120" : "172, 132, 62";
+      const base = dark ? 0.72 : 0.44;
       for (const p of parts) {
         p.x += p.vx;
         p.y += p.vy;
@@ -80,8 +86,8 @@ export function HeroAtmosphere() {
         if (p.x < -12) p.x = w + 12;
         else if (p.x > w + 12) p.x = -12;
         const tw = 0.45 + 0.55 * Math.sin(p.t);
-        const a = base * tw;
-        const rad = p.r * 6;
+        const a = base * tw * (p.b ? 1.7 : 1);
+        const rad = p.r * 6.5;
         const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, rad);
         g.addColorStop(0, `rgba(${rgb}, ${a})`);
         g.addColorStop(1, `rgba(${rgb}, 0)`);
