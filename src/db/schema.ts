@@ -1267,10 +1267,6 @@ export const groupInquiriesRelations = relations(
   })
 );
 
-// Partial unique indexes exclude soft-deleted rows.
-// Defined as a const SQL fragment so the same predicate is reused everywhere.
-const notDeletedPredicate = sql`deleted_at IS NULL`;
-
 // ============================================================
 // Phase D — additive schemas. members/pages/site-text still live in
 // their own files and are re-exported here so `@/db/schema` stays the

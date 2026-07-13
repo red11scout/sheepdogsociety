@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
 import { users } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 
 /**

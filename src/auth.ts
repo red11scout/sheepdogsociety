@@ -45,7 +45,7 @@ async function fetchPasswordHash(userId: string): Promise<string | null> {
     >`SELECT password_hash FROM users WHERE id = ${userId} LIMIT 1`;
     const value = rows[0]?.password_hash ?? "";
     return value.trim() || null;
-  } catch (err) {
+  } catch {
     // password_hash column doesn't exist yet → migration 0003 not applied.
     console.warn(
       "[auth] password_hash column missing; falling back to ADMIN_PASSWORD env."

@@ -7,7 +7,7 @@ import {
   contactSubmissions,
   locationInterests,
 } from "@/db/schema";
-import { eq, sql, and } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { AdminShell } from "@/components/admin/AdminShell";
 

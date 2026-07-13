@@ -2,7 +2,6 @@ import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
 import {
   prayerRequests,
-  prayerRequestPrayers,
   users,
   groupMembers,
 } from "@/db/schema";
