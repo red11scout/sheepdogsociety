@@ -108,7 +108,6 @@ export function NewsletterEmail({
                 lineHeight: 1.65,
                 color: "#1F2A2E",
               }}
-              // eslint-disable-next-line react/no-danger
               dangerouslySetInnerHTML={{ __html: bodyHtml }}
             />
           </Section>

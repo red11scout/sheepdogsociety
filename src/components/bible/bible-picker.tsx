@@ -124,7 +124,6 @@ export function BiblePicker({ current, variant = "reader" }: BiblePickerProps) {
     document.addEventListener("mousedown", onDown);
     return () => document.removeEventListener("mousedown", onDown);
     // closePanel is stable per render; the listener re-binds on open only.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   // Debounced keyword search (300ms), aborted on retype/unmount.

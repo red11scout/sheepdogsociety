@@ -9,6 +9,11 @@ export function ThemeToggle({ className }: { className?: string }) {
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // SSR mount guard: the resolved theme is unknown on the server, so we
+    // render a stable "dark" default until mounted, then switch to the real
+    // theme. This one-time setState on mount is the intended next-themes
+    // pattern; set-state-in-effect is a false positive here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
