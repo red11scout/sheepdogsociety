@@ -804,3 +804,225 @@
   /* Page break helper for content authors */
   .page-break { page-break-after: always; }
 }
+
+/* ====================================================================
+   THE NIGHT WATCH — visual elevation (design/night-watch).
+   Append-only. Nothing above this line is modified. Every token here is
+   NEW (never overrides an existing --c-* or oklch value), so the contrast
+   gate and all 5 Design Studio themes are untouched. The story: warm gold
+   is FLAME at night (dark) and BRASS at first light (light) — the same
+   material, two times of day. Values echo the existing brass/gold family.
+==================================================================== */
+
+/* New additive tokens. --flame powers the living flame, gold-leaf text
+   shimmer, and ambient glow. Defined per mode so they track the theme. */
+:root {
+  --flame: #9a6b1f;         /* burnished brass — AA-safe on parchment */
+  --flame-bright: #c08a2e;  /* highlight / shimmer peak */
+  --glow: rgba(154, 107, 31, 0.08);
+
+  /* Shared motion system (brief §5.0) — two easings, three durations. */
+  --nw-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --nw-ease-inout: cubic-bezier(0.65, 0, 0.35, 1);
+  --nw-fast: 180ms;
+  --nw-med: 450ms;
+  --nw-slow: 900ms;
+}
+.dark {
+  --flame: #e5a54b;         /* lampstand gold, lit */
+  --flame-bright: #f6c87a;  /* blue-white-adjacent peak */
+  --glow: rgba(229, 165, 75, 0.16);
+}
+
+/* -------- Gold-leaf shimmer (brief §5.3) --------------------------------
+   Applied to the italic <em> hero words ("brothers.", "Sit in it.").
+   Base state is solid flame (final position); .is-lit sweeps the gradient
+   ONCE when the word scrolls into view. Single sweep = illumination, not a
+   looping car-dealership shine. Fallback: solid --flame where
+   background-clip:text is unsupported. */
+.shimmer-gold {
+  background: linear-gradient(
+    105deg,
+    var(--flame) 42%,
+    var(--flame-bright) 50%,
+    var(--flame) 58%
+  );
+  background-size: 250% 100%;
+  background-position: 0 0;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: var(--flame);
+  -webkit-text-fill-color: transparent;
+}
+.shimmer-gold.is-lit {
+  animation: nwShimmerSweep var(--nw-slow) var(--nw-ease-out) 1;
+}
+@keyframes nwShimmerSweep {
+  from { background-position: 150% 0; }
+  to { background-position: 0 0; }
+}
+@supports not ((-webkit-background-clip: text) or (background-clip: text)) {
+  .shimmer-gold {
+    -webkit-text-fill-color: currentColor;
+    color: var(--flame);
+    background: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-gold { animation: none; background-position: 0 0; }
+}
+
+/* -------- Hero entrance choreography (brief §5.1) -----------------------
+   Staggered fade-up on first paint. Pure CSS (no JS): eyebrow → headline →
+   body → buttons → flame ignites last. Elements carry .nw-enter plus a
+   delay class. Content is visible by default; the animation only plays
+   where motion is allowed, so no-JS and reduced-motion see the final
+   state instantly (never hidden). */
+@media (prefers-reduced-motion: no-preference) {
+  .nw-enter {
+    opacity: 0;
+    animation: nwEntranceRise var(--nw-med) var(--nw-ease-out) both;
+  }
+  .nw-enter.d0 { animation-delay: 0ms; }
+  .nw-enter.d1 { animation-delay: 90ms; }
+  .nw-enter.d2 { animation-delay: 180ms; }
+  .nw-enter.d3 { animation-delay: 270ms; }
+  .nw-enter.d4 { animation-delay: 380ms; }
+}
+@keyframes nwEntranceRise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* -------- The living flame (brief §4) ----------------------------------
+   Pure SVG + CSS, no JS animation loop, aria-hidden, absolutely
+   positionable so it can never shift layout (CLS 0). Multiple flicker
+   animations on prime-number durations so the loop is never visible.
+   DARK: lit — flutter + glow + blue-white core. LIGHT: trimmed — a
+   static brass flame mark, no glow, no flicker (the toggle's story). */
+.nw-flame {
+  position: relative;
+  display: inline-block;
+  pointer-events: none;
+  line-height: 0;
+}
+.nw-flame__glow {
+  position: absolute;
+  left: 50%;
+  top: 55%;
+  width: 220%;
+  height: 220%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, var(--glow), transparent 68%);
+  opacity: 0;
+  z-index: 0;
+}
+.nw-flame__svg { position: relative; z-index: 1; overflow: visible; }
+.nw-flame__outer { fill: var(--flame); transform-origin: 50% 100%; }
+.nw-flame__inner { fill: var(--flame-bright); transform-origin: 50% 100%; }
+.nw-flame__core { fill: #fbe8c2; opacity: 0; transform-origin: 50% 100%; }
+
+/* Lit only in dark mode. */
+.dark .nw-flame__glow {
+  opacity: 1;
+  animation: nwGlowPulse 4s var(--nw-ease-inout) infinite;
+}
+.dark .nw-flame__core { opacity: 0.9; }
+.dark .nw-flame__outer { animation: nwFlickerOuter 3.3s ease-in-out infinite; }
+.dark .nw-flame__inner { animation: nwFlickerInner 2.1s ease-in-out infinite; }
+.dark .nw-flame__svg { animation: nwSway 5.7s ease-in-out infinite; }
+
+@keyframes nwFlickerOuter {
+  0%, 100% { transform: scaleY(1) scaleX(1); opacity: 1; }
+  30% { transform: scaleY(1.06) scaleX(0.97); opacity: 0.94; }
+  55% { transform: scaleY(0.97) scaleX(1.02); opacity: 1; }
+  80% { transform: scaleY(1.03) scaleX(0.99); opacity: 0.97; }
+}
+@keyframes nwFlickerInner {
+  0%, 100% { transform: scaleY(1); opacity: 0.95; }
+  40% { transform: scaleY(1.1); opacity: 1; }
+  70% { transform: scaleY(0.93); opacity: 0.9; }
+}
+@keyframes nwSway {
+  0%, 100% { transform: skewX(0deg); }
+  33% { transform: skewX(1.6deg); }
+  66% { transform: skewX(-1.4deg); }
+}
+@keyframes nwGlowPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.97); opacity: 0.85; }
+  50% { transform: translate(-50%, -50%) scale(1.04); opacity: 1; }
+}
+/* The ignite: flame fades up as the last hero entrance beat. */
+@media (prefers-reduced-motion: no-preference) {
+  .nw-flame--ignite {
+    animation: nwIgnite 700ms var(--nw-ease-out) 380ms both;
+  }
+}
+@keyframes nwIgnite {
+  from { opacity: 0; transform: scale(0.8); }
+  to { opacity: 1; transform: scale(1); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dark .nw-flame__glow,
+  .dark .nw-flame__outer,
+  .dark .nw-flame__inner,
+  .dark .nw-flame__svg { animation: none; }
+}
+
+/* -------- Verse illumination (brief §5.4) ------------------------------
+   A soft lamplight glow that fades in behind the Acts 20:28 ember band
+   when it scrolls into view. Decorative, aria-hidden; the Word itself
+   never animates — the light moves, the verse stands still. Faded in via
+   the existing <Reveal> (opacity only), so no-JS shows it at rest. */
+.nw-verse-glow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    60% 50% at 50% 60%,
+    color-mix(in oklab, var(--flame) 22%, transparent),
+    transparent 70%
+  );
+  z-index: 0;
+}
+
+/* -------- Ambient film grain (brief §5.7) ------------------------------
+   Fixed, full-viewport SVG-turbulence noise at 2-3% (a touch more in
+   dark) to kill the flat-digital feel and make the gold read as light on
+   material. pointer-events off; mounted only inside the public shell. */
+.nw-grain {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.025;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.dark .nw-grain { opacity: 0.04; }
+@media (max-width: 640px) {
+  /* Degrade on mid-tier mobile — static, lighter, no blend cost spikes. */
+  .nw-grain { opacity: 0.02; }
+}
+
+/* -------- Micro-interactions (brief §5.6) ------------------------------
+   Warm glow lift on the primary iron buttons (kept iron, not recolored —
+   the broadsheet's deliberate choice — but now they catch flame-light on
+   hover). Opt-in via .nw-cta so no existing button changes unless tagged. */
+.nw-cta {
+  transition:
+    filter var(--nw-fast) var(--nw-ease-out),
+    box-shadow var(--nw-fast) var(--nw-ease-out),
+    transform var(--nw-fast) var(--nw-ease-out);
+}
+.nw-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 28px var(--glow);
+}
+.nw-cta:active { transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+  .nw-cta, .nw-cta:hover, .nw-cta:active {
+    transform: none;
+    transition: none;
+  }
+}
