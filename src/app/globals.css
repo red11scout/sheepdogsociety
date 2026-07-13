@@ -1175,3 +1175,87 @@
 @media (prefers-reduced-motion: reduce) {
   .nw-chapel-glow { animation: none; }
 }
+
+/* -------- Light & material system -------------------------------------
+   Key surfaces stop being flat: a physical depth shadow, a hairline light
+   edge along the top, and on hover they rise and catch warm light. Plus a
+   sheen — a bar of light that sweeps across the surface once on hover,
+   the way light crosses glass or a framed print on a table. */
+.nw-surface {
+  position: relative;
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, #fff 6%, transparent),
+    0 18px 42px -26px color-mix(in oklab, var(--color-iron) 92%, transparent);
+  transition:
+    box-shadow 0.35s var(--nw-ease-out),
+    transform 0.35s var(--nw-ease-out);
+}
+.nw-surface:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--flame) 34%, transparent),
+    0 30px 64px -22px color-mix(in oklab, var(--flame) 30%, transparent),
+    0 18px 42px -26px color-mix(in oklab, var(--color-iron) 92%, transparent);
+}
+.dark .nw-surface {
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, #fff 9%, transparent),
+    0 26px 64px -30px #000;
+}
+.dark .nw-surface:hover {
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, var(--flame-bright) 42%, transparent),
+    0 34px 76px -20px color-mix(in oklab, var(--flame) 42%, transparent),
+    0 26px 64px -30px #000;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nw-surface, .nw-surface:hover { transform: none; }
+}
+
+.nw-sheen {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  overflow: hidden;
+}
+.nw-sheen::before {
+  content: "";
+  position: absolute;
+  top: -50%;
+  left: -70%;
+  width: 45%;
+  height: 200%;
+  background: linear-gradient(
+    100deg,
+    transparent,
+    color-mix(in oklab, #fff 24%, transparent),
+    transparent
+  );
+  transform: translateX(0) skewX(-12deg);
+  opacity: 0;
+}
+.nw-card:hover .nw-sheen::before {
+  animation: nwSheen 950ms var(--nw-ease-out);
+}
+@keyframes nwSheen {
+  0% { opacity: 0; transform: translateX(0) skewX(-12deg); }
+  28% { opacity: 1; }
+  100% { opacity: 0; transform: translateX(460%) skewX(-12deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nw-card:hover .nw-sheen::before { animation: none; }
+}
+
+/* The scripture ticker as an engraved brass lintel — a warm-tinted band
+   with an embossed edge and a soft fade at both ends, so the verse names
+   read like an inscription over a doorway rather than a stock ticker. */
+.nw-lintel {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+  border-color: color-mix(in oklab, var(--flame) 24%, transparent) !important;
+  background: color-mix(in oklab, var(--flame) 4%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in oklab, #fff 6%, transparent),
+    inset 0 -1px 0 color-mix(in oklab, #000 24%, transparent);
+}
