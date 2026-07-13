@@ -368,23 +368,18 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
                 });
 
                 return (
-                  <div key={section.id} className="mb-16 last:mb-0">
-                    <div className="flex flex-wrap items-end justify-between gap-3">
-                      <h2 className="display-xl text-2xl text-foreground md:text-3xl">
-                        {section.name}
-                      </h2>
-                      <span className="section-mark text-muted-foreground">
-                        {sectionItems.length}{" "}
-                        {sectionItems.length === 1 ? "item" : "items"}
-                      </span>
-                    </div>
-                    {section.description && (
-                      <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-                        {section.description}
-                      </p>
-                    )}
-                    <div className="hairline mt-6" />
-
+                  <SectionBlock
+                    key={section.id}
+                    name={section.name}
+                    description={section.description}
+                    count={sectionItems.length}
+                    // Force the section open when searching/filtering (so
+                    // matches aren't hidden) or when the reader has tapped a
+                    // single section. Otherwise it defaults closed on mobile
+                    // (desktop always shows it) so the page opens as a tidy
+                    // list of category headings, not a wall of 97 cards.
+                    forceOpen={!!anyFilter}
+                  >
                     {anyClustered ? (
                       <div className="mt-6 space-y-3">
                         {clusterOrder.map((clusterLabel) => {
@@ -395,11 +390,6 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
                               key={`${section.id}:${clusterLabel || "_unclustered"}`}
                               label={clusterLabel || "Other"}
                               count={items.length}
-                              // When the user is searching/filtering, force
-                              // every cluster open so matches aren't hidden.
-                              // Otherwise default to closed — the whole point
-                              // of clusters is a navigable mini-TOC, not a
-                              // wall of cards.
                               forceOpen={!!anyFilter}
                             >
                               <ul className="mt-4 space-y-3">
@@ -422,7 +412,7 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
                         ))}
                       </ul>
                     )}
-                  </div>
+                  </SectionBlock>
                 );
               })
             )}
@@ -593,6 +583,59 @@ function ChipFacet({
             </button>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * A whole resource section (category). On mobile it's a collapsible
+ * disclosure — closed by default so /resources opens as a short list of
+ * category headings instead of one long scroll of every card. On desktop
+ * (md+) it's always expanded: the content wrapper is `md:block`, and the
+ * header's toggle is disabled, so there's no hydration flip and no JS
+ * needed to show it. `forceOpen` (search / single-section filter) reveals
+ * the content on mobile too, so matches never hide behind a closed heading.
+ */
+function SectionBlock({
+  name,
+  description,
+  count,
+  forceOpen,
+  children,
+}: {
+  name: string;
+  description: string;
+  count: number;
+  forceOpen: boolean;
+  children: React.ReactNode;
+}) {
+  const [open, setOpen] = useState(false);
+  const isOpen = forceOpen || open;
+  return (
+    <div className="mb-12 last:mb-0 md:mb-16">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={isOpen}
+        className="flex w-full items-end justify-between gap-3 text-left md:pointer-events-none"
+      >
+        <h2 className="display-xl text-2xl text-foreground md:text-3xl">
+          {name}
+        </h2>
+        <span className="section-mark whitespace-nowrap text-muted-foreground">
+          {count} {count === 1 ? "item" : "items"}
+          <span className="ml-3 md:hidden">{isOpen ? "Hide" : "Show"}</span>
+        </span>
+      </button>
+      <div className={`${isOpen ? "block" : "hidden"} md:block`}>
+        {description && (
+          <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+            {description}
+          </p>
+        )}
+        <div className="hairline mt-6" />
+        {children}
       </div>
     </div>
   );

@@ -15,6 +15,7 @@ import {
 } from "@/lib/resources/categorize";
 import { generateFieldNotes, FIELD_NOTES_PROMPT_VERSION } from "@/lib/resources/generate-field-notes";
 import { uniqueResourceSlug } from "@/lib/resources/slug";
+import { tidyTitleFromFilename } from "@/lib/resources/title-from-filename";
 
 export const runtime = "nodejs";
 // 300s (was 60): the per-file field-notes sonnet call stacks on top of
@@ -149,7 +150,11 @@ export async function POST(req: Request) {
     let bodyHtml = "";
     let bodyText = "";
     let warnings: string[] = [];
-    let title = filename.replace(/\.(docx?|pdf)$/i, "").replace(/[_-]+/g, " ").trim();
+    // Title comes from the filename, normalized to one uniform pattern. The
+    // library's naming convention IS the title convention (this trains the
+    // content lead over time). Document-body extraction is only a last resort
+    // when a filename yields nothing usable (see below).
+    let title = tidyTitleFromFilename(filename);
 
     if (isDocx) {
       try {
@@ -157,7 +162,7 @@ export async function POST(req: Request) {
         bodyHtml = converted.html;
         bodyText = converted.text;
         warnings = converted.warnings;
-        title = extractTitle(bodyHtml, title);
+        if (!title) title = extractTitle(bodyHtml, filename);
       } catch (err) {
         console.error("docx convert failed:", err);
         // Don't fail the whole row — we still have the file in Blob.
