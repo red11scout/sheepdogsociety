@@ -1,0 +1,11 @@
+-- Migration 0024: make members.email optional
+--
+-- Admins can now add members directly from /admin/members with any mix of
+-- contact info (email / phone / Signal) or none at all, so email is no longer
+-- required. The existing partial unique index (members_email_active_unique)
+-- still blocks duplicate NON-NULL emails among non-deleted rows — Postgres
+-- treats NULLs as distinct, so multiple contact-less members are allowed.
+--
+-- DROP NOT NULL on an already-nullable column is a no-op, so this stays
+-- idempotent under the re-run-all apply script.
+ALTER TABLE "members" ALTER COLUMN "email" DROP NOT NULL;

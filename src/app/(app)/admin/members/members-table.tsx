@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import {
   bulkSoftDeleteMembers,
   bulkUpdateMembers,
+  createMember,
   softDeleteMember,
   updateMember,
   type AdminMemberRow,
@@ -38,6 +39,48 @@ const APPROVAL_TONE: Record<string, string> = {
 
 const APPROVAL_OPTIONS = ["pending", "approved", "rejected"] as const;
 
+const ROLE_OPTIONS = [
+  { value: "member", label: "Member" },
+  { value: "leader", label: "Leader" },
+  { value: "asst_leader", label: "Assistant leader" },
+] as const;
+
+type NewMemberForm = {
+  firstName: string;
+  lastName: string;
+  nickname: string;
+  email: string;
+  phone: string;
+  signalAccount: string;
+  groupId: string;
+  role: string;
+};
+
+const EMPTY_NEW_MEMBER: NewMemberForm = {
+  firstName: "",
+  lastName: "",
+  nickname: "",
+  email: "",
+  phone: "",
+  signalAccount: "",
+  groupId: "",
+  role: "member",
+};
+
+const NEW_MEMBER_FIELDS: {
+  key: keyof NewMemberForm;
+  label: string;
+  type: string;
+  placeholder?: string;
+}[] = [
+  { key: "firstName", label: "First name", type: "text" },
+  { key: "lastName", label: "Last name", type: "text" },
+  { key: "nickname", label: "Nickname", type: "text" },
+  { key: "email", label: "Email", type: "email", placeholder: "optional" },
+  { key: "phone", label: "Phone", type: "tel", placeholder: "optional" },
+  { key: "signalAccount", label: "Signal", type: "text", placeholder: "optional" },
+];
+
 export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
   const [rows, setRows] = useState(initialRows);
   const [query, setQuery] = useState("");
@@ -49,6 +92,51 @@ export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [busy, startTransition] = useTransition();
   const [errorMsg, setErrorMsg] = useState("");
+  const [showAdd, setShowAdd] = useState(false);
+  const [newMember, setNewMember] = useState<NewMemberForm>(EMPTY_NEW_MEMBER);
+  const [addError, setAddError] = useState("");
+
+  const canSubmitNew =
+    !!newMember.firstName.trim() ||
+    !!newMember.lastName.trim() ||
+    !!newMember.nickname.trim();
+
+  function setField(key: keyof NewMemberForm, value: string) {
+    setNewMember((prev) => ({ ...prev, [key]: value }));
+  }
+
+  function cancelAdd() {
+    setNewMember(EMPTY_NEW_MEMBER);
+    setAddError("");
+    setShowAdd(false);
+  }
+
+  function handleCreate() {
+    setAddError("");
+    if (!canSubmitNew) {
+      setAddError("Add at least a first name, last name, or nickname.");
+      return;
+    }
+    startTransition(async () => {
+      try {
+        const created = await createMember({
+          firstName: newMember.firstName,
+          lastName: newMember.lastName,
+          nickname: newMember.nickname,
+          email: newMember.email,
+          phone: newMember.phone,
+          signalAccount: newMember.signalAccount,
+          groupId: newMember.groupId || null,
+          role: newMember.role,
+        });
+        setRows((prev) => [created, ...prev]);
+        setNewMember(EMPTY_NEW_MEMBER);
+        setShowAdd(false);
+      } catch (e) {
+        setAddError(e instanceof Error ? e.message : "Could not add member.");
+      }
+    });
+  }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -248,6 +336,97 @@ export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
         description="Every man who signed up via /join. Approve or reject, toggle active, assign to a group, edit details. Filters and bulk actions keep this fast at scale."
         hint="Members never log in. They live as DB rows so admins can route email/SMS, assign them to a group, and track their lifecycle. Soft-delete hides without losing data."
       />
+
+      {/* Add member */}
+      <div className="mb-4 flex justify-end">
+        <button
+          type="button"
+          onClick={() => (showAdd ? cancelAdd() : setShowAdd(true))}
+          className="lift inline-flex h-9 items-center gap-2 border border-bone bg-bone px-4 text-sm font-medium text-iron transition-colors hover:bg-stone"
+        >
+          <Icon name={showAdd ? "close" : "plus"} size={13} />
+          {showAdd ? "Cancel" : "Add member"}
+        </button>
+      </div>
+
+      {showAdd && (
+        <div className="mb-6 border border-brass/30 bg-iron/30 p-4">
+          <p className="section-mark mb-4 text-brass">§ New member</p>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {NEW_MEMBER_FIELDS.map((f) => (
+              <label
+                key={f.key}
+                className="flex flex-col gap-1 text-xs text-stone/70"
+              >
+                <span className="section-mark text-stone/55">{f.label}</span>
+                <input
+                  type={f.type}
+                  value={newMember[f.key]}
+                  onChange={(e) => setField(f.key, e.target.value)}
+                  placeholder={f.placeholder}
+                  className="h-9 border border-stone/20 bg-transparent px-3 text-sm text-bone placeholder:text-stone/40 focus:border-brass focus:outline-none"
+                />
+              </label>
+            ))}
+            <label className="flex flex-col gap-1 text-xs text-stone/70">
+              <span className="section-mark text-stone/55">Group</span>
+              <select
+                value={newMember.groupId}
+                onChange={(e) => setField("groupId", e.target.value)}
+                className="h-9 border border-stone/20 bg-iron/40 px-3 text-sm text-bone focus:border-brass focus:outline-none"
+              >
+                <option value="">— Unassigned —</option>
+                {groupOptions.map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="flex flex-col gap-1 text-xs text-stone/70">
+              <span className="section-mark text-stone/55">Role</span>
+              <select
+                value={newMember.role}
+                onChange={(e) => setField("role", e.target.value)}
+                className="h-9 border border-stone/20 bg-iron/40 px-3 text-sm text-bone focus:border-brass focus:outline-none"
+              >
+                {ROLE_OPTIONS.map((r) => (
+                  <option key={r.value} value={r.value}>
+                    {r.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <p className="mt-3 max-w-3xl text-xs text-stone/55">
+            Contact info is optional. Add any mix of email, phone, and Signal,
+            or none at all. At least one of first name, last name, or nickname is
+            required. New members are added approved and marked as admin-added.
+          </p>
+          {addError && (
+            <p className="mt-3 border border-oxblood/40 bg-oxblood/10 px-3 py-2 text-xs text-oxblood">
+              {addError}
+            </p>
+          )}
+          <div className="mt-4 flex items-center gap-3">
+            <button
+              type="button"
+              onClick={handleCreate}
+              disabled={busy || !canSubmitNew}
+              className="lift inline-flex h-9 items-center gap-2 border border-olive/50 bg-olive/15 px-4 text-sm font-medium text-olive transition-colors hover:bg-olive/25 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Icon name="check" size={13} /> {busy ? "Adding…" : "Add member"}
+            </button>
+            <button
+              type="button"
+              onClick={cancelAdd}
+              className="text-xs text-stone/65 underline-offset-4 hover:text-brass hover:underline"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Filter bar */}
       <div className="mb-4 flex flex-wrap items-center gap-2 border border-stone/15 bg-iron/30 p-3">
@@ -534,9 +713,13 @@ function MemberRow({
       <td className="px-3 py-2 text-bone">{row.lastName ?? "—"}</td>
       <td className="px-3 py-2 text-stone/85">{row.nickname ?? ""}</td>
       <td className="px-3 py-2">
-        <a href={`mailto:${row.email}`} className="text-bone hover:text-brass">
-          {row.email}
-        </a>
+        {row.email ? (
+          <a href={`mailto:${row.email}`} className="text-bone hover:text-brass">
+            {row.email}
+          </a>
+        ) : (
+          <span className="text-stone/40">—</span>
+        )}
       </td>
       <td className="px-3 py-2">
         {row.phone ? (
@@ -694,7 +877,7 @@ function MemberCard({
             checked={selected}
             onChange={onToggleSelect}
             className="h-3.5 w-3.5 accent-brass"
-            aria-label={`Select ${row.email}`}
+            aria-label={`Select ${row.email ?? row.shortId}`}
           />
         </label>
         <div className="min-w-0 flex-1">
@@ -703,7 +886,9 @@ function MemberCard({
               row.nickname ||
               "—"}
           </p>
-          <p className="truncate text-xs text-stone/70">{row.email}</p>
+          <p className="truncate text-xs text-stone/70">
+            {row.email ?? row.phone ?? row.signalAccount ?? "—"}
+          </p>
         </div>
         {/* Status pill: the table's status cell renders the approval select
             styled as a pill — reused verbatim here as pill AND action. */}
