@@ -197,7 +197,7 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
           <h1 className="display-xl mt-5 max-w-4xl text-[clamp(2rem,7vw,6rem)] md:mt-10">
             Take, read,
             <br />
-            <span className="text-brass-deep">use it Tuesday.</span>
+            <span className="text-brass-deep">use it this week.</span>
           </h1>
           <p className="mt-5 max-w-2xl font-pullquote text-base italic leading-relaxed text-muted-foreground md:mt-10 md:text-2xl">
             Studies, leader guides, devotionals, sermon notes. Search by topic, theme, or book of the Bible. Free. Bring it to your group.
