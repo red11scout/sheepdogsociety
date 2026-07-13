@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { Ambient } from "@/components/motion/Ambient";
 import { Icon } from "@/components/icons/Icon";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -78,7 +79,8 @@ export default async function HowWeGatherPage() {
 
   const sections: Record<string, React.ReactNode> = {
     hero: (
-      <section className="bg-background text-foreground">
+      <section className="nw-hero bg-background text-foreground">
+          <Ambient soft />
         <div className="mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
           <Kicker left="How We Gather" />
           <h1 className="display-xl mt-10 max-w-4xl text-display-xl">

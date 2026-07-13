@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { Ambient } from "@/components/motion/Ambient";
 import Link from "next/link";
 import { Icon } from "@/components/icons/Icon";
 import { Kicker } from "@/components/public/kicker";
@@ -92,7 +93,8 @@ export default async function FAQPage() {
 
   const pageSections: Record<string, React.ReactNode> = {
     hero: (
-      <section className="bg-background text-foreground">
+      <section className="nw-hero bg-background text-foreground">
+          <Ambient soft />
         <div className="mx-auto max-w-7xl px-6 py-24 md:px-12 md:py-32">
           <Kicker left="Frequently Asked" />
           <h1 className="display-xl mt-10 max-w-3xl text-display-xl">

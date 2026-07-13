@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Ambient } from "@/components/motion/Ambient";
 import type { Metadata } from "next";
 import { listPublishedEncouragements } from "@/server/encouragements";
 import { Kicker } from "@/components/public/kicker";
@@ -20,7 +21,8 @@ export default async function LetterArchivePage() {
   }
 
   return (
-    <section className="bg-background text-foreground">
+    <section className="nw-hero bg-background text-foreground">
+          <Ambient soft />
       <div className="mx-auto max-w-4xl px-6 py-16 md:px-10 md:py-24">
         <Kicker left="The archive" right={`${rows.length} issue${rows.length === 1 ? "" : "s"}`} />
         <h1 className="display-xl mt-10 text-display-lg">

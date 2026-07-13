@@ -13,7 +13,7 @@ import { useEffect, useRef } from "react";
  * tab is hidden, and renders nothing at all under prefers-reduced-motion
  * (the CSS light field alone carries the atmosphere). aria-hidden.
  */
-export function HeroAtmosphere() {
+export function HeroAtmosphere({ intensity = 1 }: { intensity?: number }) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -51,9 +51,10 @@ export function HeroAtmosphere() {
 
     const seed = () => {
       // Density floors on mobile so the atmosphere sings at 375px, caps on
-      // large screens so it never turns to soup.
-      const n = Math.min(96, Math.max(44, Math.round(w / 12)));
-      parts = Array.from({ length: n }, make);
+      // large screens so it never turns to soup. `intensity` scales it for
+      // the softer interior-page heroes.
+      const n = Math.round(Math.min(96, Math.max(44, Math.round(w / 12))) * intensity);
+      parts = Array.from({ length: Math.max(8, n) }, make);
     };
 
     const resize = () => {
@@ -74,7 +75,7 @@ export function HeroAtmosphere() {
       ctx.globalCompositeOperation = "lighter";
       const dark = isDark();
       const rgb = dark ? "255, 205, 120" : "172, 132, 62";
-      const base = dark ? 0.72 : 0.44;
+      const base = (dark ? 0.72 : 0.44) * intensity;
       for (const p of parts) {
         p.x += p.vx;
         p.y += p.vy;
@@ -138,7 +139,7 @@ export function HeroAtmosphere() {
       document.removeEventListener("visibilitychange", onVis);
       io.disconnect();
     };
-  }, []);
+  }, [intensity]);
 
   return <canvas ref={ref} className="nw-atmos" aria-hidden="true" />;
 }

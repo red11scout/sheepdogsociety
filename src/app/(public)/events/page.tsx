@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { Ambient } from "@/components/motion/Ambient";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
@@ -155,7 +156,8 @@ export default async function EventsPage() {
 
   const sections: Record<string, React.ReactNode> = {
     hero: (
-      <section className="bg-background text-foreground">
+      <section className="nw-hero bg-background text-foreground">
+          <Ambient soft />
         <div className="mx-auto max-w-7xl px-6 pb-12 pt-16 md:px-10 md:pt-24">
           <Kicker left="Gatherings" right="Come once · Come often" />
           <h1 className="display-xl mt-10 text-display-xl">
