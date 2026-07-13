@@ -1004,14 +1004,14 @@
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  opacity: 0.025;
+  opacity: 0.05;
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
-.dark .nw-grain { opacity: 0.04; }
+.dark .nw-grain { opacity: 0.08; }
 @media (max-width: 640px) {
-  /* Degrade on mid-tier mobile — static, lighter, no blend cost spikes. */
-  .nw-grain { opacity: 0.02; }
+  /* Degrade on mid-tier mobile — lighter, no blend cost spikes. */
+  .nw-grain { opacity: 0.04; }
 }
 
 /* -------- Micro-interactions (brief §5.6) ------------------------------
@@ -1034,4 +1034,95 @@
     transform: none;
     transition: none;
   }
+}
+
+/* ====================================================================
+   CINEMATIC ATMOSPHERE — the "living hero" pass (design/night-watch).
+   A full-bleed environment behind the hero: a volumetric light field
+   (dawn from below in light, lamplight from above at night), drifting
+   embers on a GPU-cheap canvas, a framing vignette, and a headline that
+   focuses in like a film title. Reverent and weighty, never flashy.
+   Additive; no existing token touched.
+==================================================================== */
+
+.nw-hero {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+/* Volumetric light field. Light = a warm dawn rising from the horizon;
+   dark = lamplight pooling from above. Drifts slowly so the room feels
+   alive without ever looping visibly. */
+.nw-hero-light {
+  position: absolute;
+  inset: -12%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(52% 46% at 50% 112%, color-mix(in oklab, var(--flame) 20%, transparent), transparent 70%),
+    radial-gradient(40% 34% at 80% 88%, color-mix(in oklab, var(--flame) 12%, transparent), transparent 72%);
+  opacity: 0.6;
+  will-change: transform;
+  animation: nwLightDrift 24s ease-in-out infinite alternate;
+}
+.dark .nw-hero-light {
+  background:
+    radial-gradient(46% 42% at 70% 6%, color-mix(in oklab, var(--flame) 34%, transparent), transparent 68%),
+    radial-gradient(66% 58% at 26% -8%, color-mix(in oklab, var(--flame) 16%, transparent), transparent 72%);
+  opacity: 0.9;
+}
+@keyframes nwLightDrift {
+  0% { transform: translate3d(-1.5%, -1%, 0) scale(1); }
+  100% { transform: translate3d(2%, 1.5%, 0) scale(1.06); }
+}
+
+/* Ember/dust canvas sits above the light field, below content. */
+.nw-atmos {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Framing vignette — mostly a night device; it closes the composition
+   and pushes the eye to the headline. Barely present in daylight. */
+.nw-hero-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(
+    130% 108% at 50% 42%,
+    transparent 52%,
+    color-mix(in oklab, var(--color-iron) 42%, transparent) 100%
+  );
+  opacity: 0.18;
+}
+.dark .nw-hero-vignette { opacity: 0.62; }
+
+/* Headline focuses in like a film title — blur + spread + rise resolving
+   to crisp. Replaces the plain fade for the hero H1. */
+@media (prefers-reduced-motion: no-preference) {
+  .nw-focus-in {
+    animation: nwFocusIn 1100ms var(--nw-ease-out) both;
+  }
+}
+@keyframes nwFocusIn {
+  0% {
+    opacity: 0;
+    filter: blur(16px);
+    letter-spacing: 0.05em;
+    transform: translateY(12px) scale(0.99);
+  }
+  55% { opacity: 1; }
+  100% {
+    opacity: 1;
+    filter: blur(0);
+    letter-spacing: -0.018em;
+    transform: translateY(0) scale(1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nw-hero-light { animation: none; }
 }

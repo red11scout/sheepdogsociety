@@ -12,6 +12,7 @@ import { Reveal } from "@/components/motion/Reveal";
 import { StaggerReveal } from "@/components/motion/StaggerReveal";
 import { LampFlame } from "@/components/motion/LampFlame";
 import { ShimmerText } from "@/components/motion/ShimmerText";
+import { HeroAtmosphere } from "@/components/motion/HeroAtmosphere";
 import { LetterCover } from "@/components/letters/LetterCover";
 import { listPublishedEncouragements } from "@/server/encouragements";
 import { cadenceLabel, type SeriesCadence } from "@/lib/events/series";
@@ -161,8 +162,11 @@ export default async function HomePage() {
 
   const sections: Record<string, React.ReactNode> = {
     hero: (
-      <section className="bg-background text-foreground">
-        <div className="mx-auto max-w-7xl px-6 pb-16 pt-12 md:px-10 md:pb-24 md:pt-16">
+      <section className="nw-hero relative flex min-h-[88vh] items-center bg-background text-foreground">
+        <div className="nw-hero-light" aria-hidden="true" />
+        <HeroAtmosphere />
+        <div className="nw-hero-vignette" aria-hidden="true" />
+        <div className="relative z-10 mx-auto w-full max-w-7xl px-6 pb-16 pt-12 md:px-10 md:pb-24 md:pt-16">
           <div className="nw-enter d0">
             <Kicker left="The front page" right="Every man needs a watch to stand" />
           </div>
@@ -171,7 +175,7 @@ export default async function HomePage() {
               {/* Front-page-only raw clamp (documented Model-rules
                   exception): the prototype's 120px hero, above the
                   6rem cap of the locked --text-display-xl token. */}
-              <h1 className="display-xl nw-enter d1 text-[clamp(3.25rem,9vw,7.5rem)]">
+              <h1 className="display-xl nw-focus-in text-[clamp(3.25rem,9vw,7.5rem)]">
                 {t["home.hero.headline1"]}
                 <br />
                 <ShimmerText>{t["home.hero.headline2"]}</ShimmerText>
