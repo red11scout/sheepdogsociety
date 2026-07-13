@@ -200,9 +200,6 @@ export default async function HomePage() {
 
             {/* Right rail — standing orders */}
             <aside className="nw-enter d2 border-t-2 border-foreground/60 pt-6 lg:col-span-4 lg:border-l lg:border-t-0 lg:border-foreground/15 lg:pl-10 lg:pt-1">
-              <div className="mb-2 flex items-end">
-                <LampFlame size={44} ignite />
-              </div>
               <p className="folio">Standing orders</p>
               <ol className="mt-6 space-y-5">
                 {standingOrders.map((o) => (
