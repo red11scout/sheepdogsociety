@@ -27,6 +27,11 @@ export function CountUp({
     if (!el) return;
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduced) {
+      // Respect reduced-motion: jump straight to the final value. This must
+      // run in the effect (window.matchMedia is client-only; a lazy state
+      // initializer would render a different value on the server and cause a
+      // real hydration mismatch). set-state-in-effect is a false positive.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setValue(to);
       return;
     }
