@@ -56,7 +56,10 @@ export const members = pgTable(
     firstName: text("first_name"),
     lastName: text("last_name"),
     nickname: text("nickname"),
-    email: text("email").notNull(),
+    // Optional: admins can add members with any mix of email / phone / Signal,
+    // or none. The partial unique index below still blocks duplicate non-null
+    // emails among non-deleted rows (Postgres treats NULLs as distinct).
+    email: text("email"),
     phone: text("phone"),
     /** Signal Messenger username (e.g. "@drew.42"). Used by group leaders for
      *  texting outside the platform. Stored as plain text; no validation. */

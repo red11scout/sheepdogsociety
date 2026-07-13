@@ -26,7 +26,7 @@ export interface AdminMemberRow {
   firstName: string | null;
   lastName: string | null;
   nickname: string | null;
-  email: string;
+  email: string | null;
   phone: string | null;
   signalAccount: string | null;
   intent: string;
@@ -132,6 +132,126 @@ export async function listLocationOptions(): Promise<{ id: string; name: string 
     .select({ id: locations.id, name: locations.name })
     .from(locations)
     .orderBy(locations.name);
+}
+
+export interface CreateMemberInput {
+  firstName?: string;
+  lastName?: string;
+  nickname?: string;
+  email?: string;
+  phone?: string;
+  signalAccount?: string;
+  role?: string;
+  groupId?: string | null;
+  adminNote?: string;
+}
+
+/**
+ * Admin-created member. Unlike a /join signup, contact info is fully optional
+ * (email / phone / Signal — any mix or none), but at least one name field is
+ * required so the row has a human label (the legacy `name` column is NOT NULL).
+ * Admin-added members are auto-approved and marked source="admin". If a group
+ * is chosen, locationId is derived from that group's primary location, matching
+ * updateMember/bulkUpdateMembers.
+ */
+export async function createMember(
+  input: CreateMemberInput
+): Promise<AdminMemberRow> {
+  await requireAdmin();
+
+  const first = input.firstName?.trim() ?? "";
+  const last = input.lastName?.trim() ?? "";
+  const nick = input.nickname?.trim() ?? "";
+  const composedName = [first, last].filter(Boolean).join(" ") || nick;
+  if (!composedName) {
+    throw new Error("Add at least a first name, last name, or nickname.");
+  }
+
+  const email = input.email?.trim() || null;
+  if (email) {
+    const [dupe] = await db
+      .select({ id: members.id })
+      .from(members)
+      .where(and(eq(members.email, email), isNull(members.deletedAt)))
+      .limit(1);
+    if (dupe) {
+      throw new Error(`A member with the email ${email} already exists.`);
+    }
+  }
+
+  const groupId = input.groupId || null;
+  let locationId: string | null = null;
+  let groupName: string | null = null;
+  let locationName: string | null = null;
+  if (groupId) {
+    const [g] = await db
+      .select({ name: groups.name })
+      .from(groups)
+      .where(eq(groups.id, groupId))
+      .limit(1);
+    groupName = g?.name ?? null;
+    const [loc] = await db
+      .select({ id: locations.id, name: locations.name })
+      .from(locations)
+      .where(eq(locations.groupId, groupId))
+      .limit(1);
+    locationId = loc?.id ?? null;
+    locationName = loc?.name ?? null;
+  }
+
+  const [created] = await db
+    .insert(members)
+    .values({
+      name: composedName,
+      firstName: first || null,
+      lastName: last || null,
+      nickname: nick || null,
+      email,
+      phone: input.phone?.trim() || null,
+      signalAccount: input.signalAccount?.trim() || null,
+      intent: "join",
+      role: input.role?.trim() || "member",
+      groupId,
+      locationId,
+      approvalStatus: "approved",
+      isActive: true,
+      status: "new",
+      source: "admin",
+      adminNote: input.adminNote?.trim() || null,
+      termsAcceptedAt: new Date(),
+    })
+    .returning();
+
+  revalidatePath("/admin/members");
+
+  return {
+    id: created.id,
+    shortId: created.id.slice(0, 8),
+    approvalStatus: created.approvalStatus,
+    isActive: created.isActive,
+    role: created.role,
+    firstName: created.firstName,
+    lastName: created.lastName,
+    nickname: created.nickname,
+    email: created.email,
+    phone: created.phone,
+    signalAccount: created.signalAccount,
+    intent: created.intent,
+    status: created.status,
+    groupId: created.groupId,
+    groupName,
+    locationId: created.locationId,
+    locationName,
+    city: created.city,
+    state: created.state,
+    source: created.source,
+    note: created.note,
+    adminNote: created.adminNote,
+    createdAt:
+      created.createdAt instanceof Date
+        ? created.createdAt.toISOString()
+        : String(created.createdAt),
+  };
 }
 
 export interface UpdateMemberInput {
