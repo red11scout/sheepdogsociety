@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 type ActionState = "idle" | "running" | "ok" | "error";
 
 interface Result {
-  kind: "retag" | "cluster" | "field-notes";
+  kind: "retitle" | "retag" | "cluster" | "field-notes";
   message: string;
   detail?: string;
   // Explicit error flag — the banner used to sniff "failed" out of
@@ -49,7 +49,56 @@ export function SectionAutomationBar({
   const [retagState, setRetagState] = useState<ActionState>("idle");
   const [clusterState, setClusterState] = useState<ActionState>("idle");
   const [fieldNotesState, setFieldNotesState] = useState<ActionState>("idle");
+  const [retitleState, setRetitleState] = useState<ActionState>("idle");
   const [result, setResult] = useState<Result | null>(null);
+
+  async function handleRetitle() {
+    if (
+      !confirm(
+        `Re-title every file in "${sectionName}" from its filename, in one uniform pattern? Instant, no AI. Existing titles get overwritten and each study's public link (slug) is regenerated to match.`
+      )
+    )
+      return;
+    setRetitleState("running");
+    setResult(null);
+    try {
+      const res = await fetch(
+        `/api/admin/resources/sections/${sectionId}/retitle`,
+        { method: "POST" }
+      );
+      const data = (await res.json()) as {
+        retitled?: number;
+        unchanged?: number;
+        skippedNoFile?: number;
+        total?: number;
+        samples?: { from: string; to: string }[];
+        error?: string;
+        detail?: string;
+      };
+      if (!res.ok) throw new Error(data.detail || data.error || `HTTP ${res.status}`);
+      setRetitleState("ok");
+      const sample = (data.samples ?? [])
+        .slice(0, 3)
+        .map((s) => `“${s.to}”`)
+        .join(", ");
+      setResult({
+        kind: "retitle",
+        message: `Re-titled ${data.retitled ?? 0} of ${data.total ?? 0} · ${
+          data.unchanged ?? 0
+        } already matched · ${data.skippedNoFile ?? 0} had no file.`,
+        detail: sample ? `e.g. ${sample}` : undefined,
+      });
+      onComplete();
+    } catch (err) {
+      setRetitleState("error");
+      setResult({
+        kind: "retitle",
+        message: "Re-title failed.",
+        detail: err instanceof Error ? err.message : "unknown",
+        isError: true,
+      });
+    }
+  }
 
   async function handleRetag() {
     if (
@@ -184,11 +233,18 @@ export function SectionAutomationBar({
   return (
     <div className="border border-brass/30 bg-iron/40 p-4">
       <div className="flex flex-wrap items-center gap-2">
-        <span className="section-mark text-brass">§ Bulk AI actions</span>
-        <HintTooltip hint="Section-wide AI passes. Re-tag = restore search/filter coverage. Auto-cluster = group cards under sub-headings on the public page. Draft field notes = AI study-notes draft per resource, still needs admin approval before it's public." />
+        <span className="section-mark text-brass">§ Bulk actions</span>
+        <HintTooltip hint="Section-wide passes. Re-title = uniform titles from filenames (instant, no AI). Re-tag = restore search/filter coverage. Auto-cluster = group cards under expandable sub-headings on the public page. Draft field notes = AI study-notes draft per resource, still needs admin approval before it's public." />
         <div className="flex-1" />
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
+        <ActionButton
+          label="Re-title from filenames"
+          icon="pen"
+          onClick={handleRetitle}
+          state={retitleState}
+          tooltip="Instant, no AI. Rewrites every file's title from its filename in one uniform pattern (strip extension, tidy dashes, Title Case) and regenerates the public link to match."
+        />
         <ActionButton
           label="Re-tag all"
           icon="sparkles"
