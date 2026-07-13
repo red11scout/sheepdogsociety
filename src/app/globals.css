@@ -952,6 +952,15 @@
   0%, 100% { transform: translate(-50%, -50%) scale(0.97); opacity: 0.85; }
   50% { transform: translate(-50%, -50%) scale(1.04); opacity: 1; }
 }
+/* Still variant — a lit but motionless flame mark. Used for the six
+   outer flames of the Letter card's seven-flame echo (only the centre
+   one lives); and anywhere a calm brass mark is wanted. */
+.nw-flame--still .nw-flame__glow { animation: none; opacity: 0; }
+.dark .nw-flame--still .nw-flame__glow { opacity: 0; }
+.nw-flame--still .nw-flame__outer,
+.nw-flame--still .nw-flame__inner,
+.nw-flame--still .nw-flame__svg { animation: none; }
+
 /* The ignite: flame fades up as the last hero entrance beat. */
 @media (prefers-reduced-motion: no-preference) {
   .nw-flame--ignite {
