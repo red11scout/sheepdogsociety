@@ -156,7 +156,31 @@ and oklch value, all generative-cover components, all copy/site-text/routes/meta
 
 ---
 
-## After (screenshots)
+## After — QA results
 
-_Filled in during Phase QA — hero in light/desktop, dark/desktop, light/mobile,
-dark/mobile._
+Verified on `next dev` (localhost:3000), all four hero states:
+
+- **Dark / desktop** — blue-black iron canvas; a LIVING golden flame burns
+  over the Standing Orders with a warm radial glow; "brothers." in luminous
+  gold-leaf. The signature moment reads exactly as the thesis: a lamp in a
+  dark window.
+- **Light / desktop** — dawn parchment; the flame is a static BRASS mark
+  (the lamp trimmed at first light); "brothers." in burnished-brass gold-leaf.
+- **Dark / mobile (375px)** — flame lit and glowing at the foot of the
+  stacked hero; 0px horizontal overflow; bottom tab bar clear.
+- **Light / mobile (375px)** — trimmed brass mark; parchment; clean stack.
+
+Programmatic checks (dev):
+- `--flame` resolves (#9a6b1f light / #e5a54b dark); gold-leaf `<em>` fill is
+  transparent with a live gradient; flame `fill` = brass in light, lit in dark.
+- 8 `.nw-flame` on the page = 1 hero + 7 Letter-card echo (only centre lives).
+- Acts 20:28 blockquote present, opacity 1, above the z-0 verse glow.
+- Entrance elements all settle to opacity 1 (never stuck hidden).
+- `horizontalOverflowPx = 0` at 375px. No console errors.
+
+Gates: `npm run build` compiles clean (7.2s, no errors/warnings);
+`npm run check:contrast` all pairs pass in both modes × 5 themes; `eslint`
+clean on all touched files.
+
+_(Screenshots captured live in the build session; the four hero frames match
+the descriptions above.)_
