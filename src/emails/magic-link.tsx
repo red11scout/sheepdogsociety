@@ -20,7 +20,7 @@ interface MagicLinkEmailProps {
 // scanner / Outlook Safe Links / Gmail prefetcher problem that consumes
 // one-time tokens before the user can click them. The link is kept as a
 // fallback for clients that don't prefetch.
-export function MagicLinkEmail({ url, host, code }: MagicLinkEmailProps) {
+export function MagicLinkEmail({ host, code }: MagicLinkEmailProps) {
   return (
     <Html>
       <Head />

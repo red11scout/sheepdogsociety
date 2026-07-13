@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
-import { groups, groupMembers, channelMembers, channels, users } from "@/db/schema";
+import { groups, groupMembers, channelMembers, channels } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";

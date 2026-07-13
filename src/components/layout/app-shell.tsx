@@ -11,7 +11,6 @@ import type { AppUser } from "@/lib/types";
  * only so the (app)/layout.tsx import keeps working.
  */
 export function AppShell({
-  user: _user,
   children,
 }: {
   user: AppUser;

@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import {
   Shield,
-  Plus,
   UserPlus,
   Flame,
   MessageSquare,
@@ -21,7 +20,6 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import type { AppUser } from "@/lib/types";
 
 type Partner = {

@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
-import { events, eventRsvps, users } from "@/db/schema";
-import { eq, desc, gte, sql } from "drizzle-orm";
+import { events, users } from "@/db/schema";
+import { eq, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 

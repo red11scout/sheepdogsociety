@@ -1,6 +1,6 @@
 import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
-import { events, eventRsvps, users } from "@/db/schema";
+import { events, users } from "@/db/schema";
 import { eq, desc, sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { z } from "zod/v4";
