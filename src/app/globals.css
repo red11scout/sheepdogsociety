@@ -1136,3 +1136,42 @@
 @media (prefers-reduced-motion: reduce) {
   .nw-hero-light { animation: none; }
 }
+
+/* -------- The verse chapel (Acts 20:28) --------------------------------
+   The theological center becomes a lit alcove: a warm pool of lamplight
+   breathing at the middle, edges closed down to near-black. Walking into
+   it on scroll should feel like stepping into a dark chapel where one
+   light is burning. The Word never animates — the light moves. */
+.nw-chapel { position: relative; isolation: isolate; }
+.nw-chapel-glow {
+  position: absolute;
+  left: 50%;
+  top: 46%;
+  width: 92%;
+  height: 84%;
+  z-index: 0;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(
+    closest-side,
+    color-mix(in oklab, var(--flame) 24%, transparent),
+    transparent 72%
+  );
+  filter: blur(24px);
+  animation: nwChapelBreath 9s ease-in-out infinite;
+}
+.nw-chapel-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(78% 64% at 50% 48%, transparent 38%, #050607 100%);
+  opacity: 0.72;
+}
+@keyframes nwChapelBreath {
+  0%, 100% { opacity: 0.72; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .nw-chapel-glow { animation: none; }
+}

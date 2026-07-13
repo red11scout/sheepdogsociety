@@ -225,17 +225,21 @@ export default async function HomePage() {
       </section>
     ),
     verse: (
-      <section className="ember-band relative overflow-hidden">
+      <section className="ember-band nw-chapel relative flex min-h-[78vh] items-center overflow-hidden">
+        <div className="nw-chapel-glow" aria-hidden="true" />
         <Reveal y={0} className="absolute inset-0 z-0">
           <span className="nw-verse-glow" aria-hidden="true" />
         </Reveal>
+        <div className="nw-chapel-vignette" aria-hidden="true" />
         <div className="relative z-10 mx-auto max-w-4xl px-6 py-20 text-center md:px-10 md:py-28">
           <p className="section-mark">§ Acts 20:28</p>
-          <blockquote className="mt-8 font-pullquote text-2xl italic leading-relaxed md:text-4xl">
-            &ldquo;Keep watch over yourselves and all the flock of which the
-            Holy Spirit has made you overseers. Be shepherds of the church of
-            God, which he bought with his own blood.&rdquo;
-          </blockquote>
+          <Reveal y={20} delay={80}>
+            <blockquote className="mt-8 font-pullquote text-3xl italic leading-relaxed md:text-5xl">
+              &ldquo;Keep watch over yourselves and all the flock of which the
+              Holy Spirit has made you overseers. Be shepherds of the church of
+              God, which he bought with his own blood.&rdquo;
+            </blockquote>
+          </Reveal>
           <Link href="/acts-20-28" className="link-editorial mt-8 inline-block text-sm">
             Read the verse
           </Link>
