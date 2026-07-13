@@ -10,6 +10,8 @@ import { Icon } from "@/components/icons/Icon";
 import { Kicker } from "@/components/public/kicker";
 import { Reveal } from "@/components/motion/Reveal";
 import { StaggerReveal } from "@/components/motion/StaggerReveal";
+import { LampFlame } from "@/components/motion/LampFlame";
+import { ShimmerText } from "@/components/motion/ShimmerText";
 import { LetterCover } from "@/components/letters/LetterCover";
 import { listPublishedEncouragements } from "@/server/encouragements";
 import { cadenceLabel, type SeriesCadence } from "@/lib/events/series";
@@ -161,24 +163,26 @@ export default async function HomePage() {
     hero: (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 pb-16 pt-12 md:px-10 md:pb-24 md:pt-16">
-          <Kicker left="The front page" right="Every man needs a watch to stand" />
+          <div className="nw-enter d0">
+            <Kicker left="The front page" right="Every man needs a watch to stand" />
+          </div>
           <div className="mt-10 grid gap-12 lg:grid-cols-12 lg:gap-16">
             <div className="lg:col-span-8">
               {/* Front-page-only raw clamp (documented Model-rules
                   exception): the prototype's 120px hero, above the
                   6rem cap of the locked --text-display-xl token. */}
-              <h1 className="display-xl text-[clamp(3.25rem,9vw,7.5rem)]">
+              <h1 className="display-xl nw-enter d1 text-[clamp(3.25rem,9vw,7.5rem)]">
                 {t["home.hero.headline1"]}
                 <br />
-                <em>{t["home.hero.headline2"]}</em>
+                <ShimmerText>{t["home.hero.headline2"]}</ShimmerText>
               </h1>
-              <p className="dropcap mt-10 max-w-2xl font-scripture text-lg text-foreground/85">
+              <p className="dropcap nw-enter d2 mt-10 max-w-2xl font-scripture text-lg text-foreground/85">
                 {t["home.hero.paragraph"]}
               </p>
-              <div className="mt-10 flex flex-wrap items-center gap-6">
+              <div className="nw-enter d3 mt-10 flex flex-wrap items-center gap-6">
                 <Link
                   href="/groups"
-                  className="lift group inline-flex h-12 items-center gap-3 bg-foreground px-7 text-base font-medium text-background"
+                  className="lift nw-cta group inline-flex h-12 items-center gap-3 bg-foreground px-7 text-base font-medium text-background"
                 >
                   <Icon name="map-pin" size={18} />
                   Find your group
@@ -195,7 +199,10 @@ export default async function HomePage() {
             </div>
 
             {/* Right rail — standing orders */}
-            <aside className="border-t-2 border-foreground/60 pt-6 lg:col-span-4 lg:border-l lg:border-t-0 lg:border-foreground/15 lg:pl-10 lg:pt-1">
+            <aside className="nw-enter d2 border-t-2 border-foreground/60 pt-6 lg:col-span-4 lg:border-l lg:border-t-0 lg:border-foreground/15 lg:pl-10 lg:pt-1">
+              <div className="mb-2 flex items-end">
+                <LampFlame size={44} ignite />
+              </div>
               <p className="folio">Standing orders</p>
               <ol className="mt-6 space-y-5">
                 {standingOrders.map((o) => (
@@ -217,8 +224,11 @@ export default async function HomePage() {
       </section>
     ),
     verse: (
-      <section className="ember-band">
-        <div className="mx-auto max-w-4xl px-6 py-20 text-center md:px-10 md:py-28">
+      <section className="ember-band relative overflow-hidden">
+        <Reveal y={0} className="absolute inset-0 z-0">
+          <span className="nw-verse-glow" aria-hidden="true" />
+        </Reveal>
+        <div className="relative z-10 mx-auto max-w-4xl px-6 py-20 text-center md:px-10 md:py-28">
           <p className="section-mark">§ Acts 20:28</p>
           <blockquote className="mt-8 font-pullquote text-2xl italic leading-relaxed md:text-4xl">
             &ldquo;Keep watch over yourselves and all the flock of which the
@@ -392,6 +402,14 @@ export default async function HomePage() {
               <div>
                 {letter && (
                   <>
+                    <div
+                      className="mb-5 flex items-end gap-2"
+                      aria-hidden="true"
+                    >
+                      {[0, 1, 2, 3, 4, 5, 6].map((i) => (
+                        <LampFlame key={i} size={18} still={i !== 3} />
+                      ))}
+                    </div>
                     <h2 className="display-soft text-display-md">{letter.title}</h2>
                     {letter.intro && (
                       <p className="mt-4 line-clamp-3 leading-relaxed text-muted-foreground">
@@ -447,12 +465,12 @@ export default async function HomePage() {
           <h2 className="display-xl mt-6 text-display-lg">
             {t["home.join.headline1"]}
             <br />
-            <em>{t["home.join.headline2"]}</em>
+            <ShimmerText>{t["home.join.headline2"]}</ShimmerText>
           </h2>
           <div className="mt-10">
             <Link
               href="/join"
-              className="lift inline-flex h-12 items-center gap-3 bg-foreground px-8 text-base font-medium text-background"
+              className="lift nw-cta inline-flex h-12 items-center gap-3 bg-foreground px-8 text-base font-medium text-background"
             >
               {t["home.join.button"]}
               <Icon name="arrow-right" size={16} />
