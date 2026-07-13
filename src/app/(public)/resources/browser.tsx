@@ -673,11 +673,11 @@ function SectionBlock({
 }
 
 /**
- * Collapsible cluster heading with item count + chevron. Closed by
- * default so the section reads as a navigable mini-TOC instead of
- * a wall of cards (especially important on mobile, where 56 cards in
- * one scroll is brutal). When the user searches or filters, the
- * parent passes forceOpen so matches don't get hidden.
+ * Collapsible cluster heading with item count + chevron. OPEN by default
+ * (Drew, 2026-07-13) so the grouped view actually shows the studies laid
+ * out under their theme headings — "grouped" should mean visible-and-
+ * organized, not a menu of collapsed category names. Each group can still
+ * be collapsed by hand; search/filter forces every match open.
  */
 function ClusterDisclosure({
   label,
@@ -690,7 +690,7 @@ function ClusterDisclosure({
   forceOpen: boolean;
   children: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const isOpen = forceOpen || open;
   return (
     <div className="border border-foreground/15 bg-card">
