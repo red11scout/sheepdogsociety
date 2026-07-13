@@ -32,6 +32,17 @@ describe("tidyTitleFromFilename", () => {
     );
   });
 
+  it("treats a dash with a space on only one side as a separator", () => {
+    expect(
+      tidyTitleFromFilename("Series- Freedom in Giving.docx")
+    ).toBe("Series – Freedom in Giving");
+    expect(
+      tidyTitleFromFilename(
+        "4-week Series- Freedom in Giving – from Tithing to Grace.docx"
+      )
+    ).toBe("4-week Series – Freedom in Giving – from Tithing to Grace");
+  });
+
   it("preserves real hyphens inside words", () => {
     expect(tidyTitleFromFilename("The Work-Life Balance Myth.docx")).toBe(
       "The Work-Life Balance Myth"

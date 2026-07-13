@@ -77,10 +77,12 @@ export function tidyTitleFromFilename(filename: string): string {
     ""
   );
 
-  // 4. Normalize SPACED dash separators (subtitle dividers) to a single en
-  //    dash with single spaces. A dash without surrounding spaces is a real
-  //    hyphen ("Work-Life", "Red-Pilled") and is left untouched.
-  s = s.replace(/\s+[-–—]+\s+/g, " – ");
+  // 4. Normalize dash separators (subtitle dividers) to a single en dash with
+  //    single spaces. A dash counts as a separator when it has a space on at
+  //    least ONE side ("A – B", "A- B", "A -B"). A dash with NO space on
+  //    either side is a real hyphen ("Work-Life", "Red-Pilled", "4-week") and
+  //    is left untouched.
+  s = s.replace(/\s+[-–—]+\s*|[-–—]+\s+/g, " – ");
 
   // 5. Collapse whitespace and trim (kills the trailing-space-before-.docx
   //    class of filename).
