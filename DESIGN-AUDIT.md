@@ -184,3 +184,36 @@ clean on all touched files.
 
 _(Screenshots captured live in the build session; the four hero frames match
 the descriptions above.)_
+
+---
+
+## Cinematic pass (direction: "Cinematic atmosphere", pushed harder, mobile-first)
+
+After the first additive pass still read as "dull", the direction was
+re-set to **cinematic atmosphere** — the site should feel like a lit room
+at watch / dawn breaking, reverent and weighty, not a decorated newspaper.
+Shipped (all additive, gates green, brand + Studio + contrast untouched):
+
+- **Flame removed** from Standing Orders (`844c3d1`).
+- **Living hero environment** (`83c3fdb`, tuned `b5aeefc`): a volumetric
+  light field (dawn from the horizon / lamplight from above), a GPU-cheap
+  `HeroAtmosphere` canvas of drifting embers + sparkle motes (density
+  floored for 375px, capped on desktop, pauses off-screen/hidden, silent
+  under reduced motion), a framing vignette, an 88vh cinematic frame, and a
+  film-title focus-in on the headline. Grain raised to a real paper texture.
+- **Verse chapel** (`587230d`): Acts 20:28 is a 78vh dark alcove — a warm
+  pool of lamplight breathing at center, edges closed to black, the verse
+  enlarged and rising into the light on scroll.
+- **Light & material system** (`9aa2570`): `.nw-surface` gives key cards
+  real layered depth + a light edge that warms/rises on hover; `.nw-sheen`
+  sweeps a bar of light across the Letter cover; `.nw-lintel` turns the
+  scripture ticker into an embossed, warm-tinted, end-faded inscription.
+
+Final gates: `next build` clean, `check:contrast` passes both modes × 5
+themes, eslint clean on touched files (repo's 4 pre-existing warnings
+unchanged), 143 unit tests pass. Verified: desktop dark hero (cinematic),
+light hero (dawn), mobile dark hero (embers sing at 375px), 0px overflow.
+
+Not yet done (optional next): per-page rollout of the atmosphere to
+interior route heroes (Groups/Events/Letter/Bible/Resources), and a
+scroll parallax on the hero light field.
