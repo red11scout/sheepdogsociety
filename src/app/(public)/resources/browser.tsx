@@ -105,6 +105,9 @@ function bookFacetOptions(
 
 export function ResourcesBrowser({ sections, items }: BrowserProps) {
   const [query, setQuery] = useState("");
+  // "grouped" (default) = collapsible theme sub-headings; "all" = every
+  // study in one flat, fully-expanded list.
+  const [viewAll, setViewAll] = useState(false);
   const [activeSectionId, setActiveSectionId] = useState<string>("");
   const [activeTopic, setActiveTopic] = useState<string>("");
   const [activeBook, setActiveBook] = useState<string>("");
@@ -245,6 +248,31 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
             <span className="hidden text-xs text-muted-foreground sm:inline-flex">
               {filtered.length} {filtered.length === 1 ? "item" : "items"}
             </span>
+            {/* View toggle: grouped-by-theme (default) vs one flat list of
+                everything. */}
+            <div className="inline-flex shrink-0 border border-foreground/15">
+              {(
+                [
+                  { v: false, label: "Grouped" },
+                  { v: true, label: "All" },
+                ] as const
+              ).map((opt) => (
+                <button
+                  key={opt.label}
+                  type="button"
+                  onClick={() => setViewAll(opt.v)}
+                  aria-pressed={viewAll === opt.v}
+                  className={
+                    "min-h-[44px] px-3 text-[0.6875rem] uppercase tracking-wider transition-colors " +
+                    (viewAll === opt.v
+                      ? "bg-brass text-iron"
+                      : "bg-card text-muted-foreground hover:text-brass")
+                  }
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Mobile-only section pills. Horizontal scroll if they overflow.
@@ -374,13 +402,14 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
                     description={section.description}
                     count={sectionItems.length}
                     // Force the section open when searching/filtering (so
-                    // matches aren't hidden) or when the reader has tapped a
-                    // single section. Otherwise it defaults closed on mobile
-                    // (desktop always shows it) so the page opens as a tidy
-                    // list of category headings, not a wall of 97 cards.
-                    forceOpen={!!anyFilter}
+                    // matches aren't hidden), when the reader has tapped a
+                    // single section, or in "All" view. Otherwise it defaults
+                    // closed on mobile (desktop always shows it) so the page
+                    // opens as a tidy list of category headings, not a wall of
+                    // 97 cards.
+                    forceOpen={!!anyFilter || viewAll}
                   >
-                    {anyClustered ? (
+                    {anyClustered && !viewAll ? (
                       <div className="mt-6 space-y-3">
                         {clusterOrder.map((clusterLabel) => {
                           const items = clusters.get(clusterLabel) ?? [];

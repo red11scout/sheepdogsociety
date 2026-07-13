@@ -170,13 +170,15 @@ export default async function EventsPage() {
         </div>
       </section>
     ),
-    upcoming: (
+    // When nothing is on the books, the whole Upcoming section is hidden
+    // (no "Upcoming" heading, no empty-state box) so the page just shows
+    // past gatherings.
+    upcoming: upcomingItems.length > 0 ? (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 pb-20 md:px-10 md:pb-28">
           <Kicker left="Upcoming" />
 
-          {upcomingItems.length > 0 ? (
-            <ul className="mt-10 divide-y divide-foreground/10 border-y border-foreground/15">
+          <ul className="mt-10 divide-y divide-foreground/10 border-y border-foreground/15">
               {upcomingItems.map((item) => {
                 const ev = item.row;
                 const start = new Date(ev.startTime);
@@ -254,24 +256,9 @@ export default async function EventsPage() {
                 );
               })}
             </ul>
-          ) : (
-            <div className="mt-10 border border-dashed border-foreground/15 p-12 text-center">
-              <Icon name="calendar" size={32} className="mx-auto text-foreground/30" />
-              <p className="mt-4 font-pullquote text-xl italic text-muted-foreground">
-                {t["events.upcoming.empty"]}
-              </p>
-              <p className="mt-3 text-muted-foreground">
-                Check back soon, or{" "}
-                <Link href="/groups" className="link-editorial text-foreground">
-                  find a weekly group
-                </Link>
-                .
-              </p>
-            </div>
-          )}
         </div>
       </section>
-    ),
+    ) : null,
     "past-gatherings": past.length > 0 ? (
       <section className="bg-background text-foreground">
           <div className="mx-auto max-w-7xl px-6 pb-20 md:px-10 md:pb-28">
