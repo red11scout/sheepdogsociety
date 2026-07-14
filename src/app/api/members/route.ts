@@ -4,7 +4,7 @@ import { randomBytes } from "crypto";
 import { db } from "@/db";
 import { members, memberNotificationPrefs } from "@/db/schema";
 import { and, eq, isNull } from "drizzle-orm";
-import { resend, FROM_AUTH, FROM_NEWSLETTER } from "@/lib/email";
+import { resend, FROM_AUTH, FROM_SHEPHERD, SHEPHERD_EMAIL } from "@/lib/email";
 import { sendSms, SMS_OPT_IN_DISCLOSURE } from "@/lib/sms";
 
 export const runtime = "nodejs";
@@ -158,13 +158,16 @@ export async function POST(req: Request) {
       });
     }
 
-    // Fire-and-forget welcome email (Resend). Don't block on failures.
+    // Fire-and-forget welcome email (Resend), sent FROM the shepherd so a
+    // reply with the man's details lands with Jeremy. Don't block on
+    // failures.
     let welcomeError: string | null = null;
     try {
       await resend().emails.send({
-        from: FROM_NEWSLETTER,
+        from: FROM_SHEPHERD,
         to: emailLower,
-        subject: "A brother saved you a seat",
+        replyTo: SHEPHERD_EMAIL,
+        subject: "A brother saved you a seat. Tell me a little more.",
         text: buildWelcomeEmail(body.name, body.intent),
       });
     } catch (err) {
@@ -172,22 +175,27 @@ export async function POST(req: Request) {
       console.error("members welcome email failed", err);
     }
 
-    // Admin notification.
-    const adminEmails = (process.env.ADMIN_EMAILS ?? "")
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
-    if (adminEmails.length > 0) {
-      try {
-        await resend().emails.send({
-          from: FROM_AUTH,
-          to: adminEmails,
-          subject: `New signup — ${body.name} (${body.intent})`,
-          text: buildAdminAlert(body, memberId),
-        });
-      } catch (err) {
-        console.error("members admin alert failed", err);
-      }
+    // Admin notification — always includes shepherd@ (Jeremy) so every
+    // signup lands in the shepherd inbox, plus any ADMIN_EMAILS.
+    const adminEmails = Array.from(
+      new Set([
+        SHEPHERD_EMAIL,
+        ...(process.env.ADMIN_EMAILS ?? "")
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+      ])
+    );
+    try {
+      await resend().emails.send({
+        from: FROM_AUTH,
+        to: adminEmails,
+        replyTo: body.email,
+        subject: `New signup — ${body.name} (${body.intent})`,
+        text: buildAdminAlert(body, memberId),
+      });
+    } catch (err) {
+      console.error("members admin alert failed", err);
     }
 
     // SMS double-opt-in (Phase D returns not_configured; handled gracefully).
@@ -236,12 +244,17 @@ A brother saved you a seat.
 
 ${intentLine}
 
-You do not have to have it all together to sit at the table.
+So we can point you to the right table, reply to this email and tell me:
+  1. What town you are in.
+  2. Which mornings work for you.
+  3. Where you are with the Lord right now, in a sentence.
+
+You do not have to have it all together to sit down.
 
 Acts 20:28
 "Pay careful attention to yourselves and to all the flock, in which the Holy Spirit has made you overseers, to care for the church of God, which he obtained with his own blood."
 
-— Sheepdog Society
+— Jeremy, Sheepdog Society
 acts2028sheepdogsociety.com
 
 You signed up at /join. To stop these emails, reply UNSUBSCRIBE.`;

@@ -21,3 +21,13 @@ export const FROM_NEWSLETTER =
 export const FROM_TRANSACTIONAL =
   process.env.RESEND_FROM_TRANSACTIONAL ??
   "notifications@acts2028sheepdogsociety.com";
+
+/**
+ * The shepherd inbox. Every public lead-capture form notifies this address
+ * on submit, and every auto-reply is sent FROM it, so a man's follow-up
+ * details land straight with Jeremy (shepherd@ forwards to his inbox).
+ * Single source of truth — do not re-hardcode the address in handlers.
+ */
+export const SHEPHERD_EMAIL =
+  process.env.SHEPHERD_EMAIL ?? "shepherd@acts2028sheepdogsociety.com";
+export const FROM_SHEPHERD = `Sheepdog Society <${SHEPHERD_EMAIL}>`;
