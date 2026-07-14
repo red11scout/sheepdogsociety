@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { locationRequests } from "@/db/schema";
 import { z } from "zod/v4";
-import { resend, FROM_TRANSACTIONAL } from "@/lib/email";
+import { resend, FROM_TRANSACTIONAL, FROM_SHEPHERD, SHEPHERD_EMAIL } from "@/lib/email";
 
 const schema = z.object({
   requesterName: z.string().min(1).max(200),
@@ -58,7 +58,7 @@ export async function POST(request: Request) {
     try {
       const { error } = await resend().emails.send({
         from: FROM_TRANSACTIONAL,
-        to: "shepherd@acts2028sheepdogsociety.com",
+        to: SHEPHERD_EMAIL,
         replyTo: requesterEmail,
         subject: `New group-plant request: ${proposedCity}, ${proposedState}`,
         text: `Name: ${requesterName}\nEmail: ${requesterEmail}\nPhone: ${requesterPhone || "(not given)"}\n\nProposed location: ${proposedCity}, ${proposedState}\nMeeting details: ${proposedMeetingDetails || "(none)"}\n\nReason:\n${reason || "(none)"}`,
@@ -68,13 +68,14 @@ export async function POST(request: Request) {
       console.error("plant-request notification failed", err);
     }
 
-    // Auto-reply to the requester — separate try/catch so a failure here
-    // never blocks the shepherd@ notification above.
+    // Auto-reply FROM the shepherd, asking for the detail needed to move a
+    // plant forward. A reply lands with Jeremy. Separate try/catch.
     try {
       const { error } = await resend().emails.send({
-        from: FROM_TRANSACTIONAL,
+        from: FROM_SHEPHERD,
         to: requesterEmail,
-        subject: "Got your request to start a group",
+        replyTo: SHEPHERD_EMAIL,
+        subject: "Got your request to start a group. A few questions.",
         text: buildPlantRequestAutoReply(requesterName, proposedCity, proposedState),
       });
       if (error) console.error("plant-request auto-reply rejected", error);
@@ -95,13 +96,18 @@ function buildPlantRequestAutoReply(name: string, city: string, state: string) {
   const first = name.trim().split(/\s+/)[0] ?? "brother";
   return `${first},
 
-Got your request to start a group in ${city}, ${state}. That is no small thing, and we do not take it lightly.
+Thank you for your willingness to start a group in ${city}, ${state}. That is no small thing.
 
-Someone will reach out to talk through next steps. It may take a few days. We are grateful you are willing to lead.
+So we can move this forward, reply to this email and tell me a bit more:
+  1. How many men you have in mind to start with.
+  2. A place you could meet, and a morning that works.
+  3. Where you are in your own walk right now.
+
+I will reach out to talk through next steps. It may take a few days. We are grateful you are willing to lead.
 
 Acts 20:28
 "Pay careful attention to yourselves and to all the flock, in which the Holy Spirit has made you overseers, to care for the church of God, which he obtained with his own blood."
 
-— Sheepdog Society
+— Jeremy, Sheepdog Society
 acts2028sheepdogsociety.com`;
 }

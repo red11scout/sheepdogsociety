@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { contactSubmissions } from "@/db/schema";
 import { z } from "zod/v4";
-import { resend, FROM_TRANSACTIONAL } from "@/lib/email";
+import { resend, FROM_TRANSACTIONAL, FROM_SHEPHERD, SHEPHERD_EMAIL } from "@/lib/email";
 
 const schema = z.object({
   name: z.string().min(1).max(200),
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     try {
       const { error } = await resend().emails.send({
         from: FROM_TRANSACTIONAL,
-        to: "shepherd@acts2028sheepdogsociety.com",
+        to: SHEPHERD_EMAIL,
         replyTo: parsed.data.email,
         subject: `New contact: ${topic} from ${parsed.data.name}`,
         text: `Name: ${parsed.data.name}\nEmail: ${parsed.data.email}\nTopic: ${topic}\n\n${parsed.data.message}`,
@@ -53,13 +53,15 @@ export async function POST(request: Request) {
       console.error("contact notification email failed", err);
     }
 
-    // Auto-reply to the sender — separate try/catch so a failure here
-    // never blocks the shepherd@ notification above or the response.
+    // Auto-reply FROM the shepherd, asking for the detail Jeremy needs to
+    // help — a reply goes straight to shepherd@. Separate try/catch so a
+    // failure here never blocks the notification above or the response.
     try {
       const { error } = await resend().emails.send({
-        from: FROM_TRANSACTIONAL,
+        from: FROM_SHEPHERD,
         to: parsed.data.email,
-        subject: "We got your message",
+        replyTo: SHEPHERD_EMAIL,
+        subject: "Got your message. Tell me a little more.",
         text: buildContactAutoReply(parsed.data.name),
       });
       if (error) console.error("contact auto-reply rejected", error);
@@ -80,13 +82,18 @@ function buildContactAutoReply(name: string) {
   const first = name.trim().split(/\s+/)[0] ?? "brother";
   return `${first},
 
-Got your message. Someone will read it and get back to you soon.
+Thanks for reaching out. I read every message myself.
 
-If it is urgent, reply to this email and it will reach us directly.
+So I can help you well, reply to this email with a few details:
+  1. What is on your heart, in a sentence or two.
+  2. The best way and time to reach you.
+  3. Anything else you want me to know.
+
+I will get back to you soon.
 
 Acts 20:28
 "Pay careful attention to yourselves and to all the flock, in which the Holy Spirit has made you overseers, to care for the church of God, which he obtained with his own blood."
 
-— Sheepdog Society
+— Jeremy, Sheepdog Society
 acts2028sheepdogsociety.com`;
 }

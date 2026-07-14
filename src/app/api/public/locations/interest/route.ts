@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { locationInterests, locations } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod/v4";
-import { resend, FROM_TRANSACTIONAL } from "@/lib/email";
+import { resend, FROM_TRANSACTIONAL, FROM_SHEPHERD, SHEPHERD_EMAIL } from "@/lib/email";
 
 const schema = z.object({
   locationId: z.string().uuid(),
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
 
       const { error } = await resend().emails.send({
         from: FROM_TRANSACTIONAL,
-        to: "shepherd@acts2028sheepdogsociety.com",
+        to: SHEPHERD_EMAIL,
         replyTo: email,
         subject: `New group interest: ${groupLabel}`,
         text: `Name: ${name}\nEmail: ${email}\nPhone: ${phone || "(not given)"}\n\nGroup: ${groupLabel}\n${leaderLine}\n\nMessage:\n${message || "(none)"}`,
@@ -78,13 +78,14 @@ export async function POST(request: Request) {
       console.error("group interest notification failed", err);
     }
 
-    // Auto-reply to the man who raised his hand — separate try/catch so
-    // a failure here never blocks the shepherd@ notification above.
+    // Auto-reply FROM the shepherd, asking for the detail the leader needs
+    // to welcome him well. A reply lands with Jeremy. Separate try/catch.
     try {
       const { error } = await resend().emails.send({
-        from: FROM_TRANSACTIONAL,
+        from: FROM_SHEPHERD,
         to: email,
-        subject: "Got your interest",
+        replyTo: SHEPHERD_EMAIL,
+        subject: "Got your interest. Tell us a little more.",
         text: buildInterestAutoReply(name, loc ? groupLabel : "the group"),
       });
       if (error) console.error("group interest auto-reply rejected", error);
@@ -105,13 +106,18 @@ function buildInterestAutoReply(name: string, groupLabel: string) {
   const first = name.trim().split(/\s+/)[0] ?? "brother";
   return `${first},
 
-Got your interest in ${groupLabel}. The group leader has your info and will reach out soon.
+Thanks for raising your hand about ${groupLabel}.
 
-If you do not hear back in a few days, reply to this email and we will follow up ourselves.
+So the leader can welcome you well, reply to this email and tell us:
+  1. The best way and time to reach you.
+  2. A word about what you are looking for.
+  3. Anything that would help us welcome you.
+
+Someone will be in touch soon. If you do not hear back in a few days, reply here and we will follow up ourselves.
 
 Acts 20:28
 "Pay careful attention to yourselves and to all the flock, in which the Holy Spirit has made you overseers, to care for the church of God, which he obtained with his own blood."
 
-— Sheepdog Society
+— Jeremy, Sheepdog Society
 acts2028sheepdogsociety.com`;
 }
