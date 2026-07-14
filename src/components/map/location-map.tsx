@@ -157,7 +157,9 @@ export function LocationMap({
       center: [-84.39, 33.75],
       zoom: 5,
       attributionControl: false,
-      cooperativeGestures: true,
+      // No cooperativeGestures: it demanded Ctrl+scroll / two fingers,
+      // which read as "the map won't zoom." Plain scroll + pinch zoom is
+      // what people expect on a locator map.
     });
 
     map.current.addControl(
@@ -183,10 +185,16 @@ export function LocationMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Hot-swap the basemap when the theme toggle flips. Mapbox preserves the
-  // camera and the DOM markers; style.load re-tunes the new palette.
+  // Hot-swap the basemap when the theme toggle flips. Skip the first run:
+  // the constructor already set this style, and a redundant setStyle on
+  // mount can race with the initial fitBounds and leave the map unzoomed.
+  const didInitStyle = useRef(false);
   useEffect(() => {
     if (!map.current) return;
+    if (!didInitStyle.current) {
+      didInitStyle.current = true;
+      return;
+    }
     map.current.setStyle(styleForTheme);
   }, [styleForTheme]);
 
