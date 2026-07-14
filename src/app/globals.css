@@ -1283,3 +1283,147 @@
     color-mix(in oklab, var(--background) 34%, transparent) 100%
   );
 }
+
+/* ====================================================================
+   GROUPS MAP — Night Watch. Each group is a lamp burning on a dark iron
+   map. Bespoke monochrome basemap tuned in location-map.tsx; here: the
+   glowing lamp markers, restyled Mapbox controls, premium popups, and a
+   cinematic vignette frame. Light + dark aware via the flame tokens.
+==================================================================== */
+
+/* Lamp marker — a warm core with a breathing halo, kin to the hero embers. */
+.sheepdog-lamp {
+  position: relative;
+  width: 22px;
+  height: 22px;
+  cursor: pointer;
+  will-change: transform;
+}
+.sheepdog-lamp__glow {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 48px;
+  height: 48px;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  background: radial-gradient(circle, var(--flame), transparent 66%);
+  opacity: 0.5;
+  pointer-events: none;
+  animation: nwLampPulse 3.6s ease-in-out infinite;
+}
+.sheepdog-lamp__core {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+  border-radius: 9999px;
+  background: var(--flame-bright);
+  box-shadow:
+    0 0 0 3px color-mix(in oklab, var(--flame) 45%, transparent),
+    0 0 12px 2px color-mix(in oklab, var(--flame) 70%, transparent);
+  transition:
+    transform 0.24s var(--nw-ease-out),
+    box-shadow 0.24s var(--nw-ease-out);
+}
+.sheepdog-lamp:hover { z-index: 5; }
+.sheepdog-lamp:hover .sheepdog-lamp__core {
+  transform: translate(-50%, -50%) scale(1.35);
+  box-shadow:
+    0 0 0 4px color-mix(in oklab, var(--flame) 60%, transparent),
+    0 0 22px 6px color-mix(in oklab, var(--flame) 85%, transparent);
+}
+.sheepdog-lamp:hover .sheepdog-lamp__glow { opacity: 0.82; }
+@keyframes nwLampPulse {
+  0%, 100% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.38; }
+  50% { transform: translate(-50%, -50%) scale(1.12); opacity: 0.68; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sheepdog-lamp__glow { animation: none; }
+}
+
+/* Cinematic vignette framing the map (edges only; centre stays crisp). */
+.nw-map-vignette {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 60px 8px color-mix(in oklab, var(--color-iron) 45%, transparent),
+    inset 0 1px 0 color-mix(in oklab, var(--flame) 14%, transparent);
+}
+.dark .nw-map-vignette {
+  box-shadow:
+    inset 0 0 90px 18px #05070c,
+    inset 0 1px 0 color-mix(in oklab, var(--flame) 20%, transparent);
+}
+
+/* Mapbox navigation control — squared iron buttons, brass on hover. */
+.mapboxgl-ctrl-group {
+  background: color-mix(in oklab, var(--card) 90%, transparent) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 10px 28px -16px #000 !important;
+  overflow: hidden;
+  backdrop-filter: blur(6px);
+}
+.mapboxgl-ctrl-group button {
+  width: 34px !important;
+  height: 34px !important;
+  background: transparent !important;
+}
+.mapboxgl-ctrl-group button + button {
+  border-top: 1px solid var(--border) !important;
+}
+.mapboxgl-ctrl-group button:hover {
+  background: color-mix(in oklab, var(--flame) 16%, transparent) !important;
+}
+.mapboxgl-ctrl-group button .mapboxgl-ctrl-icon { opacity: 0.65; }
+.dark .mapboxgl-ctrl-group button .mapboxgl-ctrl-icon { filter: invert(1); }
+.mapboxgl-ctrl-attrib {
+  background: color-mix(in oklab, var(--card) 70%, transparent) !important;
+}
+.mapboxgl-ctrl-attrib a { color: var(--muted-foreground) !important; }
+
+/* Premium popup — a lit card, no tip, hairline flame edge. */
+.sheepdog-popup .mapboxgl-popup-content {
+  background: var(--card) !important;
+  color: var(--foreground) !important;
+  border: 1px solid var(--border);
+  border-radius: 0;
+  padding: 0 !important;
+  overflow: hidden;
+  box-shadow:
+    0 24px 60px -22px #000,
+    inset 0 1px 0 color-mix(in oklab, var(--flame) 22%, transparent);
+}
+.sheepdog-popup .mapboxgl-popup-tip { display: none !important; }
+.sheepdog-popup .mapboxgl-popup-close-button { display: none !important; }
+.nw-pop { padding: 16px 18px; min-width: 232px; font-family: var(--font-inter), system-ui, sans-serif; }
+.nw-pop__loc {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--color-brass-deep);
+}
+.nw-pop__name {
+  font-family: var(--font-fraunces), Georgia, serif;
+  font-weight: 600; font-size: 21px; line-height: 1.05; letter-spacing: -0.01em;
+  margin: 8px 0 0; color: var(--foreground);
+}
+.nw-pop__meta {
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase;
+  color: var(--color-brass-deep); margin-top: 12px;
+}
+.nw-pop__place { font-size: 13px; color: var(--muted-foreground); margin: 8px 0 0; line-height: 1.5; }
+.nw-pop__link {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font-jetbrains-mono), monospace;
+  font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--color-brass-deep); text-decoration: none;
+  margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px;
+  transition: color 0.16s ease;
+}
+.nw-pop__link:hover { color: var(--color-brass); }

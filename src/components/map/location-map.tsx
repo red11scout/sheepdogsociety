@@ -31,9 +31,100 @@ type LocationMapProps = {
   className?: string;
 };
 
-const BRASS = "#A6803A";
-const IRON = "#1F2A2E";
-const BONE = "#F2EBDD";
+/**
+ * Night Watch basemap palettes. The default Mapbox dark/light styles are
+ * generic; we re-tone every layer at runtime into a bespoke monochrome
+ * iron map (night) / warm parchment map (first light), so the groups read
+ * as lamps burning on the land rather than pins on a stock street map.
+ */
+const NIGHT = {
+  land: "#111a28",
+  water: "#0a101c",
+  road: "#37425a",
+  roadMajor: "#55648a",
+  label: "#d2cbba",
+  labelHalo: "#0a101c",
+  building: "#16202f",
+  boundary: "#3a4864",
+};
+const DAY = {
+  land: "#efe9db",
+  water: "#dcd6c5",
+  road: "#d0c8b5",
+  roadMajor: "#bcb298",
+  label: "#5f5540",
+  labelHalo: "#f6f2e7",
+  building: "#e6dfce",
+  boundary: "#cfc7b3",
+};
+
+/**
+ * Re-tone the active Mapbox style into the Night Watch palette. Runs on
+ * every `style.load` (initial + theme swap). Per-layer set calls are
+ * wrapped so a layer that doesn't accept a given paint prop is skipped,
+ * not thrown — keeps us resilient to Mapbox style-version churn.
+ */
+function tuneBasemap(m: mapboxgl.Map, isDark: boolean) {
+  const p = isDark ? NIGHT : DAY;
+  const style = m.getStyle();
+  if (!style?.layers) return;
+
+  // LIGHT touch: the default Mapbox dark/light styles already read well
+  // (legible roads + labels). We only deepen water to a Night Watch navy,
+  // warm the major-road network a touch, and declutter POI/transit/airport
+  // labels so the groups' lamps are the only points of interest. The
+  // basemap's own legibility is preserved — the identity comes from the
+  // glowing markers, the vignette, and the controls.
+  for (const layer of style.layers) {
+    const id = layer.id;
+    const set = (prop: string, val: unknown) => {
+      try {
+        (m.setPaintProperty as (i: string, p: string, v: unknown) => void)(
+          id,
+          prop,
+          val
+        );
+      } catch {
+        /* layer doesn't support this paint prop */
+      }
+    };
+    try {
+      switch (layer.type) {
+        case "fill":
+          if (/water/i.test(id)) set("fill-color", p.water);
+          break;
+        case "line":
+          if (/water|river|canal/i.test(id)) set("line-color", p.water);
+          else if (/motorway|trunk/i.test(id)) set("line-color", p.roadMajor);
+          break;
+        case "symbol":
+          if (/poi|transit|airport|natural[-_]?label|water[-_]?point/i.test(id)) {
+            try {
+              m.setLayoutProperty(id, "visibility", "none");
+            } catch {
+              /* noop */
+            }
+          }
+          break;
+      }
+    } catch {
+      /* skip unstylable layer */
+    }
+  }
+
+  // Subtle atmospheric depth toward the horizon.
+  try {
+    m.setFog({
+      color: p.water,
+      "high-color": p.land,
+      "horizon-blend": 0.02,
+      "space-color": isDark ? "#05070c" : "#e8e2d2",
+      "star-intensity": 0,
+    });
+  } catch {
+    /* fog unsupported */
+  }
+}
 
 export function LocationMap({
   locations,
@@ -44,7 +135,10 @@ export function LocationMap({
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
   const { resolvedTheme } = useTheme();
-  const styleForTheme = resolvedTheme === "light" ? MAP_STYLE_LIGHT : MAP_STYLE_DARK;
+  const isDark = resolvedTheme !== "light";
+  const isDarkRef = useRef(isDark);
+  isDarkRef.current = isDark;
+  const styleForTheme = isDark ? MAP_STYLE_DARK : MAP_STYLE_LIGHT;
 
   useEffect(() => {
     if (!mapContainer.current || map.current) return;
@@ -63,6 +157,7 @@ export function LocationMap({
       center: [-84.39, 33.75],
       zoom: 5,
       attributionControl: false,
+      cooperativeGestures: true,
     });
 
     map.current.addControl(
@@ -74,7 +169,10 @@ export function LocationMap({
       "bottom-right"
     );
 
-    map.current.on("load", () => {
+    // style.load fires on first load AND after every setStyle (theme swap),
+    // so the palette re-tunes with the current theme each time.
+    map.current.on("style.load", () => {
+      if (map.current) tuneBasemap(map.current, isDarkRef.current);
       setMapLoaded(true);
     });
 
@@ -85,8 +183,8 @@ export function LocationMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Hot-swap basemap when the theme toggle flips. Mapbox preserves
-  // the camera position; markers are re-added in the next effect below.
+  // Hot-swap the basemap when the theme toggle flips. Mapbox preserves the
+  // camera and the DOM markers; style.load re-tunes the new palette.
   useEffect(() => {
     if (!map.current) return;
     map.current.setStyle(styleForTheme);
@@ -95,35 +193,18 @@ export function LocationMap({
   useEffect(() => {
     if (!map.current || !mapLoaded) return;
 
-    const existingMarkers = document.querySelectorAll(".sheepdog-marker");
-    existingMarkers.forEach((el) => el.remove());
+    document.querySelectorAll(".sheepdog-lamp").forEach((el) => el.remove());
 
     locations.forEach((loc) => {
       const lat = parseFloat(loc.latitude);
       const lng = parseFloat(loc.longitude);
       if (isNaN(lat) || isNaN(lng)) return;
 
+      // A lamp: a warm core inside a breathing halo (see globals.css).
       const el = document.createElement("div");
-      el.className = "sheepdog-marker";
-      el.style.cssText = `
-        width: 16px;
-        height: 16px;
-        background: ${BRASS};
-        border: 2px solid ${BONE};
-        border-radius: 0;
-        cursor: pointer;
-        box-shadow: 0 0 0 4px rgba(166, 128, 58, 0.18);
-        transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s;
-      `;
-      el.onmouseenter = () => {
-        el.style.transform = "rotate(45deg) scale(1.15)";
-        el.style.boxShadow = `0 0 0 6px rgba(166, 128, 58, 0.28)`;
-      };
-      el.onmouseleave = () => {
-        el.style.transform = "rotate(45deg) scale(1)";
-        el.style.boxShadow = `0 0 0 4px rgba(166, 128, 58, 0.18)`;
-      };
-      el.style.transform = "rotate(45deg)";
+      el.className = "sheepdog-lamp";
+      el.innerHTML =
+        '<span class="sheepdog-lamp__glow"></span><span class="sheepdog-lamp__core"></span>';
 
       const memberPart =
         loc.groupSize != null
@@ -134,19 +215,17 @@ export function LocationMap({
         .join(" · ");
 
       const popup = new mapboxgl.Popup({
-        offset: 18,
+        offset: 20,
         closeButton: false,
         maxWidth: "300px",
         className: "sheepdog-popup",
       }).setHTML(`
-        <div style="font-family: var(--font-inter), system-ui, sans-serif; padding: 14px 16px; background: ${IRON}; color: ${BONE}; min-width: 220px;">
-          <div style="font-family: var(--font-jetbrains-mono), monospace; font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: ${BRASS};">${loc.city}, ${loc.state}</div>
-          <h3 style="font-family: var(--font-fraunces), 'Helvetica Neue', Arial, sans-serif; font-weight: 800; font-size: 20px; line-height: 1; margin: 8px 0 0; letter-spacing: -0.01em;">${loc.name}</h3>
-          ${meta ? `<div style="font-family: var(--font-jetbrains-mono), monospace; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: ${BRASS}; margin-top: 12px;">${meta}</div>` : ""}
-          ${loc.meetingPlace ? `<p style="font-size: 13px; opacity: 0.7; margin: 8px 0 0; line-height: 1.5;">${loc.meetingPlace}</p>` : ""}
-          <a href="/groups/${loc.slug ?? loc.id}" style="display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-jetbrains-mono), monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: ${BRASS}; text-decoration: none; margin-top: 14px; border-top: 1px solid rgba(199, 183, 154, 0.15); padding-top: 14px;">
-            View details →
-          </a>
+        <div class="nw-pop">
+          <div class="nw-pop__loc">${loc.city}, ${loc.state}</div>
+          <h3 class="nw-pop__name">${loc.name}</h3>
+          ${meta ? `<div class="nw-pop__meta">${meta}</div>` : ""}
+          ${loc.meetingPlace ? `<p class="nw-pop__place">${loc.meetingPlace}</p>` : ""}
+          <a class="nw-pop__link" href="/groups/${loc.slug ?? loc.id}">View details →</a>
         </div>
       `);
 
@@ -169,7 +248,7 @@ export function LocationMap({
           bounds.extend([lng, lat]);
         }
       });
-      map.current.fitBounds(bounds, { padding: 60, maxZoom: 12 });
+      map.current.fitBounds(bounds, { padding: 72, maxZoom: 11 });
     }
   }, [locations, mapLoaded, onSelectLocation]);
 
@@ -180,6 +259,8 @@ export function LocationMap({
         map.current?.flyTo({
           center: [pos.coords.longitude, pos.coords.latitude],
           zoom: 10,
+          duration: 2200,
+          essential: true,
         });
       },
       () => {}
@@ -187,12 +268,13 @@ export function LocationMap({
   }
 
   return (
-    <div className={`relative ${className}`}>
+    <div className={`relative overflow-hidden ${className}`}>
       <div ref={mapContainer} className="h-full w-full" />
+      <div className="nw-map-vignette" aria-hidden="true" />
       <button
         type="button"
         onClick={handleLocateMe}
-        className="lift absolute bottom-4 left-4 z-10 inline-flex items-center gap-2 border border-bone/30 bg-iron px-4 py-2 text-xs font-medium uppercase tracking-wider text-bone transition-colors hover:border-brass hover:text-brass"
+        className="nw-cta absolute left-4 top-4 z-10 inline-flex items-center gap-2 border border-border bg-card/85 px-4 py-2 text-xs font-medium uppercase tracking-wider text-foreground/80 backdrop-blur-sm transition-colors hover:border-brass hover:text-brass"
       >
         <Icon name="locate" size={14} />
         Near me
