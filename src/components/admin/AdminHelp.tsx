@@ -86,7 +86,7 @@ const TOPICS: { section: string; items: Topic[] }[] = [
       },
       {
         title: "Members directory",
-        body: "Phase D wires the new <MemberSignup /> form. Until then, signups land in newsletterSubscribers and groupInquiries via the existing forms.",
+        body: "Signups from /join land in the members table, managed at /admin/members. Newsletter-only subscribers live under Subscribers.",
         href: "/admin/users",
       },
     ],

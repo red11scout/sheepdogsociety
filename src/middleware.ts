@@ -48,7 +48,6 @@ const PUBLIC_ROUTES = [
   /^\/join(\/.*)?$/,
   // Auth pages and API routes
   /^\/admin\/sign-in(\/.*)?$/,
-  /^\/admin\/check-email(\/.*)?$/,
   /^\/sign-in(\/.*)?$/, // legacy Clerk routes — redirect handled in page
   /^\/sign-up(\/.*)?$/,
   /^\/pending(\/.*)?$/,

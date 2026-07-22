@@ -18,7 +18,7 @@ export default async function AdminLocationRequestsPage() {
     .where(eq(users.id, userId));
 
   if (!currentUser || currentUser.role !== "admin") {
-    redirect("/dashboard");
+    redirect("/");
   }
 
   const requests = await db

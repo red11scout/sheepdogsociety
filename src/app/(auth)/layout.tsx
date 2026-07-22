@@ -1,6 +1,6 @@
-// Minimal layout for the auth pages (/admin/sign-in, /admin/check-email).
-// Bypasses the (app) layout's Clerk-aware shell so these pages stay reachable
-// for unauthenticated visitors after the middleware swap.
+// Minimal layout for the auth pages (/admin/sign-in).
+// Bypasses the (app) layout's shell so these pages stay reachable
+// for unauthenticated visitors.
 export default function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <main className="min-h-screen flex items-center justify-center bg-background text-foreground px-4">

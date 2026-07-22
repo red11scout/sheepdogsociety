@@ -57,8 +57,8 @@ export default async function LetterIndexPage() {
                 {t["letter.empty.heading"]}
               </h2>
               {/* Copy fix, deliberate: the elevated index has no inline
-                  signup form, so "below" would point at nothing. The
-                  nearest form lives in the footer. */}
+                  signup form, so "below" would point at nothing. Signup
+                  lives at /join. */}
               <p className="mx-auto mt-4 max-w-md font-pullquote text-lg italic text-muted-foreground">
                 {t["letter.empty.body"]}
               </p>
