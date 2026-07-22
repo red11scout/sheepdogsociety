@@ -190,6 +190,52 @@ describe.runIf(RUN)("plant approval — live integration", () => {
   );
 
   it(
+    "legacy approved-but-groupless request: push creates the group, free-text meeting details survive",
+    async () => {
+      const { db } = await import("@/db");
+      const { locations, locationRequests } = await import("@/db/schema");
+      const { eq } = await import("drizzle-orm");
+      const { approvePlantRequest } = await import("@/server/plant-approval");
+
+      // Pre-0025 shape: status already approved, no group, no address, no
+      // structured meeting fields — only the legacy free-text details.
+      const [req] = await db
+        .insert(locationRequests)
+        .values({
+          requesterName: "ZZTEST Legacy Approved",
+          requesterEmail: `zztest-legacy-${suffix}@example.com`,
+          proposedCity: "Granite Bay",
+          proposedState: "California",
+          proposedMeetingDetails: "Tuesday morning 6:00am Starbucks on the parkway",
+          status: "approved",
+          reviewedAt: new Date(),
+        })
+        .returning();
+      cleanup.requestIds.push(req.id);
+
+      const result = await approvePlantRequest(req, await adminId());
+      expect(result.ok).toBe(true);
+      if (!result.ok) return;
+      expect(result.alreadyCreated).toBe(false);
+      cleanup.groupIds.push(result.groupId);
+      if (result.memberId) cleanup.memberIds.push(result.memberId);
+
+      const [loc] = await db
+        .select()
+        .from(locations)
+        .where(eq(locations.groupId, result.groupId));
+      // Granite Bay, CA is ~38.76N, -121.16W — city/state fallback pin.
+      expect(parseFloat(loc.latitude)).toBeGreaterThan(37);
+      expect(parseFloat(loc.latitude)).toBeLessThan(40);
+      expect(parseFloat(loc.longitude)).toBeLessThan(-120);
+      expect(loc.displayedOnMap).toBe(true);
+      // The free-text meeting details land in special instructions.
+      expect(loc.specialInstructions).toContain("Starbucks");
+    },
+    60000
+  );
+
+  it(
     "unmappable street address: approval falls back to city/state coordinates",
     async () => {
       const { db } = await import("@/db");

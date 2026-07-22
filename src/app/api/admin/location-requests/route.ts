@@ -52,8 +52,13 @@ export async function PATCH(request: Request) {
   }
 
   // Approval creates the real group + map pin AND promotes the requester's
-  // member row to group leader — see src/server/plant-approval.ts.
+  // member row to group leader — see src/server/plant-approval.ts. The same
+  // path powers the "Create the group" button on requests that were
+  // approved before this pipeline existed (status flipped, no group).
+  const wasAlreadyApproved = req.status === "approved";
   let groupSlug: string | null = null;
+  let groupId: string | null = null;
+  let alreadyCreated = false;
   if (status === "approved") {
     const result = await approvePlantRequest(req, admin.id);
     if (!result.ok) {
@@ -66,6 +71,8 @@ export async function PATCH(request: Request) {
       );
     }
     groupSlug = result.slug;
+    groupId = result.groupId;
+    alreadyCreated = result.alreadyCreated;
     revalidatePath("/admin/groups");
     revalidatePath("/admin/members");
     revalidatePath("/groups");
@@ -84,8 +91,10 @@ export async function PATCH(request: Request) {
     .returning();
 
   // Tell the requester the outcome. Non-blocking: the status change and
-  // group creation above are already durable.
-  if (updated) {
+  // group creation above are already durable. Skipped when nothing new
+  // happened (re-approving a request whose group already exists) so a
+  // stray double-click never re-emails the man.
+  if (updated && !(alreadyCreated && wasAlreadyApproved)) {
     try {
       const { error } = await resend().emails.send({
         from: FROM_TRANSACTIONAL,
@@ -106,7 +115,7 @@ export async function PATCH(request: Request) {
     }
   }
 
-  return NextResponse.json({ success: true });
+  return NextResponse.json({ success: true, groupId, slug: groupSlug });
 }
 
 function buildDecisionEmail(

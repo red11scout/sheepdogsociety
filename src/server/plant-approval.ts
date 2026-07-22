@@ -84,6 +84,11 @@ export async function approvePlantRequest(
 
   const groupName =
     req.proposedGroupName?.trim() || `${req.proposedCity} Watch`;
+  // Legacy (pre-0025) requests carry their meeting info only as free text —
+  // don't drop it; land it in the location's special instructions.
+  const hasStructuredMeeting = Boolean(
+    req.meetingDay?.trim() || req.meetingTime?.trim() || req.meetingPlace?.trim()
+  );
   const { groupId } = await upsertGroupLocationCore(
     {
       groupName,
@@ -97,6 +102,10 @@ export async function approvePlantRequest(
       longitude,
       meetingDay: req.meetingDay ?? "",
       meetingTime: req.meetingTime ?? "",
+      specialInstructions:
+        !hasStructuredMeeting && req.proposedMeetingDetails?.trim()
+          ? req.proposedMeetingDetails.trim()
+          : undefined,
       contactName: req.requesterName,
       contactEmail: req.requesterEmail,
       contactPhone: req.requesterPhone ?? "",
