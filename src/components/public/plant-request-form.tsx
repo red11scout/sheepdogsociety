@@ -17,19 +17,28 @@ const US_STATES = [
   "West Virginia", "Wisconsin", "Wyoming",
 ];
 
+const MEETING_DAYS = [
+  "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday",
+];
+
 /**
- * Plant-a-group request form, extracted from the retired
- * /locations/request page for the /join start path. Posts to the
- * existing public API; copy preserved verbatim.
+ * Plant-a-group request form on the /join start path. Collects the same
+ * fields the admin add-a-group form holds, so an approval can create the
+ * group — pin on the map included — without retyping anything.
  */
 export function PlantRequestForm() {
   const [form, setForm] = useState({
     requesterName: "",
     requesterEmail: "",
     requesterPhone: "",
+    proposedGroupName: "",
     proposedCity: "",
     proposedState: "",
-    proposedMeetingDetails: "",
+    address: "",
+    zipCode: "",
+    meetingPlace: "",
+    meetingDay: "",
+    meetingTime: "",
     reason: "",
   });
   const [honeypot, setHoneypot] = useState("");
@@ -94,7 +103,8 @@ export function PlantRequestForm() {
 
       <p className="max-w-2xl font-pullquote text-lede italic text-muted-foreground">
         Two to twelve men. Weekly Scripture study. Tell us about your vision
-        and we will set up a video call.
+        and we will set up a video call. When your group is approved it goes
+        straight onto the map.
       </p>
 
       <div className="flex items-center gap-4">
@@ -128,11 +138,29 @@ export function PlantRequestForm() {
       />
 
       <div className="mt-4 flex items-center gap-4">
-        <span className="folio">Where</span>
+        <span className="folio">The group</span>
         <div className="hairline flex-1" aria-hidden />
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
+      <Field
+        label="Group name"
+        required
+        maxLength={200}
+        placeholder="e.g. Northside Watch"
+        value={form.proposedGroupName}
+        onChange={(v) => update("proposedGroupName", v)}
+      />
+
+      <Field
+        label="Street address of the meeting spot"
+        required
+        maxLength={300}
+        placeholder="e.g. 415 5th Ave N"
+        value={form.address}
+        onChange={(v) => update("address", v)}
+      />
+
+      <div className="grid gap-6 md:grid-cols-3">
         <Field
           label="City"
           required
@@ -161,20 +189,53 @@ export function PlantRequestForm() {
             ))}
           </select>
         </div>
+        <Field
+          label="ZIP (optional)"
+          maxLength={10}
+          value={form.zipCode}
+          onChange={(v) => update("zipCode", v)}
+        />
       </div>
 
-      <div>
-        <label className="folio" htmlFor="plant-meeting">
-          Proposed meeting day, time, place
-        </label>
-        <textarea
-          id="plant-meeting"
-          rows={3}
-          maxLength={2000}
-          placeholder="e.g. Saturday mornings 7am at the diner on 5th"
-          value={form.proposedMeetingDetails}
-          onChange={(e) => update("proposedMeetingDetails", e.target.value)}
-          className="mt-3 w-full border border-foreground/20 bg-transparent px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-foreground/40 focus:border-brass focus:outline-none"
+      <div className="mt-4 flex items-center gap-4">
+        <span className="folio">When you would meet</span>
+        <div className="hairline flex-1" aria-hidden />
+      </div>
+
+      <div className="grid gap-6 md:grid-cols-3">
+        <Field
+          label="Meeting place (optional)"
+          maxLength={200}
+          placeholder="e.g. The diner on 5th"
+          value={form.meetingPlace}
+          onChange={(v) => update("meetingPlace", v)}
+        />
+        <div>
+          <label className="folio" htmlFor="plant-day">
+            Day (optional)
+          </label>
+          <select
+            id="plant-day"
+            value={form.meetingDay}
+            onChange={(e) => update("meetingDay", e.target.value)}
+            className="mt-3 h-11 w-full border border-foreground/20 bg-transparent px-4 text-sm text-foreground focus:border-brass focus:outline-none"
+          >
+            <option value="" className="bg-background text-foreground">
+              Select day
+            </option>
+            {MEETING_DAYS.map((d) => (
+              <option key={d} value={d} className="bg-background text-foreground">
+                {d}
+              </option>
+            ))}
+          </select>
+        </div>
+        <Field
+          label="Time (optional)"
+          maxLength={50}
+          placeholder="e.g. 7:00 AM"
+          value={form.meetingTime}
+          onChange={(v) => update("meetingTime", v)}
         />
       </div>
 
@@ -218,6 +279,7 @@ function Field({
   required,
   type = "text",
   maxLength,
+  placeholder,
   value,
   onChange,
 }: {
@@ -225,6 +287,7 @@ function Field({
   required?: boolean;
   type?: string;
   maxLength?: number;
+  placeholder?: string;
   value: string;
   onChange: (v: string) => void;
 }) {
@@ -240,6 +303,7 @@ function Field({
         type={type}
         required={required}
         maxLength={maxLength}
+        placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="mt-3 h-11 w-full border border-foreground/20 bg-transparent px-4 text-base text-foreground placeholder:text-foreground/40 focus:border-brass focus:outline-none"

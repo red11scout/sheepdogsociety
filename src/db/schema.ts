@@ -970,6 +970,21 @@ export const locationRequests = pgTable("location_requests", {
   proposedState: text("proposed_state").notNull(),
   proposedMeetingDetails: text("proposed_meeting_details").default(""),
   reason: text("reason").default(""),
+  /** Migration 0025: the request carries everything the admin add-a-group
+   *  form holds, so approval can auto-create the group + map pin. */
+  proposedGroupName: text("proposed_group_name").default(""),
+  address: text("address").default(""),
+  zipCode: text("zip_code").default(""),
+  meetingDay: text("meeting_day").default(""),
+  meetingTime: text("meeting_time").default(""),
+  meetingPlace: text("meeting_place").default(""),
+  locationType: text("location_type").default("in_person"),
+  /** Geocoded best-effort at submit time (text, matching locations). */
+  latitude: text("latitude").default(""),
+  longitude: text("longitude").default(""),
+  /** Set on approval — approving twice never creates a duplicate group. */
+  createdGroupId: uuid("created_group_id"),
+  createdLocationId: uuid("created_location_id"),
   status: text("status").notNull().default("pending"),
   reviewedBy: text("reviewed_by"),
   reviewedAt: timestamp("reviewed_at"),

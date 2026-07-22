@@ -48,12 +48,12 @@ export function CommandPalette({ open, onClose, onAskAi }: CommandPaletteProps) 
         keywords: "gathering meetup",
       },
       {
-        id: "send-broadcast",
-        label: "Send a Resend broadcast",
+        id: "send-announcement",
+        label: "Send an announcement",
         icon: "send",
-        href: "/admin/newsletter",
+        href: "/admin/announcements",
         group: "Quick action",
-        keywords: "email blast",
+        keywords: "email blast broadcast shepherd",
       },
       // Pages
       {
