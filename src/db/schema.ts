@@ -997,16 +997,22 @@ export const locationRequests = pgTable("location_requests", {
 
 export const locationInterests = pgTable("location_interests", {
   id: uuid("id").primaryKey().defaultRandom(),
-  locationId: uuid("location_id")
-    .notNull()
-    .references(() => locations.id, { onDelete: "cascade" }),
+  /** Nullable since migration 0027 — a "no preference yet" join request
+   *  has no specific group. */
+  locationId: uuid("location_id").references(() => locations.id, {
+    onDelete: "cascade",
+  }),
   name: text("name").notNull(),
   email: text("email").notNull(),
   phone: text("phone").default(""),
   message: text("message").default(""),
-  /** "new" | "contacted" | "resolved". Plain text (matches locationRequests'
-   *  own status column) — these submissions had no admin visibility at all
-   *  until this column was added; see /admin/location-interests. */
+  /** Weekly-letter checkbox from the join form; carried onto the member
+   *  row when the admin approves (migration 0027). */
+  wantsNewsletter: boolean("wants_newsletter").notNull().default(true),
+  /** Set on approval — approving twice never creates a duplicate member. */
+  createdMemberId: uuid("created_member_id"),
+  /** "new" | "contacted" | "approved" | "resolved". Plain text (matches
+   *  locationRequests' own status column); see /admin/location-interests. */
   status: text("status").notNull().default("new"),
   respondedAt: timestamp("responded_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),

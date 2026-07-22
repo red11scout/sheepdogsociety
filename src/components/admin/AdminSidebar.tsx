@@ -104,7 +104,7 @@ export function AdminSidebar({
           label: "Group Interest",
           icon: "inbox",
           badge: pendingLocationInterests > 0 ? pendingLocationInterests : undefined,
-          hint: "Men who clicked 'I'm interested' on a group's page. Mark contacted or resolved as you follow up.",
+          hint: "Join requests from /join and group pages. Approve to add the man to Members, assigned to his group; the leader already got an intro email.",
         },
         {
           href: "/admin/prayer",

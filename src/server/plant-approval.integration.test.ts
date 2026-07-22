@@ -62,7 +62,8 @@ describe.runIf(RUN)("plant approval — live integration", () => {
       const { eq } = await import("drizzle-orm");
       const { approvePlantRequest } = await import("@/server/plant-approval");
 
-      // 1. Simulate what /api/members writes for intent=start.
+      // 1. Simulate a member row with a linked plant request (the shape a
+      //    start-path signup produced; the memberId branch stays supported).
       const [member] = await db
         .insert(members)
         .values({
