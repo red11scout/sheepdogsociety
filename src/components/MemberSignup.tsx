@@ -52,6 +52,11 @@ export function MemberSignup({
   const [state, setState] = useState("");
   const [zip, setZip] = useState("");
   const [timeline, setTimeline] = useState<Timeline>("now");
+  const [groupName, setGroupName] = useState("");
+  const [address, setAddress] = useState("");
+  const [meetingPlace, setMeetingPlace] = useState("");
+  const [meetingDay, setMeetingDay] = useState("");
+  const [meetingTime, setMeetingTime] = useState("");
   const [note, setNote] = useState("");
   const [wantsNewsletter, setWantsNewsletter] = useState(true);
   const [wantsEvents, setWantsEvents] = useState(true);
@@ -83,6 +88,11 @@ export function MemberSignup({
             state: intent === "start" && state ? state : undefined,
             zip: intent === "start" && zip ? zip : undefined,
             timeline: intent === "start" ? timeline : undefined,
+            groupName: intent === "start" && groupName ? groupName : undefined,
+            address: intent === "start" && address ? address : undefined,
+            meetingPlace: intent === "start" && meetingPlace ? meetingPlace : undefined,
+            meetingDay: intent === "start" && meetingDay ? meetingDay : undefined,
+            meetingTime: intent === "start" && meetingTime ? meetingTime : undefined,
             note: note || undefined,
             wantsNewsletter,
             wantsEvents,
@@ -205,6 +215,34 @@ export function MemberSignup({
       {/* Conditional: start → city + timeline */}
       {intent === "start" && (
         <>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Field label="Group name" required hint="What the group will be called on the map.">
+              <input
+                type="text"
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+                maxLength={200}
+                placeholder="e.g. Northside Watch"
+                required
+                className={inputCls()}
+              />
+            </Field>
+            <Field
+              label="Street address of the meeting spot"
+              required
+              hint="We use this to put your group on the map."
+            >
+              <input
+                type="text"
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                maxLength={300}
+                placeholder="e.g. 415 5th Ave N"
+                required
+                className={inputCls()}
+              />
+            </Field>
+          </div>
           <div className="grid gap-4 md:grid-cols-3">
             <Field label="City" required>
               <input
@@ -232,6 +270,42 @@ export function MemberSignup({
                 value={zip}
                 onChange={(e) => setZip(e.target.value)}
                 maxLength={10}
+                className={inputCls()}
+              />
+            </Field>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Field label="Meeting place (optional)">
+              <input
+                type="text"
+                value={meetingPlace}
+                onChange={(e) => setMeetingPlace(e.target.value)}
+                maxLength={200}
+                placeholder="e.g. The diner on 5th"
+                className={inputCls()}
+              />
+            </Field>
+            <Field label="Meeting day (optional)">
+              <select
+                value={meetingDay}
+                onChange={(e) => setMeetingDay(e.target.value)}
+                className={inputCls()}
+              >
+                <option value="">Pick a day</option>
+                {["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"].map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+            </Field>
+            <Field label="Meeting time (optional)">
+              <input
+                type="text"
+                value={meetingTime}
+                onChange={(e) => setMeetingTime(e.target.value)}
+                maxLength={50}
+                placeholder="e.g. 7:00 AM"
                 className={inputCls()}
               />
             </Field>
@@ -323,7 +397,8 @@ export function MemberSignup({
           !terms ||
           !name.trim() ||
           !email.trim() ||
-          (intent === "start" && (!city.trim() || !state.trim()))
+          (intent === "start" &&
+            (!city.trim() || !state.trim() || !groupName.trim() || !address.trim()))
         }
         className="lift inline-flex h-12 items-center gap-3 bg-foreground px-6 text-sm font-medium uppercase tracking-[0.18em] text-background transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-40"
       >

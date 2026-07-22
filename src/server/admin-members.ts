@@ -40,6 +40,8 @@ export interface AdminMemberRow {
   locationName: string | null;
   city: string | null;
   state: string | null;
+  zip: string | null;
+  timeline: string | null;
   source: string | null;
   note: string | null;
   adminNote: string | null;
@@ -70,6 +72,8 @@ export async function listAdminMembers(): Promise<AdminMemberRow[]> {
       locationId: members.locationId,
       city: members.city,
       state: members.state,
+      zip: members.zip,
+      timeline: members.timeline,
       source: members.source,
       note: members.note,
       adminNote: members.adminNote,
@@ -114,6 +118,8 @@ export async function listAdminMembers(): Promise<AdminMemberRow[]> {
       locationName: r.locationName,
       city: r.city,
       state: r.state,
+      zip: r.zip,
+      timeline: r.timeline,
       source: r.source,
       note: r.note,
       adminNote: r.adminNote,
@@ -257,6 +263,8 @@ export async function createMember(
     locationName,
     city: created.city,
     state: created.state,
+    zip: created.zip,
+    timeline: created.timeline,
     source: created.source,
     note: created.note,
     adminNote: created.adminNote,

@@ -9,8 +9,8 @@ import {
   deleteGroupLocation,
   upsertGroupLocation,
   type AdminGroupLocationRow,
-  type UpsertGroupLocationInput,
 } from "@/server/admin-groups-locations";
+import type { UpsertGroupLocationInput } from "@/server/groups-locations-core";
 import { format } from "date-fns";
 
 interface Props {
@@ -478,13 +478,14 @@ export function GroupsLocationsTable({ initialRows, dbError }: Props) {
               <th className="px-3 py-2 text-left">Day</th>
               <th className="px-3 py-2 text-left">Time</th>
               <SortableTh label="#" k="memberCount" sortKey={sortKey} sortDir={sortDir} onClick={() => toggleSort("memberCount")} />
+              <SortableTh label="Created" k="createdAt" sortKey={sortKey} sortDir={sortDir} onClick={() => toggleSort("createdAt")} />
               <th className="w-16 px-3 py-2"></th>
             </tr>
           </thead>
           <tbody className="divide-y divide-stone/10">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={14} className="px-6 py-12 text-center text-stone/60">
+                <td colSpan={15} className="px-6 py-12 text-center text-stone/60">
                   No groups match. Adjust filters or add a new group.
                 </td>
               </tr>
@@ -624,6 +625,9 @@ function GroupRow({
       <td className="px-3 py-2 text-stone/85">{row.meetingDay ?? ""}</td>
       <td className="px-3 py-2 text-stone/85">{row.meetingTime ?? ""}</td>
       <td className="px-3 py-2 text-right text-stone/65">{row.memberCount}</td>
+      <td className="px-3 py-2 text-stone/55">
+        {format(new Date(row.createdAt), "MMM d, yyyy")}
+      </td>
       <td className="px-3 py-2 text-right">
         <div className="inline-flex items-center gap-1">
           <button

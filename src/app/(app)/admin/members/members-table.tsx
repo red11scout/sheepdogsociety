@@ -40,6 +40,18 @@ const APPROVAL_TONE: Record<string, string> = {
 
 const APPROVAL_OPTIONS = ["pending", "approved", "rejected"] as const;
 
+const INTENT_LABEL: Record<string, string> = {
+  join: "Join",
+  start: "Start",
+  just_keep_posted: "Posted",
+};
+
+const TIMELINE_LABEL: Record<string, string> = {
+  now: "Ready now",
+  three_months: "Within three months",
+  exploring: "Just exploring",
+};
+
 const ROLE_OPTIONS = [
   { value: "member", label: "Member" },
   { value: "leader", label: "Leader" },
@@ -91,6 +103,7 @@ export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>("createdAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [busy, startTransition] = useTransition();
   const [errorMsg, setErrorMsg] = useState("");
   const [showAdd, setShowAdd] = useState(false);
@@ -190,6 +203,14 @@ export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
     }
   }
 
+  function toggleExpand(id: string) {
+    setExpanded((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  }
   function toggleSelect(id: string) {
     setSelected((prev) => {
       const n = new Set(prev);
@@ -647,10 +668,12 @@ export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
                   aria-label="Select all"
                 />
               </th>
+              <th className="w-8 px-2 py-2"></th>
               <SortableTh label="ID" k="email" sortKey={sortKey} sortDir={sortDir} onClick={() => toggleSort("email")} />
               <SortableTh label="Approval" k="approvalStatus" sortKey={sortKey} sortDir={sortDir} onClick={() => toggleSort("approvalStatus")} />
               <SortableTh label="Active" k="isActive" sortKey={sortKey} sortDir={sortDir} onClick={() => toggleSort("isActive")} />
               <SortableTh label="Letter" k="subscribed" sortKey={sortKey} sortDir={sortDir} onClick={() => toggleSort("subscribed")} />
+              <th className="px-3 py-2 text-left">Intent</th>
               <SortableTh label="Role" k="role" sortKey={sortKey} sortDir={sortDir} onClick={() => toggleSort("role")} />
               <SortableTh label="First" k="firstName" sortKey={sortKey} sortDir={sortDir} onClick={() => toggleSort("firstName")} />
               <SortableTh label="Last" k="lastName" sortKey={sortKey} sortDir={sortDir} onClick={() => toggleSort("lastName")} />
@@ -667,7 +690,7 @@ export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
           <tbody className="divide-y divide-stone/10">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={16} className="px-6 py-12 text-center text-stone/60">
+                <td colSpan={18} className="px-6 py-12 text-center text-stone/60">
                   No members match. Adjust filters or wait for the first signup.
                 </td>
               </tr>
@@ -678,6 +701,8 @@ export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
                   row={r}
                   groupOptions={groupOptions}
                   selected={selected.has(r.id)}
+                  expanded={expanded.has(r.id)}
+                  onToggleExpand={() => toggleExpand(r.id)}
                   onToggleSelect={() => toggleSelect(r.id)}
                   onApprove={(s) => handleApproval(r.id, s)}
                   onActive={(a) => handleActive(r.id, a)}
@@ -736,6 +761,8 @@ function MemberRow({
   row,
   groupOptions,
   selected,
+  expanded,
+  onToggleExpand,
   onToggleSelect,
   onApprove,
   onActive,
@@ -746,6 +773,8 @@ function MemberRow({
   row: AdminMemberRow;
   groupOptions: { id: string; name: string }[];
   selected: boolean;
+  expanded: boolean;
+  onToggleExpand: () => void;
   onToggleSelect: () => void;
   onApprove: (s: "pending" | "approved" | "rejected") => void;
   onActive: (a: boolean) => void;
@@ -754,6 +783,7 @@ function MemberRow({
   onDelete: () => void;
 }) {
   return (
+    <>
     <tr className={cn("hover:bg-iron/30", selected && "bg-brass/5")}>
       <td className="px-3 py-2">
         <input
@@ -762,6 +792,17 @@ function MemberRow({
           onChange={onToggleSelect}
           className="h-3.5 w-3.5 accent-brass"
         />
+      </td>
+      <td className="px-2 py-2">
+        <button
+          type="button"
+          onClick={onToggleExpand}
+          className="p-1 text-stone/50 transition-colors hover:text-brass"
+          title={expanded ? "Hide details" : "Show everything he submitted"}
+          aria-expanded={expanded}
+        >
+          <Icon name={expanded ? "chevron-down" : "chevron-right"} size={12} />
+        </button>
       </td>
       <td className="px-3 py-2 font-mono text-[0.6875rem] text-stone/55">
         {row.shortId}
@@ -774,6 +815,18 @@ function MemberRow({
       </td>
       <td className="px-3 py-2">
         <SubscribedCheckbox subscribed={row.subscribed} onSubscribed={onSubscribed} />
+      </td>
+      <td className="px-3 py-2">
+        <span
+          className={cn(
+            "border px-1.5 py-0.5 text-[0.625rem] uppercase tracking-wider",
+            row.intent === "start"
+              ? "border-brass/40 bg-brass/10 text-brass"
+              : "border-stone/25 text-stone/70"
+          )}
+        >
+          {INTENT_LABEL[row.intent] ?? row.intent}
+        </span>
       </td>
       <td className="px-3 py-2 text-stone/85">{row.role}</td>
       <td className="px-3 py-2 text-bone">{row.firstName ?? "—"}</td>
@@ -821,6 +874,47 @@ function MemberRow({
         </button>
       </td>
     </tr>
+    {expanded && (
+      <tr className="bg-iron/20">
+        <td colSpan={18} className="px-6 py-3">
+          <dl className="grid grid-cols-1 gap-x-8 gap-y-2 text-[0.6875rem] sm:grid-cols-2 lg:grid-cols-3">
+            <DetailItem label="Intent" value={INTENT_LABEL[row.intent] ?? row.intent} />
+            <DetailItem
+              label="Location given"
+              value={[row.city, row.state, row.zip].filter(Boolean).join(", ") || null}
+            />
+            <DetailItem
+              label="Timeline"
+              value={row.timeline ? TIMELINE_LABEL[row.timeline] ?? row.timeline : null}
+            />
+            <DetailItem label="Source" value={row.source} />
+            <DetailItem
+              label="Joined"
+              value={format(new Date(row.createdAt), "MMM d, yyyy h:mm a")}
+            />
+            <DetailItem label="Weekly letter" value={row.subscribed ? "Subscribed" : "Unsubscribed"} />
+            <div className="sm:col-span-2 lg:col-span-3">
+              <DetailItem label="His note" value={row.note} />
+            </div>
+            <div className="sm:col-span-2 lg:col-span-3">
+              <DetailItem label="Admin note" value={row.adminNote} />
+            </div>
+          </dl>
+        </td>
+      </tr>
+    )}
+    </>
+  );
+}
+
+function DetailItem({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div className="flex gap-2">
+      <dt className="shrink-0 uppercase tracking-wider text-stone/50">{label}</dt>
+      <dd className="min-w-0 whitespace-pre-wrap break-words text-stone/85">
+        {value || "—"}
+      </dd>
+    </div>
   );
 }
 
@@ -978,6 +1072,18 @@ function MemberCard({
           <p className="truncate text-xs text-stone/70">
             {row.email ?? row.phone ?? row.signalAccount ?? "—"}
           </p>
+          <p className="mt-0.5 text-[0.625rem] uppercase tracking-wider text-stone/55">
+            {[
+              INTENT_LABEL[row.intent] ?? row.intent,
+              [row.city, row.state].filter(Boolean).join(", "),
+              format(new Date(row.createdAt), "MMM d, yyyy"),
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </p>
+          {row.note && (
+            <p className="mt-1 line-clamp-3 text-xs text-stone/70">{row.note}</p>
+          )}
         </div>
         {/* Status pill: the table's status cell renders the approval select
             styled as a pill — reused verbatim here as pill AND action. */}

@@ -51,10 +51,13 @@ export async function geocodeAddress(
       Accept: "application/json",
       // The token is URL-restricted to the site's domains. Server-side
       // fetches send no Referer, so Mapbox returns 403 Forbidden without
-      // this — identify the request as coming from our own site.
+      // this — identify the request as coming from our own site. In dev,
+      // NEXT_PUBLIC_SITE_URL is localhost (not on the token's allowlist),
+      // so only use it when it's an https origin; else the canonical site.
       Referer:
-        process.env.NEXT_PUBLIC_SITE_URL ??
-        "https://www.acts2028sheepdogsociety.com/",
+        (process.env.NEXT_PUBLIC_SITE_URL?.startsWith("https://")
+          ? process.env.NEXT_PUBLIC_SITE_URL
+          : null) ?? "https://www.acts2028sheepdogsociety.com/",
     },
     // Mapbox responses are public; cache aggressively at the edge so
     // repeated lookups don't burn quota.

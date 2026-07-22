@@ -985,6 +985,9 @@ export const locationRequests = pgTable("location_requests", {
   /** Set on approval — approving twice never creates a duplicate group. */
   createdGroupId: uuid("created_group_id"),
   createdLocationId: uuid("created_location_id"),
+  /** Migration 0026: the members row that filed this request (join form's
+   *  "Start a group" path). Approval promotes that member to group leader. */
+  memberId: uuid("member_id"),
   status: text("status").notNull().default("pending"),
   reviewedBy: text("reviewed_by"),
   reviewedAt: timestamp("reviewed_at"),
