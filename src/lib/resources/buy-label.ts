@@ -5,7 +5,10 @@
  * falls back to "Get the book".
  */
 
-const AMAZON_HOST_RE = /(^|\.)amazon\.(com|co\.uk|ca|de|fr|es|it|com\.au|co\.jp)$/i;
+// Includes Amazon's link shorteners (a.co, amzn.to, amzn.eu) — those are
+// what the mobile app's Share button produces.
+const AMAZON_HOST_RE =
+  /(^|\.)(amazon\.(com|co\.uk|ca|de|fr|es|it|com\.au|co\.jp)|a\.co|amzn\.(to|eu|asia))$/i;
 
 export function buyLabelForUrl(url: string | null | undefined): string {
   if (!url?.trim()) return "Get the book";
