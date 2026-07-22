@@ -1,27 +1,30 @@
 # SheepDog Society — Project Todo
 
-## 2026-07-22 — Legacy sweep + plant approval + subscribed + announcements (ACTIVE)
+## 2026-07-22 — Legacy sweep + plant approval + subscribed + announcements (DONE)
 Spec: docs/superpowers/specs/2026-07-22-plant-approval-subscribed-announcements-design.md
 
 ### PR 1 — chore/legacy-sweep
-- [ ] Delete dormant bible libs, dead email templates, member-area pages + APIs (+repoint 2 redirects), orphaned api/groups + api/events, blog stack, AskTheWatch + ask API, scroll-area, newsletter-form, clerk webhook, check-email (+verifyRequest+middleware), supabase cutover script
-- [ ] Remove unused deps (@tiptap ×7, @dnd-kit ×2, @auth/drizzle-adapter, @vercel/og)
-- [ ] Fix stale comments (letter page, encouragements.ts, AdminHelp)
-- [ ] Verify: tsc, vitest, build → PR → merge
+- [x] Delete dormant bible libs, dead email templates, member-area pages + APIs (+repoint 2 redirects), orphaned api/groups + api/events, blog stack, AskTheWatch + ask API, scroll-area, newsletter-form, clerk webhook, check-email (+verifyRequest+middleware), supabase cutover script
+- [x] Remove unused deps (@tiptap ×7, @dnd-kit ×2, @auth/drizzle-adapter, @vercel/og)
+- [x] Fix stale comments (letter page, encouragements.ts, AdminHelp)
+- [x] Verify: tsc, vitest, build → PR → merge
 
 ### PR 2 — feat/plant-subscribe-announce
-- [ ] Migration 0025 (location_requests cols, members.subscribed, announcements) + schema
-- [ ] Plant form new fields; submit route zod + best-effort geocode
-- [ ] Approval: geocode + upsertGroupLocation + idempotency + decision email w/ group URL; admin cards show new fields
-- [ ] members.subscribed: server actions + table column + add form + bulk
-- [ ] Resend audience sync lib + wiring (toggle, create, /api/members, webhook) + backfill script
-- [ ] Announcements: schema, server actions, email template, HMAC unsubscribe, admin page, sidebar, command palette
-- [ ] Vitest: token, dedupe/chunk, template render
-- [ ] Verify: tsc, vitest, build → PR → merge
-- [ ] Post-merge: watch migration action + deploy; verify prod join form; test announcement send
+- [x] Migration 0025 (location_requests cols, members.subscribed, announcements) + schema
+- [x] Plant form new fields; submit route zod + best-effort geocode
+- [x] Approval: geocode + upsertGroupLocation + idempotency + decision email w/ group URL; admin cards show new fields
+- [x] members.subscribed: server actions + table column + add form + bulk
+- [x] Resend audience sync lib + wiring (toggle, create, /api/members, webhook) + backfill script
+- [x] Announcements: schema, server actions, email template, HMAC unsubscribe, admin page, sidebar, command palette
+- [x] Vitest: token, dedupe/chunk, template render
+- [x] Verify: tsc, vitest, build → PR → merge
+- [x] Post-merge: watch migration action + deploy; verify prod join form; test announcement send
 
 ### Review
-(fill after implementation)
+- PR #70 (legacy sweep) + PR #71 (features) merged to main; migration 0025 applied twice (manual + GH Action re-run, idempotent) — both green, prod deploy Ready.
+- Verified live: /join?path=start renders all group fields on prod; Mapbox geocode OK after Referer fix (also fixed the silently-broken admin Find-on-map); audience queries 31/1/2 against Neon; branded shepherd@ test email delivered; /api/public/unsubscribe rejects tampered tokens with the branded 400 page.
+- Also fixed: Vercel Development DATABASE_URL (stale Supabase → Neon pooled), so local dev works again (AUTH_SECRET still unset locally — admin sign-in stays prod-only).
+- Follow-ups: run scripts/sync-members-to-audience.mjs once if existing members should join the weekly-letter audience immediately (new toggles/signups sync automatically); consider adding AUTH_SECRET to the Development env for local admin login.
 
 
 ## Phase 1: Infrastructure ✅
@@ -59,7 +62,7 @@ Spec: docs/superpowers/specs/2026-07-22-plant-approval-subscribed-announcements-
 - [x] POST /api/public/contact route
 
 ## Phase 5: Deploy & Verify
-- [ ] Push schema changes to Supabase (`npx drizzle-kit push`)
+- [x] Push schema changes to Supabase (`npx drizzle-kit push`)
 - [ ] Deploy to Vercel
 - [ ] Set Mapbox token env var
 - [ ] Verify all public pages render
