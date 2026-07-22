@@ -3,6 +3,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getPublicResourceBySlug } from "@/server/resources-admin";
 import { Icon } from "@/components/icons/Icon";
+import { buyLabelForUrl } from "@/lib/resources/buy-label";
 import { format } from "date-fns";
 import { PrintButton } from "./print-button";
 import { ResourceBody } from "./resource-body";
@@ -49,10 +50,15 @@ export default async function ResourceDetailPage({
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
   const isPdf = row.sourceMime === "application/pdf";
 
-  // Provider-driven render branch.
+  // Provider-driven render branch. A "book" is an Amazon row OR any
+  // link-backed row filed under Book Studies (publisher sites, other
+  // stores) — both get the cover + buy-button layout.
   const isYouTube = row.provider === "youtube" && !!row.embedHtml;
-  const isAmazonBook = row.provider === "amazon";
-  const isWebLink = row.provider === "web" && !!row.url;
+  const isBook =
+    row.provider === "amazon" ||
+    (row.category === "book-studies" && row.type === "link" && !!row.url);
+  const isWebLink = row.provider === "web" && !!row.url && !isBook;
+  const buyLabel = buyLabelForUrl(row.url);
   const hasCompanion =
     !!(row.companionUrl || row.companionFileKey);
 
@@ -89,7 +95,7 @@ export default async function ResourceDetailPage({
                 Watch on YouTube
               </a>
             )}
-            {isAmazonBook && row.url && (
+            {isBook && row.url && (
               <a
                 href={row.url}
                 target="_blank"
@@ -97,7 +103,7 @@ export default async function ResourceDetailPage({
                 className="lift inline-flex h-9 items-center gap-2 border border-foreground/15 bg-card px-4 text-xs font-medium uppercase tracking-wider text-foreground transition-colors hover:border-brass hover:text-brass"
               >
                 <Icon name="arrow-up-right" size={12} />
-                Buy on Amazon
+                {buyLabel}
               </a>
             )}
             {isWebLink && row.url && (
@@ -122,7 +128,7 @@ export default async function ResourceDetailPage({
             {row.bodyHtml && (
               <PrintButton title={row.title} label="Save as PDF / Print" />
             )}
-            {!isYouTube && !isAmazonBook && !isWebLink && downloadUrl && !row.bodyHtml && (
+            {!isYouTube && !isBook && !isWebLink && downloadUrl && !row.bodyHtml && (
               // Pure file resources (no extracted body): direct download
               // is the only thing we can offer. Browser will preview if
               // it's a PDF, save if it's anything else.
@@ -135,7 +141,7 @@ export default async function ResourceDetailPage({
                 Download {isPdf ? "PDF" : isDocx ? ".docx" : "file"}
               </a>
             )}
-            {!isYouTube && !isAmazonBook && !isWebLink && downloadUrl && row.bodyHtml && (
+            {!isYouTube && !isBook && !isWebLink && downloadUrl && row.bodyHtml && (
               // Body-html row that ALSO has the original file uploaded:
               // surface the original as a tertiary text link so it
               // doesn't compete with the primary Save-as-PDF action.
@@ -280,12 +286,13 @@ export default async function ResourceDetailPage({
                 </p>
               )}
             </div>
-          ) : isAmazonBook ? (
+          ) : isBook ? (
             <BookCard
               title={row.title}
               author={row.author}
               thumbnailUrl={row.thumbnailUrl}
               buyUrl={row.url ?? ""}
+              buyLabel={buyLabel}
               summary={null}
             />
           ) : isWebLink ? (
@@ -405,12 +412,14 @@ function BookCard({
   author,
   thumbnailUrl,
   buyUrl,
+  buyLabel,
   summary,
 }: {
   title: string;
   author: string | null;
   thumbnailUrl: string | null;
   buyUrl: string;
+  buyLabel: string;
   summary: string | null;
 }) {
   return (
@@ -451,7 +460,7 @@ function BookCard({
               className="lift inline-flex h-11 items-center gap-2 bg-foreground px-5 text-xs font-medium uppercase tracking-wider text-background transition-colors hover:bg-foreground/85"
             >
               <Icon name="arrow-up-right" size={14} />
-              Buy on Amazon
+              {buyLabel}
             </a>
           </div>
         )}
