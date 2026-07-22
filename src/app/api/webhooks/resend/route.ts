@@ -1,7 +1,8 @@
 import { Webhook } from "svix";
 import { db } from "@/db";
 import { newsletterSubscribers } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { members } from "@/db/schema-members";
+import { and, eq, isNull } from "drizzle-orm";
 
 // Resend webhook for delivery events.
 // Subscribers state mirror: marks rows inactive on bounce/complaint/unsubscribe.
@@ -85,6 +86,16 @@ export async function POST(req: Request) {
       } catch (err) {
         console.error("subscriber sync failed", err);
       }
+      // Keep the /admin/members checkbox honest when a man unsubscribes
+      // from an email footer or hard-bounces.
+      try {
+        await db
+          .update(members)
+          .set({ subscribed: false, updatedAt: new Date() })
+          .where(and(eq(members.email, email), isNull(members.deletedAt)));
+      } catch (err) {
+        console.error("member subscribed sync failed", err);
+      }
       break;
     case "contact.subscribed":
       try {
@@ -94,6 +105,14 @@ export async function POST(req: Request) {
           .where(eq(newsletterSubscribers.email, email));
       } catch (err) {
         console.error("subscriber sync failed", err);
+      }
+      try {
+        await db
+          .update(members)
+          .set({ subscribed: true, updatedAt: new Date() })
+          .where(and(eq(members.email, email), isNull(members.deletedAt)));
+      } catch (err) {
+        console.error("member subscribed sync failed", err);
       }
       break;
     default:

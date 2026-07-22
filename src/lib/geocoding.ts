@@ -47,7 +47,15 @@ export async function geocodeAddress(
   url.searchParams.set("autocomplete", "false");
 
   const res = await fetch(url.toString(), {
-    headers: { Accept: "application/json" },
+    headers: {
+      Accept: "application/json",
+      // The token is URL-restricted to the site's domains. Server-side
+      // fetches send no Referer, so Mapbox returns 403 Forbidden without
+      // this — identify the request as coming from our own site.
+      Referer:
+        process.env.NEXT_PUBLIC_SITE_URL ??
+        "https://www.acts2028sheepdogsociety.com/",
+    },
     // Mapbox responses are public; cache aggressively at the edge so
     // repeated lookups don't burn quota.
     next: { revalidate: 60 * 60 * 24 * 30 },

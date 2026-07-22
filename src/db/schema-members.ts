@@ -4,6 +4,7 @@ import {
   timestamp,
   uuid,
   boolean,
+  integer,
   jsonb,
   pgEnum,
   uniqueIndex,
@@ -83,6 +84,11 @@ export const members = pgTable(
     approvalStatus: text("approval_status").notNull().default("pending"),
     isActive: boolean("is_active").notNull().default(true),
     status: memberStatusEnum("status").notNull().default("new"),
+    /** Admin checkbox (migration 0025): checked = the man receives the weekly
+     *  letter + announcements. Mirrored into the Resend Audience best-effort
+     *  (src/lib/resend-audience.ts). Seeded from the /join wantsNewsletter
+     *  toggle; defaults to yes. */
+    subscribed: boolean("subscribed").notNull().default(true),
     /** Public page they came from. Helps the admin understand source. */
     source: text("source"),
     /** Free-text note from the man. Shown in /admin/members. */
@@ -131,6 +137,22 @@ export const memberNotificationPrefs = pgTable("member_notification_prefs", {
 
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+/** Send history for /admin/announcements — one row per shepherd@ email blast.
+ *  audience: "all" | "leaders" | "groups". sent_by mirrors the plain-text
+ *  reviewer columns elsewhere (users.id, no FK). */
+export const announcements = pgTable("announcements", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  subject: text("subject").notNull(),
+  body: text("body").notNull(),
+  ctaLabel: text("cta_label").default(""),
+  ctaUrl: text("cta_url").default(""),
+  audience: text("audience").notNull(),
+  sentBy: text("sent_by").notNull(),
+  recipientCount: integer("recipient_count").notNull().default(0),
+  sentAt: timestamp("sent_at", { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
 /** Per-admin UI prefs — coachmark dismissals, sidebar collapsed state, etc.

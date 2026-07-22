@@ -6,6 +6,7 @@ import { members, memberNotificationPrefs } from "@/db/schema";
 import { and, eq, isNull } from "drizzle-orm";
 import { resend, FROM_AUTH, FROM_SHEPHERD, SHEPHERD_EMAIL } from "@/lib/email";
 import { sendSms, SMS_OPT_IN_DISCLOSURE } from "@/lib/sms";
+import { syncMemberToAudience } from "@/lib/resend-audience";
 
 export const runtime = "nodejs";
 
@@ -91,6 +92,7 @@ export async function POST(req: Request) {
           timeline: body.intent === "start" ? body.timeline ?? null : null,
           note: body.note ?? null,
           source: body.source ?? null,
+          subscribed: body.wantsNewsletter,
           updatedAt: new Date(),
         })
         .where(eq(members.id, existing.id));
@@ -110,11 +112,16 @@ export async function POST(req: Request) {
           timeline: body.intent === "start" ? body.timeline ?? null : null,
           note: body.note ?? null,
           source: body.source ?? null,
+          subscribed: body.wantsNewsletter,
           termsAcceptedAt: new Date(),
         })
         .returning({ id: members.id });
       memberId = created.id;
     }
+
+    // Mirror the newsletter choice into the Resend Audience so the man
+    // actually receives (or stops receiving) the weekly letter. Best-effort.
+    await syncMemberToAudience(emailLower, body.wantsNewsletter);
 
     // Notification prefs — upsert by memberId.
     const unsubscribeToken = randomBytes(32).toString("hex");

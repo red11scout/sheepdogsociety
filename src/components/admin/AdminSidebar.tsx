@@ -64,10 +64,16 @@ export function AdminSidebar({
           hint: "Your weekly word to the brotherhood. Single letters or a scheduled series. Theme, image, voice, AI draft, then publish.",
         },
         {
+          href: "/admin/announcements",
+          label: "Announcements",
+          icon: "send",
+          hint: "Email the brotherhood from shepherd@. All subscribed members, leaders only, or men in groups.",
+        },
+        {
           href: "/admin/newsletter",
           label: "Subscribers",
           icon: "mail",
-          hint: "Newsletter list. Send Resend Broadcasts.",
+          hint: "Newsletter-only list synced with Resend. The weekly letter goes to this audience.",
         },
       ],
     },

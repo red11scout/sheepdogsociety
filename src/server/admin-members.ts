@@ -6,6 +6,7 @@ import { members } from "@/db/schema-members";
 import { groups, locations, users } from "@/db/schema";
 import { eq, isNull, desc, and, inArray } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { syncMemberToAudience } from "@/lib/resend-audience";
 
 async function requireAdmin(): Promise<string> {
   const { userId } = await auth();
@@ -22,6 +23,8 @@ export interface AdminMemberRow {
   shortId: string;
   approvalStatus: string;
   isActive: boolean;
+  /** Weekly-letter checkbox — mirrored into the Resend Audience. */
+  subscribed: boolean;
   role: string;
   firstName: string | null;
   lastName: string | null;
@@ -50,6 +53,7 @@ export async function listAdminMembers(): Promise<AdminMemberRow[]> {
       id: members.id,
       approvalStatus: members.approvalStatus,
       isActive: members.isActive,
+      subscribed: members.subscribed,
       role: members.role,
       firstName: members.firstName,
       lastName: members.lastName,
@@ -94,6 +98,7 @@ export async function listAdminMembers(): Promise<AdminMemberRow[]> {
       shortId: r.id.slice(0, 8),
       approvalStatus: r.approvalStatus,
       isActive: r.isActive,
+      subscribed: r.subscribed,
       role: r.role,
       firstName,
       lastName,
@@ -144,6 +149,7 @@ export interface CreateMemberInput {
   role?: string;
   groupId?: string | null;
   adminNote?: string;
+  subscribed?: boolean;
 }
 
 /**
@@ -215,6 +221,7 @@ export async function createMember(
       locationId,
       approvalStatus: "approved",
       isActive: true,
+      subscribed: input.subscribed ?? true,
       status: "new",
       source: "admin",
       adminNote: input.adminNote?.trim() || null,
@@ -224,11 +231,17 @@ export async function createMember(
 
   revalidatePath("/admin/members");
 
+  // Mirror the checkbox into the Resend Audience (best-effort, non-blocking).
+  if (created.email) {
+    await syncMemberToAudience(created.email, created.subscribed);
+  }
+
   return {
     id: created.id,
     shortId: created.id.slice(0, 8),
     approvalStatus: created.approvalStatus,
     isActive: created.isActive,
+    subscribed: created.subscribed,
     role: created.role,
     firstName: created.firstName,
     lastName: created.lastName,
@@ -258,6 +271,7 @@ export interface UpdateMemberInput {
   id: string;
   approvalStatus?: "pending" | "approved" | "rejected";
   isActive?: boolean;
+  subscribed?: boolean;
   role?: string;
   firstName?: string;
   lastName?: string;
@@ -284,6 +298,7 @@ export async function updateMember(input: UpdateMemberInput) {
   for (const k of [
     "approvalStatus",
     "isActive",
+    "subscribed",
     "role",
     "firstName",
     "lastName",
@@ -318,17 +333,26 @@ export async function updateMember(input: UpdateMemberInput) {
   }
   await db.update(members).set(patch).where(eq(members.id, input.id));
   revalidatePath("/admin/members");
+  // Mirror a subscribed flip into the Resend Audience (best-effort).
+  if (input.subscribed !== undefined) {
+    const [row] = await db
+      .select({ email: members.email })
+      .from(members)
+      .where(eq(members.id, input.id));
+    await syncMemberToAudience(row?.email, input.subscribed);
+  }
 }
 
 export async function bulkUpdateMembers(
   ids: string[],
-  patch: Pick<UpdateMemberInput, "approvalStatus" | "isActive" | "groupId">
+  patch: Pick<UpdateMemberInput, "approvalStatus" | "isActive" | "subscribed" | "groupId">
 ) {
   await requireAdmin();
   if (ids.length === 0) return;
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   if (patch.approvalStatus !== undefined) updates.approvalStatus = patch.approvalStatus;
   if (patch.isActive !== undefined) updates.isActive = patch.isActive;
+  if (patch.subscribed !== undefined) updates.subscribed = patch.subscribed;
   if (patch.groupId !== undefined) {
     updates.groupId = patch.groupId;
     if (patch.groupId) {
@@ -344,6 +368,16 @@ export async function bulkUpdateMembers(
   }
   await db.update(members).set(updates).where(inArray(members.id, ids));
   revalidatePath("/admin/members");
+  // Mirror bulk subscribed flips into the Resend Audience (best-effort).
+  if (patch.subscribed !== undefined) {
+    const rows = await db
+      .select({ email: members.email })
+      .from(members)
+      .where(inArray(members.id, ids));
+    for (const r of rows) {
+      await syncMemberToAudience(r.email, patch.subscribed);
+    }
+  }
 }
 
 export async function softDeleteMember(id: string) {

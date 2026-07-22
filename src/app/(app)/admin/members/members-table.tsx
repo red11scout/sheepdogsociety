@@ -24,6 +24,7 @@ type SortKey =
   | "createdAt"
   | "approvalStatus"
   | "isActive"
+  | "subscribed"
   | "role"
   | "firstName"
   | "lastName"
@@ -94,6 +95,7 @@ export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
   const [errorMsg, setErrorMsg] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [newMember, setNewMember] = useState<NewMemberForm>(EMPTY_NEW_MEMBER);
+  const [newSubscribed, setNewSubscribed] = useState(true);
   const [addError, setAddError] = useState("");
 
   const canSubmitNew =
@@ -107,6 +109,7 @@ export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
 
   function cancelAdd() {
     setNewMember(EMPTY_NEW_MEMBER);
+    setNewSubscribed(true);
     setAddError("");
     setShowAdd(false);
   }
@@ -128,9 +131,11 @@ export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
           signalAccount: newMember.signalAccount,
           groupId: newMember.groupId || null,
           role: newMember.role,
+          subscribed: newSubscribed,
         });
         setRows((prev) => [created, ...prev]);
         setNewMember(EMPTY_NEW_MEMBER);
+        setNewSubscribed(true);
         setShowAdd(false);
       } catch (e) {
         setAddError(e instanceof Error ? e.message : "Could not add member.");
@@ -235,6 +240,18 @@ export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
     });
   }
 
+  async function handleSubscribed(id: string, subscribed: boolean) {
+    setErrorMsg("");
+    startTransition(async () => {
+      try {
+        await updateMember({ id, subscribed });
+        await patchRow(id, { subscribed });
+      } catch (e) {
+        setErrorMsg(e instanceof Error ? e.message : "Update failed");
+      }
+    });
+  }
+
   async function handleGroup(id: string, groupId: string | null) {
     setErrorMsg("");
     startTransition(async () => {
@@ -290,6 +307,20 @@ export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
         await bulkUpdateMembers(ids, { isActive });
         setRows((prev) =>
           prev.map((r) => (selected.has(r.id) ? { ...r, isActive } : r))
+        );
+      } catch (e) {
+        setErrorMsg(e instanceof Error ? e.message : "Bulk update failed");
+      }
+    });
+  }
+  async function bulkSubscribed(subscribed: boolean) {
+    if (selected.size === 0) return;
+    const ids = Array.from(selected);
+    startTransition(async () => {
+      try {
+        await bulkUpdateMembers(ids, { subscribed });
+        setRows((prev) =>
+          prev.map((r) => (selected.has(r.id) ? { ...r, subscribed } : r))
         );
       } catch (e) {
         setErrorMsg(e instanceof Error ? e.message : "Bulk update failed");
@@ -396,6 +427,18 @@ export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
                   </option>
                 ))}
               </select>
+            </label>
+            <label className="flex flex-col gap-1 text-xs text-stone/70">
+              <span className="section-mark text-stone/55">Weekly letter</span>
+              <span className="inline-flex h-9 items-center gap-2 border border-stone/20 px-3">
+                <input
+                  type="checkbox"
+                  checked={newSubscribed}
+                  onChange={(e) => setNewSubscribed(e.target.checked)}
+                  className="h-3.5 w-3.5 accent-brass"
+                />
+                <span className="text-sm text-bone">Subscribed</span>
+              </span>
             </label>
           </div>
           <p className="mt-3 max-w-3xl text-xs text-stone/55">
@@ -526,6 +569,22 @@ export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
           </button>
           <button
             type="button"
+            onClick={() => bulkSubscribed(true)}
+            disabled={busy}
+            className="inline-flex h-7 items-center gap-1.5 border border-stone/30 px-2 transition-colors hover:border-brass hover:text-brass"
+          >
+            Subscribe
+          </button>
+          <button
+            type="button"
+            onClick={() => bulkSubscribed(false)}
+            disabled={busy}
+            className="inline-flex h-7 items-center gap-1.5 border border-stone/30 px-2 transition-colors hover:border-brass hover:text-brass"
+          >
+            Unsubscribe
+          </button>
+          <button
+            type="button"
             onClick={bulkDelete}
             disabled={busy}
             className="inline-flex h-7 items-center gap-1.5 border border-oxblood/40 px-2 text-oxblood transition-colors hover:bg-oxblood/20"
@@ -566,6 +625,7 @@ export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
               onToggleSelect={() => toggleSelect(r.id)}
               onApprove={(s) => handleApproval(r.id, s)}
               onActive={(a) => handleActive(r.id, a)}
+              onSubscribed={(v) => handleSubscribed(r.id, v)}
               onGroup={(g) => handleGroup(r.id, g)}
               onDelete={() => handleDelete(r.id)}
             />
@@ -590,6 +650,7 @@ export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
               <SortableTh label="ID" k="email" sortKey={sortKey} sortDir={sortDir} onClick={() => toggleSort("email")} />
               <SortableTh label="Approval" k="approvalStatus" sortKey={sortKey} sortDir={sortDir} onClick={() => toggleSort("approvalStatus")} />
               <SortableTh label="Active" k="isActive" sortKey={sortKey} sortDir={sortDir} onClick={() => toggleSort("isActive")} />
+              <SortableTh label="Letter" k="subscribed" sortKey={sortKey} sortDir={sortDir} onClick={() => toggleSort("subscribed")} />
               <SortableTh label="Role" k="role" sortKey={sortKey} sortDir={sortDir} onClick={() => toggleSort("role")} />
               <SortableTh label="First" k="firstName" sortKey={sortKey} sortDir={sortDir} onClick={() => toggleSort("firstName")} />
               <SortableTh label="Last" k="lastName" sortKey={sortKey} sortDir={sortDir} onClick={() => toggleSort("lastName")} />
@@ -606,7 +667,7 @@ export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
           <tbody className="divide-y divide-stone/10">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={15} className="px-6 py-12 text-center text-stone/60">
+                <td colSpan={16} className="px-6 py-12 text-center text-stone/60">
                   No members match. Adjust filters or wait for the first signup.
                 </td>
               </tr>
@@ -620,6 +681,7 @@ export function MembersTable({ initialRows, groupOptions, dbError }: Props) {
                   onToggleSelect={() => toggleSelect(r.id)}
                   onApprove={(s) => handleApproval(r.id, s)}
                   onActive={(a) => handleActive(r.id, a)}
+                  onSubscribed={(v) => handleSubscribed(r.id, v)}
                   onGroup={(g) => handleGroup(r.id, g)}
                   onDelete={() => handleDelete(r.id)}
                 />
@@ -677,6 +739,7 @@ function MemberRow({
   onToggleSelect,
   onApprove,
   onActive,
+  onSubscribed,
   onGroup,
   onDelete,
 }: {
@@ -686,6 +749,7 @@ function MemberRow({
   onToggleSelect: () => void;
   onApprove: (s: "pending" | "approved" | "rejected") => void;
   onActive: (a: boolean) => void;
+  onSubscribed: (v: boolean) => void;
   onGroup: (g: string | null) => void;
   onDelete: () => void;
 }) {
@@ -707,6 +771,9 @@ function MemberRow({
       </td>
       <td className="px-3 py-2">
         <ActiveToggle isActive={row.isActive} onActive={onActive} className="h-6" />
+      </td>
+      <td className="px-3 py-2">
+        <SubscribedCheckbox subscribed={row.subscribed} onSubscribed={onSubscribed} />
       </td>
       <td className="px-3 py-2 text-stone/85">{row.role}</td>
       <td className="px-3 py-2 text-bone">{row.firstName ?? "—"}</td>
@@ -815,6 +882,26 @@ function ActiveToggle({
   );
 }
 
+/** The weekly-letter checkbox — check is yes, uncheck is no. */
+function SubscribedCheckbox({
+  subscribed,
+  onSubscribed,
+}: {
+  subscribed: boolean;
+  onSubscribed: (v: boolean) => void;
+}) {
+  return (
+    <input
+      type="checkbox"
+      checked={subscribed}
+      onChange={(e) => onSubscribed(e.target.checked)}
+      className="h-3.5 w-3.5 accent-brass"
+      aria-label={subscribed ? "Subscribed to the weekly letter" : "Not subscribed"}
+      title={subscribed ? "Gets the weekly letter" : "Does not get the weekly letter"}
+    />
+  );
+}
+
 function GroupSelect({
   value,
   groupOptions,
@@ -855,6 +942,7 @@ function MemberCard({
   onToggleSelect,
   onApprove,
   onActive,
+  onSubscribed,
   onGroup,
   onDelete,
 }: {
@@ -864,6 +952,7 @@ function MemberCard({
   onToggleSelect: () => void;
   onApprove: (s: "pending" | "approved" | "rejected") => void;
   onActive: (a: boolean) => void;
+  onSubscribed: (v: boolean) => void;
   onGroup: (g: string | null) => void;
   onDelete: () => void;
 }) {
@@ -900,6 +989,15 @@ function MemberCard({
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <ActiveToggle isActive={row.isActive} onActive={onActive} className="h-11 px-3" />
+        <label className="inline-flex h-11 items-center gap-2 border border-stone/20 px-3 text-[0.6875rem] uppercase tracking-wider text-stone/85">
+          <input
+            type="checkbox"
+            checked={row.subscribed}
+            onChange={(e) => onSubscribed(e.target.checked)}
+            className="h-3.5 w-3.5 accent-brass"
+          />
+          Letter
+        </label>
         <div className="flex min-w-[180px] flex-1 items-center gap-1.5">
           <span className="text-[0.625rem] uppercase tracking-wider text-stone/55">
             Group
