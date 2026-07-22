@@ -1,5 +1,29 @@
 # SheepDog Society — Project Todo
 
+## 2026-07-22 — Legacy sweep + plant approval + subscribed + announcements (ACTIVE)
+Spec: docs/superpowers/specs/2026-07-22-plant-approval-subscribed-announcements-design.md
+
+### PR 1 — chore/legacy-sweep
+- [ ] Delete dormant bible libs, dead email templates, member-area pages + APIs (+repoint 2 redirects), orphaned api/groups + api/events, blog stack, AskTheWatch + ask API, scroll-area, newsletter-form, clerk webhook, check-email (+verifyRequest+middleware), supabase cutover script
+- [ ] Remove unused deps (@tiptap ×7, @dnd-kit ×2, @auth/drizzle-adapter, @vercel/og)
+- [ ] Fix stale comments (letter page, encouragements.ts, AdminHelp)
+- [ ] Verify: tsc, vitest, build → PR → merge
+
+### PR 2 — feat/plant-subscribe-announce
+- [ ] Migration 0025 (location_requests cols, members.subscribed, announcements) + schema
+- [ ] Plant form new fields; submit route zod + best-effort geocode
+- [ ] Approval: geocode + upsertGroupLocation + idempotency + decision email w/ group URL; admin cards show new fields
+- [ ] members.subscribed: server actions + table column + add form + bulk
+- [ ] Resend audience sync lib + wiring (toggle, create, /api/members, webhook) + backfill script
+- [ ] Announcements: schema, server actions, email template, HMAC unsubscribe, admin page, sidebar, command palette
+- [ ] Vitest: token, dedupe/chunk, template render
+- [ ] Verify: tsc, vitest, build → PR → merge
+- [ ] Post-merge: watch migration action + deploy; verify prod join form; test announcement send
+
+### Review
+(fill after implementation)
+
+
 ## Phase 1: Infrastructure ✅
 - [x] Lazy DB init for Vercel build compatibility
 - [x] Update middleware with public routes

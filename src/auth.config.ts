@@ -17,7 +17,6 @@ export const authConfig = {
   // Pages live inside the (app) route group as /admin/sign-in
   pages: {
     signIn: "/admin/sign-in",
-    verifyRequest: "/admin/check-email",
   },
   callbacks: {
     // Hard allowlist for /admin/* magic-link sign-in.

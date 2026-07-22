@@ -243,8 +243,7 @@ export async function setEncouragementStatus(
  * Send the encouragement to the Resend audience as a broadcast. Idempotent:
  * if broadcast_id is already populated, returns early without sending.
  *
- * Uses the same shape as the legacy publishLetter pattern in
- * src/server/letters.ts: create the broadcast, immediately send it, store
+ * Create the broadcast, immediately send it, store
  * the broadcast id back on the row. Failures don't throw — the caller
  * gets a structured result and the letter stays published on the website.
  */
