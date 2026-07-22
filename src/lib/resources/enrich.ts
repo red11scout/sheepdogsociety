@@ -38,6 +38,9 @@ const YOUTUBE_HOSTS = new Set([
   "youtu.be",
 ]);
 const AMAZON_HOST_RE = /(^|\.)amazon\.(com|co\.uk|ca|de|fr|es|it|com\.au|co\.jp)$/i;
+/** Amazon's link shorteners — what the mobile app's Share button produces.
+ *  They 301 to the real /dp/<ASIN> product URL (see resolveAmazonShortLink). */
+export const AMAZON_SHORT_HOST_RE = /(^|\.)(a\.co|amzn\.(to|eu|asia))$/i;
 
 const FETCH_OPTIONS = {
   // Hint that we want HTML; some sites short-circuit otherwise.
@@ -59,7 +62,7 @@ export function detectProvider(url: string): Provider {
   }
   const host = u.hostname.toLowerCase();
   if (YOUTUBE_HOSTS.has(host)) return "youtube";
-  if (AMAZON_HOST_RE.test(host)) return "amazon";
+  if (AMAZON_HOST_RE.test(host) || AMAZON_SHORT_HOST_RE.test(host)) return "amazon";
   return "web";
 }
 
@@ -151,6 +154,54 @@ export async function enrichLink(url: string): Promise<EnrichedLink> {
 // Both APIs lookup by ISBN-13 (preferred) or ISBN-10. Amazon ASINs
 // for books are usually ISBN-10. Non-book ASINs (B0xxxxxxxx) skip
 // straight to a friendly "couldn't enrich" stub the admin can fill.
+
+/** Canonical product URL — stable, tracking-params stripped. */
+export function canonicalAmazonUrl(asin: string): string {
+  return `https://www.amazon.com/dp/${asin}`;
+}
+
+/**
+ * Resolve an a.co / amzn.to short link to the real product URL by walking
+ * redirects manually. Amazon's shortener is picky: it 404s bot UAs and
+ * bare requests, but honors a browser-shaped UA + Accept headers with a
+ * plain 301 (verified 2026-07-22). Up to 5 hops; returns null if no
+ * amazon product URL emerges.
+ */
+async function resolveAmazonShortLink(url: string): Promise<string | null> {
+  let current = url;
+  for (let hop = 0; hop < 5; hop++) {
+    let res: Response;
+    try {
+      // GET, not HEAD — a.co answers HEAD with 404 (verified 2026-07-22).
+      // The 301 body is empty and we never fetch the final product page:
+      // the loop returns as soon as an ASIN shows up in a Location URL.
+      res = await fetch(current, {
+        method: "GET",
+        redirect: "manual",
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36",
+          Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+          "Accept-Language": "en-US,en;q=0.9",
+        },
+      });
+    } catch {
+      return null;
+    }
+    const location = res.headers.get("location");
+    if (!location) {
+      // Terminal response. If we already landed on a product URL, use it.
+      return extractAmazonAsin(current) ? current : null;
+    }
+    try {
+      current = new URL(location, current).toString();
+    } catch {
+      return null;
+    }
+    if (extractAmazonAsin(current)) return current;
+  }
+  return extractAmazonAsin(current) ? current : null;
+}
 
 function extractAmazonAsin(url: string): string | null {
   try {
@@ -318,7 +369,29 @@ async function fetchGoogleBooks(isbn: string): Promise<BookMeta | null> {
 }
 
 async function enrichAmazon(url: string): Promise<EnrichedLink> {
-  const asin = extractAmazonAsin(url);
+  let productUrl = url;
+  let asin = extractAmazonAsin(url);
+
+  // Short links (a.co, amzn.to) carry no ASIN — resolve the redirect to
+  // the real product URL first. Without this the pipeline fell through to
+  // an OG scrape of Amazon's bot-block page and produced garbage
+  // (title "a.co", the share-icon image as a cover).
+  if (!asin) {
+    let host = "";
+    try {
+      host = new URL(url).hostname.toLowerCase();
+    } catch {
+      // fall through with empty host
+    }
+    if (AMAZON_SHORT_HOST_RE.test(host)) {
+      const resolved = await resolveAmazonShortLink(url);
+      if (resolved) {
+        productUrl = resolved;
+        asin = extractAmazonAsin(resolved);
+      }
+    }
+  }
+  if (asin) productUrl = canonicalAmazonUrl(asin);
 
   // Books: ISBN-10 lookup against Open Library + Google Books in parallel.
   // Merge so we get OpenLibrary's reliable title/cover + Google's richer
@@ -358,7 +431,7 @@ async function enrichAmazon(url: string): Promise<EnrichedLink> {
         : merged.title;
       return {
         provider: "amazon",
-        url,
+        url: productUrl,
         title: titleLine,
         description: merged.description ?? "",
         thumbnailUrl: merged.thumbnailUrl ?? null,
@@ -383,7 +456,7 @@ async function enrichAmazon(url: string): Promise<EnrichedLink> {
   // into the DB. Better to hand the admin an empty form to fill in.
   return {
     provider: "amazon",
-    url,
+    url: productUrl,
     title: "",
     description: "",
     thumbnailUrl: null,
