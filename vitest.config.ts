@@ -8,6 +8,10 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      // Next-only marker module; stubbed so server modules import cleanly.
+      "server-only": fileURLToPath(
+        new URL("./src/test/server-only-stub.ts", import.meta.url)
+      ),
     },
   },
 });

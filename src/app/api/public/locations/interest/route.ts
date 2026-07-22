@@ -6,11 +6,13 @@ import { z } from "zod/v4";
 import { resend, FROM_TRANSACTIONAL, FROM_SHEPHERD, SHEPHERD_EMAIL } from "@/lib/email";
 
 const schema = z.object({
-  locationId: z.string().uuid(),
+  // Optional since the /join form allows "no preference yet".
+  locationId: z.uuid().optional(),
   name: z.string().min(1).max(200),
   email: z.email(),
   phone: z.string().max(30).optional(),
   message: z.string().max(2000).optional(),
+  wantsNewsletter: z.boolean().optional(),
   // No .max(0) here — that would make schema validation itself reject a
   // filled honeypot, so the runtime check below never runs and bots get
   // a visible 400 instead of a silent fake-success.
@@ -31,47 +33,86 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true });
     }
 
-    const { locationId, name, email, phone, message } = parsed.data;
+    const { locationId, name, email, phone, message, wantsNewsletter } =
+      parsed.data;
 
     await db.insert(locationInterests).values({
-      locationId,
+      locationId: locationId ?? null,
       name,
       email,
       phone: phone ?? "",
       message: message ?? "",
+      wantsNewsletter: wantsNewsletter ?? true,
     });
 
-    // Look up the group once — used by both the admin notification and
-    // the submitter's auto-reply below.
-    const [loc] = await db
-      .select({
-        name: locations.name,
-        city: locations.city,
-        state: locations.state,
-        contactName: locations.contactName,
-        contactEmail: locations.contactEmail,
-      })
-      .from(locations)
-      .where(eq(locations.id, locationId));
-    const groupLabel = loc ? `${loc.name} (${loc.city}, ${loc.state})` : locationId;
+    // Look up the group once — used by the leader intro, the admin
+    // notification, and the submitter's auto-reply below.
+    const loc = locationId
+      ? (
+          await db
+            .select({
+              name: locations.name,
+              city: locations.city,
+              state: locations.state,
+              contactName: locations.contactName,
+              contactEmail: locations.contactEmail,
+            })
+            .from(locations)
+            .where(eq(locations.id, locationId))
+        )[0]
+      : undefined;
+    const groupLabel = loc
+      ? `${loc.name} (${loc.city}, ${loc.state})`
+      : "no particular group yet";
 
-    // Notify a human — this table previously had no downstream reader,
-    // so every submission vanished silently. We route to shepherd@ (not
-    // directly to the group's contactEmail, which is admin-only per
-    // migration 0013) and include the leader's contact info in the body
-    // so an admin can forward or make the introduction. Non-blocking:
-    // the interest is already durably stored above.
+    // The rule: when a man picks a specific group, his information goes
+    // straight to that group's leader from the admin address, reply-to set
+    // to the man so the leader can welcome him with one reply. Leader
+    // contact is admin-only data (migration 0013) — it is used as a
+    // recipient here, never exposed to the visitor. Non-blocking.
+    if (loc?.contactEmail) {
+      try {
+        const leaderFirst =
+          loc.contactName?.trim().split(/\s+/)[0] || "brother";
+        const { error } = await resend().emails.send({
+          from: FROM_TRANSACTIONAL,
+          to: loc.contactEmail,
+          replyTo: email,
+          subject: `A man wants to join ${loc.name}`,
+          text: `${leaderFirst},
+
+A man raised his hand to join ${groupLabel}.
+
+Name: ${name}
+Email: ${email}
+Phone: ${phone || "(not given)"}
+${message ? `\nHis note:\n${message}\n` : ""}
+Reply to this email and it goes straight to him. Welcome him well.
+
+— Sheepdog Society admin
+acts2028sheepdogsociety.com/admin/location-interests`,
+        });
+        if (error) console.error("group interest leader intro rejected", error);
+      } catch (err) {
+        console.error("group interest leader intro failed", err);
+      }
+    }
+
+    // Notify the shepherd inbox so the admin can approve the request into
+    // the members database. Non-blocking: the interest is already stored.
     try {
       const leaderLine = loc?.contactEmail
-        ? `Leader: ${loc.contactName || "(no name on file)"} <${loc.contactEmail}>`
-        : "Leader: no contact email on file for this group.";
+        ? `Leader: ${loc.contactName || "(no name on file)"} <${loc.contactEmail}> (intro email sent automatically)`
+        : loc
+          ? "Leader: no contact email on file for this group — no intro sent."
+          : "No group picked — route him by city when you follow up.";
 
       const { error } = await resend().emails.send({
         from: FROM_TRANSACTIONAL,
         to: SHEPHERD_EMAIL,
         replyTo: email,
-        subject: `New group interest: ${groupLabel}`,
-        text: `Name: ${name}\nEmail: ${email}\nPhone: ${phone || "(not given)"}\n\nGroup: ${groupLabel}\n${leaderLine}\n\nMessage:\n${message || "(none)"}`,
+        subject: `New join request: ${loc ? groupLabel : name}`,
+        text: `Name: ${name}\nEmail: ${email}\nPhone: ${phone || "(not given)"}\nWeekly letter: ${wantsNewsletter ?? true ? "yes" : "no"}\n\nGroup: ${groupLabel}\n${leaderLine}\n\nMessage:\n${message || "(none)"}\n\nApprove it into Members: ${process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.acts2028sheepdogsociety.com"}/admin/location-interests`,
       });
       if (error) console.error("group interest notification rejected", error);
     } catch (err) {
@@ -86,7 +127,7 @@ export async function POST(request: Request) {
         to: email,
         replyTo: SHEPHERD_EMAIL,
         subject: "Got your interest. Tell us a little more.",
-        text: buildInterestAutoReply(name, loc ? groupLabel : "the group"),
+        text: buildInterestAutoReply(name, loc ? groupLabel : "a group near you"),
       });
       if (error) console.error("group interest auto-reply rejected", error);
     } catch (err) {

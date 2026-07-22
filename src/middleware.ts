@@ -54,7 +54,6 @@ const PUBLIC_ROUTES = [
   /^\/api\/auth(\/.*)?$/,
   /^\/api\/public(\/.*)?$/,
   /^\/api\/og(\/.*)?$/,           // Phase B/D — verse plate + covenant card
-  /^\/api\/members(\/.*)?$/,      // Phase D — public signup POST
   /^\/api\/webhooks(\/.*)?$/,
   /^\/api\/cron(\/.*)?$/,
   // SEO files

@@ -5,8 +5,9 @@ import Link from "next/link";
 import { db } from "@/db";
 import { locations } from "@/db/schema";
 import { eq, asc } from "drizzle-orm";
-import { MemberSignup, type GroupOption } from "@/components/MemberSignup";
+import { JoinGroupForm, type GroupOption } from "@/components/public/join-group-form";
 import { PlantRequestForm } from "@/components/public/plant-request-form";
+import { KeepMePostedForm } from "@/components/public/keep-me-posted-form";
 import { Kicker } from "@/components/public/kicker";
 import { Icon, type IconName } from "@/components/icons/Icon";
 import { getSiteTextMap } from "@/lib/site-text/get";
@@ -93,7 +94,8 @@ export default async function JoinPage({
   searchParams: Promise<{ group?: string; path?: string }>;
 }) {
   const sp = await searchParams;
-  const path = sp.path === "start" ? "start" : "join";
+  const path =
+    sp.path === "start" ? "start" : sp.path === "posted" ? "posted" : "join";
   const groups = path === "join" ? await getGroupOptions() : [];
   const preselectedGroupId = sp.group;
   const [t, config] = await Promise.all([getSiteTextMap(), getStudioConfig()]);
@@ -114,8 +116,8 @@ export default async function JoinPage({
             are. We will help you find a table.
           </p>
 
-          {/* Two paths */}
-          <nav aria-label="Join paths" className="mt-12 grid gap-px border border-foreground/15 bg-foreground/15 md:grid-cols-2">
+          {/* Three paths */}
+          <nav aria-label="Join paths" className="mt-12 grid gap-px border border-foreground/15 bg-foreground/15 md:grid-cols-3">
             <Link
               href="/join"
               aria-current={path === "join" ? "page" : undefined}
@@ -146,16 +148,33 @@ export default async function JoinPage({
                 Ready to lead? Plant a table where you live.
               </p>
             </Link>
+            <Link
+              href="/join?path=posted"
+              aria-current={path === "posted" ? "page" : undefined}
+              className={`block p-6 transition-colors ${
+                path === "posted"
+                  ? "bg-card"
+                  : "bg-background hover:bg-foreground/[0.03]"
+              }`}
+            >
+              <span className={`section-mark ${path === "posted" ? "" : "text-muted-foreground"}`}>
+                III · Keep me posted
+              </span>
+              <p className="mt-2 font-display text-xl">
+                Not ready yet? Take the weekly Letter.
+              </p>
+            </Link>
           </nav>
 
           <div className="mt-12">
             {path === "start" ? (
               <PlantRequestForm />
+            ) : path === "posted" ? (
+              <KeepMePostedForm />
             ) : (
-              <MemberSignup
+              <JoinGroupForm
                 groups={groups}
                 preselectedGroupId={preselectedGroupId}
-                source="/join"
               />
             )}
           </div>

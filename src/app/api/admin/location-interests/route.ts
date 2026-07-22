@@ -1,8 +1,10 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
 import { users, locationInterests, locations } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { approveInterest } from "@/server/interest-approval";
 
 async function requireAdmin() {
   const { userId } = await auth();
@@ -21,6 +23,8 @@ async function listInterests() {
       phone: locationInterests.phone,
       message: locationInterests.message,
       status: locationInterests.status,
+      wantsNewsletter: locationInterests.wantsNewsletter,
+      createdMemberId: locationInterests.createdMemberId,
       createdAt: locationInterests.createdAt,
       locationName: locations.name,
       locationCity: locations.city,
@@ -48,8 +52,23 @@ export async function PATCH(request: Request) {
   }
 
   const { id, status } = await request.json();
-  if (!id || !["new", "contacted", "resolved"].includes(status)) {
+  if (!id || !["new", "contacted", "approved", "resolved"].includes(status)) {
     return NextResponse.json({ error: "Invalid input" }, { status: 400 });
+  }
+
+  // Approve populates the members database — see interest-approval.ts.
+  if (status === "approved") {
+    const [interest] = await db
+      .select()
+      .from(locationInterests)
+      .where(eq(locationInterests.id, id));
+    if (!interest) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+    const result = await approveInterest(interest);
+    revalidatePath("/admin/members");
+    revalidatePath("/admin/location-interests");
+    return NextResponse.json({ success: true, memberId: result.memberId });
   }
 
   await db
