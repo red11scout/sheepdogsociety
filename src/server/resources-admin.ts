@@ -118,6 +118,12 @@ export async function listResourcesForAdmin() {
       url: resources.url,
       fileKey: resources.fileKey,
       sourceFilename: resources.sourceFilename,
+      provider: resources.provider,
+      thumbnailUrl: resources.thumbnailUrl,
+      author: resources.author,
+      companionUrl: resources.companionUrl,
+      companionFileKey: resources.companionFileKey,
+      companionLabel: resources.companionLabel,
       sectionId: resources.sectionId,
       category: resources.category,
       isPublic: resources.isPublic,
@@ -174,8 +180,15 @@ export async function updateResource(input: {
   id: string;
   title?: string;
   description?: string;
+  summary?: string;
   url?: string;
   fileKey?: string;
+  /** Book-study surface: cover art, author, buy link live here too. */
+  thumbnailUrl?: string;
+  author?: string;
+  companionUrl?: string;
+  companionFileKey?: string;
+  companionLabel?: string;
   category?: string;
   level?: string;
   isPublic?: boolean;
@@ -186,8 +199,16 @@ export async function updateResource(input: {
   const patch: Record<string, unknown> = {};
   if (input.title != null) patch.title = input.title;
   if (input.description != null) patch.description = input.description;
+  if (input.summary != null) patch.summary = input.summary;
   if (input.url != null) patch.url = input.url;
   if (input.fileKey != null) patch.fileKey = input.fileKey;
+  if (input.thumbnailUrl != null) patch.thumbnailUrl = input.thumbnailUrl || null;
+  if (input.author != null) patch.author = input.author || null;
+  if (input.companionUrl != null) patch.companionUrl = input.companionUrl || null;
+  if (input.companionFileKey != null)
+    patch.companionFileKey = input.companionFileKey || null;
+  if (input.companionLabel != null)
+    patch.companionLabel = input.companionLabel || null;
   if (input.category != null) patch.category = input.category;
   if (input.level != null) patch.level = input.level;
   if (input.isPublic != null) patch.isPublic = input.isPublic;
@@ -342,6 +363,7 @@ export async function getPublicResourceBySlug(slug: string) {
       companionFileKey: resources.companionFileKey,
       companionLabel: resources.companionLabel,
       sectionId: resources.sectionId,
+      category: resources.category,
       audience: resources.audience,
       topics: resources.topics,
       themes: resources.themes,

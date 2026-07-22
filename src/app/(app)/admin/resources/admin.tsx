@@ -44,6 +44,12 @@ interface ResourceRow {
   url: string | null;
   fileKey: string | null;
   sourceFilename?: string | null;
+  provider?: string | null;
+  thumbnailUrl?: string | null;
+  author?: string | null;
+  companionUrl?: string | null;
+  companionFileKey?: string | null;
+  companionLabel?: string | null;
   sectionId?: string | null;
   category: string | null;
   isPublic: boolean;
@@ -458,6 +464,11 @@ NEON_DATABASE_URL='paste-the-prod-url-here' \\
                           isPublic?: boolean;
                           fieldNotesHtml?: string;
                           fieldNotesStatus?: "none" | "draft" | "approved";
+                          thumbnailUrl?: string;
+                          author?: string;
+                          companionUrl?: string;
+                          companionFileKey?: string;
+                          companionLabel?: string;
                         } = { id: r.id };
                         if (typeof patch.title === "string") cleaned.title = patch.title;
                         if (typeof patch.description === "string")
@@ -465,6 +476,16 @@ NEON_DATABASE_URL='paste-the-prod-url-here' \\
                         if (typeof patch.url === "string") cleaned.url = patch.url;
                         if (typeof patch.fileKey === "string")
                           cleaned.fileKey = patch.fileKey;
+                        if (typeof patch.thumbnailUrl === "string")
+                          cleaned.thumbnailUrl = patch.thumbnailUrl;
+                        if (typeof patch.author === "string")
+                          cleaned.author = patch.author;
+                        if (typeof patch.companionUrl === "string")
+                          cleaned.companionUrl = patch.companionUrl;
+                        if (typeof patch.companionFileKey === "string")
+                          cleaned.companionFileKey = patch.companionFileKey;
+                        if (typeof patch.companionLabel === "string")
+                          cleaned.companionLabel = patch.companionLabel;
                         if (typeof patch.category === "string")
                           cleaned.category = patch.category;
                         if (typeof patch.level === "string") cleaned.level = patch.level;
@@ -718,6 +739,17 @@ function ResourceRow({
   const [editing, setEditing] = useState(false);
   const [title, setTitle] = useState(resource.title);
   const [description, setDescription] = useState(resource.description ?? "");
+  // Book-study surface: cover art, buy link, author, companion. Editable
+  // for any link-backed row; file rows keep the simple two-field editor.
+  const isLinkRow = !!resource.url || resource.type === "link" || resource.type === "video";
+  const [url, setUrl] = useState(resource.url ?? "");
+  const [thumbnailUrl, setThumbnailUrl] = useState(resource.thumbnailUrl ?? "");
+  const [author, setAuthor] = useState(resource.author ?? "");
+  const [companionUrl, setCompanionUrl] = useState(resource.companionUrl ?? "");
+  const [companionLabel, setCompanionLabel] = useState(resource.companionLabel ?? "");
+  const [companionFileKey, setCompanionFileKey] = useState(resource.companionFileKey ?? "");
+  const [coverUploading, setCoverUploading] = useState(false);
+  const [companionUploading, setCompanionUploading] = useState(false);
   const [recat, setRecat] = useState<"idle" | "busy" | "error">("idle");
   const [recatError, setRecatError] = useState("");
   const tags = [
@@ -857,6 +889,28 @@ function ResourceRow({
 
   // Heuristic: show re-extract on file uploads that don't yet have an
   // AI categorization timestamp (legacy resources from before the bulk
+  async function uploadTo(setter: (u: string) => void, kind: "cover" | "companion", file: File) {
+    const setBusy = kind === "cover" ? setCoverUploading : setCompanionUploading;
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("folder", `resources/${kind}s`);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      if (!res.ok) {
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(j.error ?? "Upload failed");
+      }
+      const data = (await res.json()) as { url: string };
+      setter(data.url);
+    } catch (e) {
+      setRecat("error");
+      setRecatError(e instanceof Error ? e.message : "Upload failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   // upload pipeline existed).
   const showReextract =
     !!resource.fileKey &&
@@ -866,22 +920,150 @@ function ResourceRow({
   return (
     <li className="border border-stone/15 bg-iron/30 px-4 py-3 transition-colors hover:border-stone/30">
       {editing ? (
-        <div className="space-y-2">
-          <input
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="block w-full bg-transparent text-sm text-bone focus:outline-none"
-          />
-          <input
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="block w-full bg-transparent text-xs text-stone/80 focus:outline-none"
-          />
-          <div className="flex gap-2">
+        <div className="space-y-3">
+          <label className="block">
+            <span className="mb-1 block text-[0.625rem] uppercase tracking-wider text-stone/55">Title</span>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="block h-9 w-full border border-stone/20 bg-transparent px-3 text-sm text-bone focus:border-brass focus:outline-none"
+            />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-[0.625rem] uppercase tracking-wider text-stone/55">Description</span>
+            <input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="block h-9 w-full border border-stone/20 bg-transparent px-3 text-xs text-stone/80 focus:border-brass focus:outline-none"
+            />
+          </label>
+
+          {isLinkRow && (
+            <div className="grid gap-3 border-t border-stone/15 pt-3 md:grid-cols-[100px_1fr]">
+              {/* Cover preview + controls */}
+              <div className="relative aspect-[2/3] w-[100px] overflow-hidden border border-stone/15 bg-iron/60">
+                {thumbnailUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={thumbnailUrl} alt="" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-stone/35">
+                    <Icon name="image" size={22} />
+                  </div>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="block">
+                  <span className="mb-1 block text-[0.625rem] uppercase tracking-wider text-stone/55">
+                    Cover image URL
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      value={thumbnailUrl}
+                      onChange={(e) => setThumbnailUrl(e.target.value)}
+                      placeholder="https://... (paste an image URL)"
+                      className="block h-9 flex-1 border border-stone/20 bg-transparent px-3 text-xs text-bone focus:border-brass focus:outline-none"
+                    />
+                    <label className="inline-flex h-9 cursor-pointer items-center border border-dashed border-stone/30 px-3 text-[0.6875rem] uppercase tracking-wider text-stone/75 transition-colors hover:border-brass hover:text-brass">
+                      {coverUploading ? "Uploading..." : "Upload"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) uploadTo(setThumbnailUrl, "cover", f);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  </div>
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-[0.625rem] uppercase tracking-wider text-stone/55">
+                    Buy / source link (Amazon, publisher, any store)
+                  </span>
+                  <input
+                    value={url}
+                    onChange={(e) => setUrl(e.target.value)}
+                    placeholder="https://www.amazon.com/dp/..."
+                    className="block h-9 w-full border border-stone/20 bg-transparent px-3 text-xs text-bone focus:border-brass focus:outline-none"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-[0.625rem] uppercase tracking-wider text-stone/55">
+                    Author
+                  </span>
+                  <input
+                    value={author}
+                    onChange={(e) => setAuthor(e.target.value)}
+                    placeholder="e.g. J.C. Ryle"
+                    className="block h-9 w-full border border-stone/20 bg-transparent px-3 text-xs text-bone focus:border-brass focus:outline-none"
+                  />
+                </label>
+                <div className="grid gap-2 md:grid-cols-2">
+                  <label className="block">
+                    <span className="mb-1 block text-[0.625rem] uppercase tracking-wider text-stone/55">
+                      Companion study URL
+                    </span>
+                    <input
+                      value={companionUrl}
+                      onChange={(e) => setCompanionUrl(e.target.value)}
+                      placeholder="https://..."
+                      className="block h-9 w-full border border-stone/20 bg-transparent px-3 text-xs text-bone focus:border-brass focus:outline-none"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="mb-1 block text-[0.625rem] uppercase tracking-wider text-stone/55">
+                      Companion label
+                    </span>
+                    <div className="flex items-center gap-2">
+                      <input
+                        value={companionLabel}
+                        onChange={(e) => setCompanionLabel(e.target.value)}
+                        placeholder="Study Guide"
+                        className="block h-9 flex-1 border border-stone/20 bg-transparent px-3 text-xs text-bone focus:border-brass focus:outline-none"
+                      />
+                      <label className="inline-flex h-9 cursor-pointer items-center border border-dashed border-stone/30 px-3 text-[0.6875rem] uppercase tracking-wider text-stone/75 transition-colors hover:border-brass hover:text-brass">
+                        {companionUploading ? "..." : companionFileKey ? "Replace file" : "Upload file"}
+                        <input
+                          type="file"
+                          accept=".pdf,.docx"
+                          className="hidden"
+                          onChange={(e) => {
+                            const f = e.target.files?.[0];
+                            if (f) uploadTo(setCompanionFileKey, "companion", f);
+                            e.target.value = "";
+                          }}
+                        />
+                      </label>
+                    </div>
+                    {companionFileKey && (
+                      <span className="mt-1 block truncate text-[0.625rem] text-olive">✓ File attached</span>
+                    )}
+                  </label>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="flex gap-2 border-t border-stone/15 pt-3">
             <button
               type="button"
               onClick={async () => {
-                await onUpdate({ title, description });
+                await onUpdate({
+                  title,
+                  description,
+                  ...(isLinkRow
+                    ? {
+                        url,
+                        thumbnailUrl,
+                        author,
+                        companionUrl,
+                        companionLabel,
+                        companionFileKey,
+                      }
+                    : {}),
+                });
                 setEditing(false);
               }}
               className="text-xs font-medium text-brass hover:text-gold"

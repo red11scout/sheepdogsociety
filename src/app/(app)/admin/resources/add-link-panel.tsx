@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Icon } from "@/components/icons/Icon";
 import { HintTooltip } from "@/components/admin/HintTooltip";
 import { createLinkResource } from "@/server/resources-link";
+import { detectProvider } from "@/lib/resources/enrich";
 import type { EnrichedLink } from "@/lib/resources/enrich";
 import { cn } from "@/lib/utils";
 
@@ -40,6 +41,10 @@ export function AddLinkPanel({
   const [title, setTitle] = useState("");
   const [summary, setSummary] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
+  const [buyUrl, setBuyUrl] = useState("");
+  const [coverUrl, setCoverUrl] = useState("");
+  const [author, setAuthor] = useState("");
+  const [coverUploading, setCoverUploading] = useState(false);
 
   // Book-mode companion
   const [companion, setCompanion] = useState<BookCompanion>({
@@ -79,6 +84,9 @@ export function AddLinkPanel({
         setEnriched(e);
         setTitle(e.title);
         setSummary(e.description);
+        setBuyUrl(e.url);
+        setCoverUrl(e.thumbnailUrl ?? "");
+        setAuthor(e.author ?? "");
       }
     } catch (err) {
       setEnrichError(err instanceof Error ? err.message : "Enrich failed");
@@ -125,6 +133,43 @@ export function AddLinkPanel({
     }
   }
 
+  function startManual() {
+    const url = primaryUrl.trim();
+    setEnrichError("");
+    setEnriched({
+      provider: url ? detectProvider(url) : "web",
+      url,
+      title: "",
+      description: "",
+      thumbnailUrl: null,
+      author: null,
+      embedHtml: null,
+      durationSeconds: null,
+      rawOg: {},
+    });
+    setBuyUrl(url);
+  }
+
+  async function handleCoverUpload(file: File) {
+    setCoverUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("folder", `resources/${sectionSlug}/covers`);
+      const res = await fetch("/api/admin/upload", { method: "POST", body: fd });
+      if (!res.ok) {
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(j.error ?? "Upload failed");
+      }
+      const data = (await res.json()) as { url: string };
+      setCoverUrl(data.url);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setCoverUploading(false);
+    }
+  }
+
   function reset() {
     setPrimaryUrl("");
     setEnriched(null);
@@ -132,6 +177,9 @@ export function AddLinkPanel({
     setTitle("");
     setSummary("");
     setAdminNotes("");
+    setBuyUrl("");
+    setCoverUrl("");
+    setAuthor("");
     setCompanion({ url: "", fileKey: "", label: "" });
     setCompanionEnriched(null);
     setSaveError("");
@@ -142,14 +190,15 @@ export function AddLinkPanel({
     setSaving(true);
     setSaveError("");
     try {
+      const finalUrl = buyUrl.trim() || enriched.url;
       await createLinkResource({
         sectionId,
-        url: enriched.url,
-        provider: enriched.provider,
+        url: finalUrl,
+        provider: detectProvider(finalUrl),
         title: title.trim(),
         summary: summary.trim() || undefined,
-        thumbnailUrl: enriched.thumbnailUrl,
-        author: enriched.author,
+        thumbnailUrl: coverUrl.trim() || null,
+        author: author.trim() || null,
         embedHtml: enriched.embedHtml,
         durationSeconds: enriched.durationSeconds,
         adminNotes: adminNotes.trim() || undefined,
@@ -219,9 +268,18 @@ export function AddLinkPanel({
             </label>
             {enrichError && (
               <p className="border border-oxblood/40 bg-oxblood/15 px-3 py-2 text-xs text-bone">
-                Couldn&rsquo;t enrich the URL: {enrichError}. You can still paste manually below.
+                Couldn&rsquo;t enrich the URL: {enrichError}.
               </p>
             )}
+            <button
+              type="button"
+              onClick={startManual}
+              className="text-xs text-stone/65 underline-offset-4 hover:text-brass hover:underline"
+            >
+              {mode === "book"
+                ? "Or enter the book by hand (title, cover, buy link)"
+                : "Or enter the details by hand"}
+            </button>
           </div>
         )}
 
@@ -231,9 +289,9 @@ export function AddLinkPanel({
             {/* Preview card */}
             <div className="grid gap-3 border border-stone/15 bg-iron/40 p-4 md:grid-cols-[140px_1fr]">
               <div className="relative aspect-video w-full overflow-hidden bg-iron/60 md:aspect-[3/4]">
-                {enriched.thumbnailUrl ? (
+                {coverUrl ? (
                   <Image
-                    src={enriched.thumbnailUrl}
+                    src={coverUrl}
                     alt=""
                     fill
                     sizes="140px"
@@ -246,25 +304,58 @@ export function AddLinkPanel({
                   </div>
                 )}
               </div>
-              <div className="text-xs">
+              <div className="space-y-2 text-xs">
                 <p className="section-mark text-stone/55">{enriched.provider}</p>
-                <p className="mt-1 truncate text-sm text-bone">
-                  <a
-                    href={enriched.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="hover:text-brass"
-                  >
-                    {enriched.url}
-                  </a>
-                </p>
-                {enriched.author && (
-                  <p className="mt-1 text-stone/65">
-                    {mode === "book" ? "Author" : "Channel / Site"}: {enriched.author}
-                  </p>
-                )}
+                <label className="block">
+                  <span className="mb-1 block text-[0.625rem] uppercase tracking-wider text-stone/55">
+                    {mode === "book" ? "Where to buy (Amazon, publisher, any store)" : "Link URL"}
+                  </span>
+                  <input
+                    value={buyUrl}
+                    onChange={(e) => setBuyUrl(e.target.value)}
+                    placeholder="https://..."
+                    className="block h-9 w-full border border-stone/20 bg-transparent px-3 text-xs text-bone focus:border-brass focus:outline-none"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-[0.625rem] uppercase tracking-wider text-stone/55">
+                    {mode === "book" ? "Cover image" : "Thumbnail"}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <input
+                      value={coverUrl}
+                      onChange={(e) => setCoverUrl(e.target.value)}
+                      placeholder="https://... (paste an image URL)"
+                      className="block h-9 flex-1 border border-stone/20 bg-transparent px-3 text-xs text-bone focus:border-brass focus:outline-none"
+                    />
+                    <label className="inline-flex h-9 cursor-pointer items-center border border-dashed border-stone/30 px-3 text-[0.6875rem] uppercase tracking-wider text-stone/75 transition-colors hover:border-brass hover:text-brass">
+                      {coverUploading ? "Uploading..." : "Upload"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const f = e.target.files?.[0];
+                          if (f) handleCoverUpload(f);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  </div>
+                </label>
+                <label className="block">
+                  <span className="mb-1 block text-[0.625rem] uppercase tracking-wider text-stone/55">
+                    {mode === "book" ? "Author" : "Channel / Site"}
+                  </span>
+                  <input
+                    value={author}
+                    onChange={(e) => setAuthor(e.target.value)}
+                    placeholder={mode === "book" ? "e.g. J.C. Ryle" : ""}
+                    className="block h-9 w-full border border-stone/20 bg-transparent px-3 text-xs text-bone focus:border-brass focus:outline-none"
+                  />
+                </label>
                 {enriched.embedHtml && (
-                  <p className="mt-1 text-olive">✓ Embed available</p>
+                  <p className="text-olive">✓ Embed available</p>
                 )}
               </div>
             </div>
