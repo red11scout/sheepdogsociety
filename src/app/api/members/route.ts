@@ -2,11 +2,12 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { randomBytes } from "crypto";
 import { db } from "@/db";
-import { members, memberNotificationPrefs } from "@/db/schema";
+import { members, memberNotificationPrefs, locationRequests } from "@/db/schema";
 import { and, eq, isNull } from "drizzle-orm";
 import { resend, FROM_AUTH, FROM_SHEPHERD, SHEPHERD_EMAIL } from "@/lib/email";
 import { sendSms, SMS_OPT_IN_DISCLOSURE } from "@/lib/sms";
 import { syncMemberToAudience } from "@/lib/resend-audience";
+import { geocodeAddress } from "@/lib/geocoding";
 
 export const runtime = "nodejs";
 
@@ -22,6 +23,13 @@ const SignupBody = z
     zip: z.string().max(10).optional(),
     timeline: z.enum(["now", "three_months", "exploring"]).optional(),
     note: z.string().max(2000).optional(),
+    // Start-a-group fields — the same data the admin add-a-group form
+    // holds, so approval can create the group without retyping anything.
+    groupName: z.string().max(200).optional(),
+    address: z.string().max(300).optional(),
+    meetingPlace: z.string().max(200).optional(),
+    meetingDay: z.string().max(20).optional(),
+    meetingTime: z.string().max(50).optional(),
     wantsNewsletter: z.boolean().default(true),
     wantsEvents: z.boolean().default(true),
     wantsSms: z.boolean().default(false),
@@ -122,6 +130,68 @@ export async function POST(req: Request) {
     // Mirror the newsletter choice into the Resend Audience so the man
     // actually receives (or stops receiving) the weekly letter. Best-effort.
     await syncMemberToAudience(emailLower, body.wantsNewsletter);
+
+    // "Start a group" files a plant request carrying the full group fields,
+    // linked to this member. Approval in /admin/location-requests creates
+    // the geocoded group and promotes this member to its leader. Geocode is
+    // best-effort here (approval re-geocodes); resubmits update the pending
+    // request instead of stacking duplicates.
+    if (body.intent === "start") {
+      let latitude = "";
+      let longitude = "";
+      try {
+        const geo = await geocodeAddress({
+          address: body.address ?? "",
+          city: body.city ?? "",
+          state: body.state ?? "",
+          zipCode: body.zip ?? "",
+        });
+        if (geo) {
+          latitude = geo.latitude.toFixed(6);
+          longitude = geo.longitude.toFixed(6);
+        }
+      } catch (err) {
+        console.warn("member start-a-group geocode skipped:", err);
+      }
+      const requestFields = {
+        requesterName: body.name,
+        requesterEmail: emailLower,
+        requesterPhone: body.phone ?? "",
+        proposedGroupName: body.groupName ?? "",
+        proposedCity: body.city ?? "",
+        proposedState: body.state ?? "",
+        address: body.address ?? "",
+        zipCode: body.zip ?? "",
+        meetingPlace: body.meetingPlace ?? "",
+        meetingDay: body.meetingDay ?? "",
+        meetingTime: body.meetingTime ?? "",
+        latitude,
+        longitude,
+        reason: body.note ?? "",
+        proposedMeetingDetails: [body.meetingDay, body.meetingTime, body.meetingPlace]
+          .filter(Boolean)
+          .join(" · "),
+        memberId,
+      };
+      const [pending] = await db
+        .select({ id: locationRequests.id })
+        .from(locationRequests)
+        .where(
+          and(
+            eq(locationRequests.memberId, memberId),
+            eq(locationRequests.status, "pending")
+          )
+        )
+        .limit(1);
+      if (pending) {
+        await db
+          .update(locationRequests)
+          .set(requestFields)
+          .where(eq(locationRequests.id, pending.id));
+      } else {
+        await db.insert(locationRequests).values(requestFields);
+      }
+    }
 
     // Notification prefs — upsert by memberId.
     const unsubscribeToken = randomBytes(32).toString("hex");
@@ -277,6 +347,11 @@ function buildAdminAlert(b: z.infer<typeof SignupBody>, id: string) {
     `Intent: ${b.intent}`,
     b.groupId ? `Group ID: ${b.groupId}` : null,
     b.city ? `Location: ${b.city}, ${b.state ?? "?"} ${b.zip ?? ""}` : null,
+    b.groupName ? `Proposed group: ${b.groupName}` : null,
+    b.address ? `Meeting address: ${b.address}` : null,
+    [b.meetingDay, b.meetingTime, b.meetingPlace].some(Boolean)
+      ? `Meeting: ${[b.meetingDay, b.meetingTime, b.meetingPlace].filter(Boolean).join(" · ")}`
+      : null,
     b.timeline ? `Timeline: ${b.timeline}` : null,
     `Notify: newsletter=${b.wantsNewsletter} events=${b.wantsEvents} sms=${b.wantsSms}`,
     `Source: ${b.source ?? "(direct)"}`,

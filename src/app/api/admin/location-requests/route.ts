@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
-import { users, locations, locationRequests } from "@/db/schema";
+import { users, locationRequests } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { resend, FROM_TRANSACTIONAL } from "@/lib/email";
-import { geocodeAddress } from "@/lib/geocoding";
-import { upsertGroupLocation } from "@/server/admin-groups-locations";
+import { approvePlantRequest } from "@/server/plant-approval";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -51,38 +51,12 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  // Approval creates the real group + map pin from the request's own
-  // fields — the whole point of collecting them up front. Idempotent:
-  // once created_group_id is set, a second approve only re-flips status.
+  // Approval creates the real group + map pin AND promotes the requester's
+  // member row to group leader — see src/server/plant-approval.ts.
   let groupSlug: string | null = null;
-  if (status === "approved" && !req.createdGroupId) {
-    // Resolve coordinates: submit-time geocode → full address → city/state.
-    let latitude = req.latitude ?? "";
-    let longitude = req.longitude ?? "";
-    if (!isFinite(parseFloat(latitude)) || !isFinite(parseFloat(longitude))) {
-      try {
-        const geo =
-          (await geocodeAddress({
-            address: req.address ?? "",
-            city: req.proposedCity,
-            state: req.proposedState,
-            zipCode: req.zipCode ?? "",
-          })) ??
-          (await geocodeAddress({
-            city: req.proposedCity,
-            state: req.proposedState,
-          }));
-        if (geo) {
-          latitude = geo.latitude.toFixed(6);
-          longitude = geo.longitude.toFixed(6);
-        }
-      } catch (err) {
-        console.error("approval geocode failed", err);
-      }
-    }
-    if (!isFinite(parseFloat(latitude)) || !isFinite(parseFloat(longitude))) {
-      // Never create a pinless "0,0" group — the map silently drops NaN
-      // and renders (0,0) in the Atlantic. Leave the request pending.
+  if (status === "approved") {
+    const result = await approvePlantRequest(req, admin.id);
+    if (!result.ok) {
       return NextResponse.json(
         {
           error:
@@ -91,44 +65,11 @@ export async function PATCH(request: Request) {
         { status: 422 }
       );
     }
-
-    const groupName =
-      req.proposedGroupName?.trim() ||
-      `${req.proposedCity} Watch`;
-    const { groupId } = await upsertGroupLocation({
-      groupName,
-      locationName: req.meetingPlace?.trim() || groupName,
-      locationType: "in_person",
-      address: req.address ?? "",
-      city: req.proposedCity,
-      state: req.proposedState,
-      zipCode: req.zipCode ?? "",
-      latitude,
-      longitude,
-      meetingDay: req.meetingDay ?? "",
-      meetingTime: req.meetingTime ?? "",
-      contactName: req.requesterName,
-      contactEmail: req.requesterEmail,
-      contactPhone: req.requesterPhone ?? "",
-      approvalStatus: "approved",
-    });
-
-    const [loc] = await db
-      .select({ id: locations.id, slug: locations.slug })
-      .from(locations)
-      .where(eq(locations.groupId, groupId))
-      .limit(1);
-    groupSlug = loc?.slug ?? null;
-
-    await db
-      .update(locationRequests)
-      .set({
-        createdGroupId: groupId,
-        createdLocationId: loc?.id ?? null,
-        latitude,
-        longitude,
-      })
-      .where(eq(locationRequests.id, id));
+    groupSlug = result.slug;
+    revalidatePath("/admin/groups");
+    revalidatePath("/admin/members");
+    revalidatePath("/groups");
+    revalidatePath("/");
   }
 
   const [updated] = await db
