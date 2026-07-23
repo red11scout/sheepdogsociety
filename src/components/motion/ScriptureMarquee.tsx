@@ -164,7 +164,14 @@ export function ScriptureMarquee({ className, verses = [] }: ScriptureMarqueePro
                       if (open?.verse.ref === ref && open.phase !== "out") close();
                       else openFor(ref, e.currentTarget);
                     }}
-                    onFocus={(e) => openFor(ref, e.currentTarget)}
+                    onFocus={(e) => {
+                      // Keyboard focus only. A tap focuses the button right
+                      // before its click lands, so an unguarded focus-open
+                      // gets toggled shut by that same click — on phones the
+                      // card died in ~160ms and the ref looked dead.
+                      if (e.currentTarget.matches(":focus-visible"))
+                        openFor(ref, e.currentTarget);
+                    }}
                     onBlur={scheduleClose}
                     className={cn(
                       "section-mark cursor-pointer whitespace-nowrap px-1 py-4 transition-colors duration-200",
