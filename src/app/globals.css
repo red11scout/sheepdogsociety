@@ -304,7 +304,8 @@
 .marquee-track {
   animation: marqueeScroll var(--marquee-duration) linear infinite;
 }
-.marquee:hover .marquee-track {
+.marquee:hover .marquee-track,
+.marquee[data-paused] .marquee-track {
   animation-play-state: paused;
 }
 @keyframes marqueeScroll {
