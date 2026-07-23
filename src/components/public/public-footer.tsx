@@ -2,16 +2,26 @@ import Link from "next/link";
 import Image from "next/image";
 import { Icon } from "@/components/icons/Icon";
 import { ScriptureMarquee } from "@/components/motion/ScriptureMarquee";
+import { MARQUEE_REFS } from "@/lib/bible/marquee-refs";
+import { getMarqueeVerses } from "@/lib/bible/verse";
 
 /**
  * Broadsheet footer. The crest bookends the page (single, centered,
  * ~40px, opacity-80 — MASTER.md), then three link columns, then the
  * colophon line.
  */
-export function PublicFooter() {
+export async function PublicFooter() {
+  // Verbatim verse texts for the marquee popovers (ESV → WEB, 24h cache).
+  // A total failure degrades to the plain ticker — never breaks the footer.
+  let verses: Awaited<ReturnType<typeof getMarqueeVerses>> = [];
+  try {
+    verses = await getMarqueeVerses(MARQUEE_REFS);
+  } catch {
+    verses = [];
+  }
   return (
     <footer className="border-t border-foreground/15 bg-background text-foreground">
-      <ScriptureMarquee className="nw-lintel" />
+      <ScriptureMarquee className="nw-lintel" verses={verses} />
       <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-24">
         {/* Crest bookend */}
         <div className="flex flex-col items-center gap-3 text-center">
