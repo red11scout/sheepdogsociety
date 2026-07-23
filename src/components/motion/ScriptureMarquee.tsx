@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { MarqueeVerse } from "@/lib/bible/verse";
@@ -192,7 +193,12 @@ export function ScriptureMarquee({ className, verses = [] }: ScriptureMarqueePro
         )}
       </div>
 
-      {open && (
+      {/* The card portals to <body>: the footer masks this root (nw-lintel's
+          edge fade), and a CSS mask discards everything the subtree paints
+          outside the band's border box — a card rendered in here is
+          hit-testable but invisible, on every browser. */}
+      {open &&
+        createPortal(
         <div
           ref={cardRef}
           role="dialog"
@@ -251,7 +257,8 @@ export function ScriptureMarquee({ className, verses = [] }: ScriptureMarqueePro
             style={{ left: caretX }}
             className="absolute -bottom-[5px] h-2.5 w-2.5 -translate-x-1/2 rotate-45 border-b border-r border-brass/40 bg-card"
           />
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
