@@ -248,14 +248,22 @@ export function LocationMap({
     });
 
     if (locations.length > 0) {
+      const pts = locations
+        .map((loc) => [parseFloat(loc.longitude), parseFloat(loc.latitude)] as [number, number])
+        .filter(([lng, lat]) => !isNaN(lat) && !isNaN(lng));
+      // Frame the flock, not the continent: one far-flung outpost would
+      // zoom the whole country into view and make six tables look like
+      // none. Fit the majority cluster (within ~5° of the median point);
+      // outliers stay reachable via the ledger and "Near me".
+      // ponytail: 5° box heuristic; revisit if groups spread regionally.
+      const median = (xs: number[]) => xs.slice().sort((a, b) => a - b)[Math.floor(xs.length / 2)];
+      const [mLng, mLat] = [median(pts.map((p) => p[0])), median(pts.map((p) => p[1]))];
+      const cluster = pts.filter(
+        ([lng, lat]) => Math.abs(lng - mLng) <= 5 && Math.abs(lat - mLat) <= 5
+      );
+      const frame = cluster.length >= pts.length / 2 ? cluster : pts;
       const bounds = new mapboxgl.LngLatBounds();
-      locations.forEach((loc) => {
-        const lat = parseFloat(loc.latitude);
-        const lng = parseFloat(loc.longitude);
-        if (!isNaN(lat) && !isNaN(lng)) {
-          bounds.extend([lng, lat]);
-        }
-      });
+      frame.forEach((pt) => bounds.extend(pt));
       map.current.fitBounds(bounds, { padding: 72, maxZoom: 11 });
     }
   }, [locations, mapLoaded, onSelectLocation]);

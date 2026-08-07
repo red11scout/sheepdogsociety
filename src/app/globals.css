@@ -497,14 +497,22 @@
   }
 }
 
-/* Editorial text link — underline offset 3px, brass on hover. */
+/* Editorial text link — underline offset 3px, brass on hover. The ::before
+   overlay grows the touch target to ~44px without moving a pixel of
+   layout (standalone editorial links render ~20px tall). */
 @utility link-editorial {
+  position: relative;
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 3px;
   transition:
     color 0.16s ease,
     text-decoration-color 0.16s ease;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -12px 0;
+  }
   &:hover {
     color: var(--color-brass);
     text-decoration-color: var(--color-brass);
@@ -1394,8 +1402,9 @@
   backdrop-filter: blur(6px);
 }
 .mapboxgl-ctrl-group button {
-  width: 34px !important;
-  height: 34px !important;
+  /* 44px minimum touch target (WCAG 2.5.8 / house checklist). */
+  width: 44px !important;
+  height: 44px !important;
   background: transparent !important;
 }
 .mapboxgl-ctrl-group button + button {

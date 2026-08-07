@@ -10,6 +10,7 @@ import { PlantRequestForm } from "@/components/public/plant-request-form";
 import { KeepMePostedForm } from "@/components/public/keep-me-posted-form";
 import { Kicker } from "@/components/public/kicker";
 import { Icon, type IconName } from "@/components/icons/Icon";
+import { formatMeetingTime, joinPlace } from "@/lib/format-meeting";
 import { getSiteTextMap } from "@/lib/site-text/get";
 import { getStudioConfig } from "@/lib/studio/get";
 import { renderMerge } from "@/lib/studio/config";
@@ -39,8 +40,10 @@ async function getGroupOptions(): Promise<GroupOption[]> {
       .limit(50);
 
     return rows.map((r) => {
-      const place = [r.city, r.state].filter(Boolean).join(", ");
-      const time = [r.meetingDay, r.meetingTime].filter(Boolean).join(" ");
+      const place = joinPlace(r.city, r.state);
+      const time = [r.meetingDay, formatMeetingTime(r.meetingTime)]
+        .filter(Boolean)
+        .join(" ");
       const head = r.name && r.name.trim() ? r.name : place || "Group";
       const tail = [place && head !== place ? place : null, time]
         .filter(Boolean)
@@ -111,6 +114,9 @@ export default async function JoinPage({
             <br />
             <em>Sit in it.</em>
           </h1>
+          {/* The kicker's right aside carries this on sm+; mobile hides it,
+              and this reassurance is the whole page's argument. */}
+          <p className="folio mt-6 sm:hidden">No application · No interview</p>
           <p className="dropcap mt-8 max-w-2xl font-scripture text-lg text-foreground/85">
             You do not need to have your life cleaned up. Tell us where you
             are. We will help you find a table.
@@ -193,7 +199,7 @@ export default async function JoinPage({
                   <span className="section-mark">{p.roman}</span>
                 </span>
                 <span>
-                  <h3 className="font-display text-xl">{p.title}</h3>
+                  <h2 className="font-display text-xl">{p.title}</h2>
                   <p className="mt-1.5 text-sm leading-relaxed text-muted-foreground">
                     {p.copy}
                   </p>

@@ -32,10 +32,16 @@ export function JoinGroupForm({
   const [submitting, startTransition] = useTransition();
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!terms) return;
+    const problems: Record<string, string> = {};
+    if (!name.trim()) problems.name = "We need your name.";
+    if (!email.trim()) problems.email = "We need an email to reach you.";
+    if (!terms) problems.terms = "Agree to the privacy policy first. We keep our word about your data.";
+    setFieldErrors(problems);
+    if (Object.keys(problems).length > 0) return;
     startTransition(async () => {
       setError("");
       try {
@@ -97,7 +103,7 @@ export function JoinGroupForm({
       </label>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Field label="Name" required>
+        <Field label="Name" required error={fieldErrors.name}>
           <input
             type="text"
             value={name}
@@ -107,7 +113,7 @@ export function JoinGroupForm({
             className={inputCls()}
           />
         </Field>
-        <Field label="Email" required>
+        <Field label="Email" required error={fieldErrors.email}>
           <input
             type="email"
             value={email}
@@ -139,7 +145,7 @@ export function JoinGroupForm({
           onChange={(e) => setLocationId(e.target.value)}
           className={inputCls()}
         >
-          <option value="">No preference yet — surprise me</option>
+          <option value="">No preference. Point me to a table.</option>
           {groups.map((g) => (
             <option key={g.id} value={g.id}>
               {g.label}
@@ -167,13 +173,18 @@ export function JoinGroupForm({
         </div>
       </fieldset>
 
-      <Toggle checked={terms} onChange={setTerms}>
-        I agree to the{" "}
-        <Link href="/privacy" className="underline decoration-brass underline-offset-4 hover:text-brass">
-          Privacy Policy
-        </Link>
-        .
-      </Toggle>
+      <div>
+        <Toggle checked={terms} onChange={setTerms}>
+          I agree to the{" "}
+          <Link href="/privacy" className="underline decoration-brass underline-offset-4 hover:text-brass">
+            Privacy Policy
+          </Link>
+          .
+        </Toggle>
+        {fieldErrors.terms && (
+          <p className="mt-1 text-sm text-oxblood">{fieldErrors.terms}</p>
+        )}
+      </div>
 
       {error && (
         <p className="border border-oxblood/40 bg-oxblood/10 px-4 py-3 text-sm text-oxblood">
@@ -183,10 +194,10 @@ export function JoinGroupForm({
 
       <button
         type="submit"
-        disabled={submitting || !terms || !name.trim() || !email.trim()}
+        disabled={submitting}
         className="lift inline-flex h-12 items-center gap-3 bg-foreground px-6 text-sm font-medium uppercase tracking-[0.18em] text-background transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-40"
       >
-        {submitting ? "Sending…" : "There is a chair"}
+        {submitting ? "Sending…" : "Save my seat"}
         {!submitting && <Icon name="arrow-right" size={16} />}
       </button>
 
@@ -201,20 +212,23 @@ function Field({
   label,
   hint,
   required,
+  error,
   children,
 }: {
   label: string;
   hint?: string;
   required?: boolean;
+  error?: string;
   children: React.ReactNode;
 }) {
   return (
     <label className="block">
       <span className="section-mark text-muted-foreground">
         § {label}
-        {required && <span className="ml-1 text-brass">*</span>}
+        {required && <span className="ml-1 text-brass-deep">*</span>}
       </span>
       <div className="mt-2">{children}</div>
+      {error && <p className="mt-2 text-sm text-oxblood">{error}</p>}
       {hint && <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{hint}</p>}
     </label>
   );
@@ -230,12 +244,12 @@ function Toggle({
   children: React.ReactNode;
 }) {
   return (
-    <label className="flex cursor-pointer items-start gap-3">
+    <label className="flex min-h-11 cursor-pointer items-center gap-3">
       <input
         type="checkbox"
         checked={checked}
         onChange={(e) => onChange(e.target.checked)}
-        className="mt-1 size-4 shrink-0 cursor-pointer accent-brass"
+        className="size-5 shrink-0 cursor-pointer accent-brass"
       />
       <span className="text-sm leading-relaxed text-foreground">{children}</span>
     </label>

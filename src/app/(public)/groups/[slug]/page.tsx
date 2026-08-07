@@ -7,6 +7,7 @@ import { and, eq } from "drizzle-orm";
 import { Kicker } from "@/components/public/kicker";
 import { Icon } from "@/components/icons/Icon";
 import { GroupInterestForm } from "@/components/public/group-interest-form";
+import { formatMeetingTime, joinPlace } from "@/lib/format-meeting";
 
 export const revalidate = 60;
 
@@ -78,16 +79,15 @@ export default async function GroupDetailPage({
   // Legacy UUID URL and we know the pretty slug: settle on the canonical.
   if (loc.wasUuid && loc.slug) permanentRedirect(`/groups/${loc.slug}`);
 
-  const when = [loc.meetingDay, loc.meetingTime].filter(Boolean).join(" · ");
+  const when = [loc.meetingDay, formatMeetingTime(loc.meetingTime)]
+    .filter(Boolean)
+    .join(" · ");
   const where = loc.meetingPlace || loc.address || "";
 
   return (
     <article className="bg-background text-foreground">
       <div className="mx-auto max-w-7xl px-6 py-16 md:px-10 md:py-24">
-        <Kicker
-          left="Gathering post"
-          right={`${loc.city}, ${loc.state}`}
-        />
+        <Kicker left="Gathering post" right={joinPlace(loc.city, loc.state)} />
 
         <div className="mt-10 grid gap-12 lg:grid-cols-12">
           {/* Left column */}
@@ -151,9 +151,15 @@ export default async function GroupDetailPage({
                 </div>
               )}
               <div>
-                <dt className="folio">Group size</dt>
+                <dt className="folio">Seats</dt>
                 <dd className="mt-1.5 font-display text-lg">
-                  {loc.groupSize ?? 0} of {loc.maxSize} men
+                  {/* Never print a zero here: the empty-room number confirms
+                      the exact fear that keeps a man from coming. */}
+                  {loc.groupSize && loc.groupSize > 0
+                    ? loc.maxSize && loc.groupSize >= loc.maxSize
+                      ? `${loc.groupSize} men · table full`
+                      : `${loc.groupSize} men · seats open`
+                    : "Seats open"}
                 </dd>
               </div>
               {loc.contactName && (

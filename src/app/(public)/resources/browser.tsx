@@ -842,7 +842,10 @@ function ResourceCard({ item }: { item: ItemLite }) {
             {item.summary || item.description}
           </p>
         )}
-        <p className="mt-3 section-mark text-brass md:mt-4">{ctaLabel}</p>
+        {/* brass-deep, not brass: raw brass at section-mark size fails AA
+            on the light card (2.66:1); brass-deep is the small-type accent
+            (MASTER.md). Dark theme maps brass-deep back to bright brass. */}
+        <p className="mt-3 section-mark text-brass-deep md:mt-4">{ctaLabel}</p>
       </Link>
     </article>
   );
