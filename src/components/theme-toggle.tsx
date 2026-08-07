@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { flushSync } from "react-dom";
 import { useTheme } from "next-themes";
 import { Icon } from "@/components/icons/Icon";
 
@@ -23,7 +24,27 @@ export function ThemeToggle({ className }: { className?: string }) {
   return (
     <button
       type="button"
-      onClick={() => setTheme(isDark ? "light" : "dark")}
+      onClick={() => {
+        const next = isDark ? "light" : "dark";
+        // Ease the dark<->light brightness jump with a view-transition
+        // cross-fade where supported; hard-cut for reduced-motion users
+        // and older browsers. flushSync so the class flip lands inside
+        // the transition's snapshot callback.
+        if (
+          typeof document.startViewTransition === "function" &&
+          !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ) {
+          const vt = document.startViewTransition(() =>
+            flushSync(() => setTheme(next))
+          );
+          // An aborted transition still applies the theme; the promise
+          // rejection is just noise.
+          vt.ready.catch(() => {});
+          vt.finished.catch(() => {});
+        } else {
+          setTheme(next);
+        }
+      }}
       aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
       title={`Switch to ${isDark ? "light" : "dark"} mode`}
       className={

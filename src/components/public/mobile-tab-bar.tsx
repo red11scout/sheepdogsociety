@@ -39,7 +39,7 @@ export function MobileTabBar() {
               <Link
                 href={tab.href}
                 aria-current={active ? "page" : undefined}
-                className={`relative flex min-h-[52px] flex-col items-center justify-center gap-0.5 pt-1 ${
+                className={`relative flex min-h-[52px] flex-col items-center justify-center gap-0.5 pt-1 active:opacity-60 ${
                   active ? "text-brass" : "text-foreground/60"
                 }`}
               >
