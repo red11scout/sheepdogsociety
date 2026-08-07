@@ -17,6 +17,10 @@ export function KeepMePostedForm() {
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!email.trim()) {
+      setError("We need an email to send the Letter to.");
+      return;
+    }
     startTransition(async () => {
       setError("");
       try {
@@ -82,7 +86,7 @@ export function KeepMePostedForm() {
         </label>
         <label className="block">
           <span className="section-mark text-muted-foreground">
-            § Email<span className="ml-1 text-brass">*</span>
+            § Email<span className="ml-1 text-brass-deep">*</span>
           </span>
           <input
             type="email"
@@ -103,7 +107,7 @@ export function KeepMePostedForm() {
 
       <button
         type="submit"
-        disabled={submitting || !email.trim()}
+        disabled={submitting}
         className="lift inline-flex h-12 items-center gap-3 bg-foreground px-6 text-sm font-medium uppercase tracking-[0.18em] text-background transition-colors hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-40"
       >
         {submitting ? "Sending…" : "Send me the Letter"}

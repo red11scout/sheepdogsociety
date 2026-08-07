@@ -303,7 +303,7 @@ export default async function ResourceDetailPage({
               url={row.url ?? ""}
             />
           ) : row.bodyHtml ? (
-            <ResourceBody html={row.bodyHtml} />
+            <ResourceBody html={row.bodyHtml} dedupeTitle={row.title} />
           ) : downloadUrl ? (
             <div className="border border-dashed border-foreground/15 bg-card p-10 text-center">
               <Icon name="download" size={36} className="mx-auto text-brass" />

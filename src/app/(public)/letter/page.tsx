@@ -28,6 +28,8 @@ export default async function LetterIndexPage() {
     rows = [];
   }
   const [t, config] = await Promise.all([getSiteTextMap(), getStudioConfig()]);
+  // The current issue gets the front page; the rest file into the archive.
+  const [current, ...archive] = rows;
 
   const sections: Record<string, React.ReactNode> = {
     hero: (
@@ -65,64 +67,128 @@ export default async function LetterIndexPage() {
             </div>
           ) : (
             <>
-              <StaggerReveal
-                className="grid gap-6 md:grid-cols-2"
-                selector=":scope > a"
+              {/* Front page: the current issue alone, full width. One letter
+                  a week deserves a front page, not first place in a bin. */}
+              <Link
+                href={`/letter/${current.slug}`}
+                className="group/front block"
               >
-                {rows.map((row) => (
-                  <Link
-                    key={row.id}
-                    href={`/letter/${row.slug}`}
-                    className="paper-card lift group/card block overflow-hidden"
-                  >
-                    {/* Real uploaded cover wins; else the deterministic SVG
-                        keyed by theme so the archive reads as one series. */}
+                <div className="grid gap-8 md:grid-cols-2 md:items-center md:gap-12">
+                  <div className="paper-card overflow-hidden">
                     <div className="relative aspect-[16/9] w-full overflow-hidden">
-                      {row.coverImageUrl ? (
+                      {current.coverImageUrl ? (
                         <Image
-                          src={row.coverImageUrl}
-                          alt={row.coverImageAlt ?? ""}
+                          src={current.coverImageUrl}
+                          alt={current.coverImageAlt ?? ""}
                           fill
                           sizes="(max-width: 768px) 100vw, 50vw"
                           unoptimized
-                          className="object-cover transition-transform duration-500 group-hover/card:scale-[1.03]"
+                          className="object-cover transition-transform duration-700 group-hover/front:scale-[1.04]"
                         />
                       ) : (
                         <LetterCover
-                          id={row.id}
-                          title={row.title}
-                          theme={row.theme}
-                          className="h-full w-full transition-transform duration-500 group-hover/card:scale-[1.03]"
+                          id={current.id}
+                          title={current.title}
+                          theme={current.theme}
+                          className="h-full w-full transition-transform duration-700 group-hover/front:scale-[1.04]"
                         />
                       )}
                     </div>
-                    <div className="p-6 md:p-8">
-                      <p className="folio">
-                        No. {row.issueNumber}
-                        {row.publishDate && (
-                          <> · {format(new Date(row.publishDate), "MMM d, yyyy")}</>
-                        )}
-                      </p>
-                      <h3 className="display-soft mt-3 text-2xl md:text-3xl">
-                        {row.title}
-                      </h3>
-                      {row.intro && (
-                        <p className="mt-3 line-clamp-3 text-base leading-relaxed text-muted-foreground">
-                          {row.intro}
-                        </p>
+                  </div>
+                  <div>
+                    <p className="folio">
+                      No. {current.issueNumber}
+                      {current.publishDate && (
+                        <> · {format(new Date(current.publishDate), "MMMM d, yyyy")}</>
                       )}
-                      <p className="section-mark mt-5 inline-flex items-center gap-2">
-                        Read this week&rsquo;s
-                        <Icon
-                          name="arrow-right"
-                          size={14}
-                          className="transition-transform group-hover/card:translate-x-1"
-                        />
+                    </p>
+                    <h2 className="display-soft mt-4 text-3xl md:text-4xl">
+                      {current.title}
+                    </h2>
+                    {current.intro && (
+                      <p className="mt-4 line-clamp-4 text-base leading-relaxed text-muted-foreground">
+                        {current.intro}
                       </p>
-                    </div>
-                  </Link>
-                ))}
-              </StaggerReveal>
+                    )}
+                    <p className="section-mark mt-6 inline-flex items-center gap-2 transition-colors group-hover/front:text-brass">
+                      Read this week&rsquo;s
+                      <Icon
+                        name="arrow-right"
+                        size={14}
+                        className="transition-transform group-hover/front:translate-x-1"
+                      />
+                    </p>
+                  </div>
+                </div>
+              </Link>
+
+              {archive.length > 0 && (
+                <>
+                  <Kicker
+                    left="The archive"
+                    right={`${archive.length} back issue${archive.length === 1 ? "" : "s"}`}
+                    className="mt-20"
+                  />
+                  <StaggerReveal
+                    className="mt-8 grid gap-6 md:grid-cols-2"
+                    selector=":scope > a"
+                  >
+                    {archive.map((row) => (
+                      <Link
+                        key={row.id}
+                        href={`/letter/${row.slug}`}
+                        className="paper-card lift group/card block overflow-hidden"
+                      >
+                        {/* Real uploaded cover wins; else the deterministic SVG
+                            keyed by theme so the archive reads as one series. */}
+                        <div className="relative aspect-[16/9] w-full overflow-hidden">
+                          {row.coverImageUrl ? (
+                            <Image
+                              src={row.coverImageUrl}
+                              alt={row.coverImageAlt ?? ""}
+                              fill
+                              sizes="(max-width: 768px) 100vw, 50vw"
+                              unoptimized
+                              className="object-cover transition-transform duration-500 group-hover/card:scale-[1.03]"
+                            />
+                          ) : (
+                            <LetterCover
+                              id={row.id}
+                              title={row.title}
+                              theme={row.theme}
+                              className="h-full w-full transition-transform duration-500 group-hover/card:scale-[1.03]"
+                            />
+                          )}
+                        </div>
+                        <div className="p-6 md:p-8">
+                          <p className="folio">
+                            No. {row.issueNumber}
+                            {row.publishDate && (
+                              <> · {format(new Date(row.publishDate), "MMM d, yyyy")}</>
+                            )}
+                          </p>
+                          <h3 className="display-soft mt-3 text-2xl md:text-3xl">
+                            {row.title}
+                          </h3>
+                          {row.intro && (
+                            <p className="mt-3 line-clamp-3 text-base leading-relaxed text-muted-foreground">
+                              {row.intro}
+                            </p>
+                          )}
+                          <p className="section-mark mt-5 inline-flex items-center gap-2">
+                            Read No. {row.issueNumber}
+                            <Icon
+                              name="arrow-right"
+                              size={14}
+                              className="transition-transform group-hover/card:translate-x-1"
+                            />
+                          </p>
+                        </div>
+                      </Link>
+                    ))}
+                  </StaggerReveal>
+                </>
+              )}
               <div className="mt-10">
                 <Link href="/letter/archive" className="link-editorial text-sm">
                   The full archive

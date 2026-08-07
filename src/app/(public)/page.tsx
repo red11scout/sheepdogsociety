@@ -16,6 +16,7 @@ import { HeroAtmosphere } from "@/components/motion/HeroAtmosphere";
 import { LetterCover } from "@/components/letters/LetterCover";
 import { listPublishedEncouragements } from "@/server/encouragements";
 import { cadenceLabel, type SeriesCadence } from "@/lib/events/series";
+import { WeeklyLedger } from "@/components/public/weekly-ledger";
 import { getSiteTextMap } from "@/lib/site-text/get";
 import { getStudioConfig } from "@/lib/studio/get";
 import { renderMerge } from "@/lib/studio/config";
@@ -162,7 +163,7 @@ export default async function HomePage() {
 
   const sections: Record<string, React.ReactNode> = {
     hero: (
-      <section className="nw-hero relative flex min-h-[88vh] items-center bg-background text-foreground">
+      <section className="nw-hero relative flex min-h-[88vh] items-center bg-background text-foreground [@media(max-height:760px)]:min-h-0">
         <div className="nw-hero-light" aria-hidden="true" />
         <HeroAtmosphere />
         <div className="nw-hero-vignette" aria-hidden="true" />
@@ -250,7 +251,9 @@ export default async function HomePage() {
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 py-20 md:px-10 md:py-28">
           <Kicker left="What this is" right="Plain answers" />
-          <StaggerReveal className="mt-10 grid gap-10 md:grid-cols-2 lg:grid-cols-5 lg:gap-8">
+          {/* 3+2, not 5-across: five simultaneous micro-columns at 1280px
+              was the one place the broadsheet density cost comprehension. */}
+          <StaggerReveal className="mt-10 grid gap-10 md:grid-cols-2 lg:grid-cols-3 lg:gap-12">
             <div>
               <p className="folio">Who it&rsquo;s for</p>
               <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
@@ -345,9 +348,7 @@ export default async function HomePage() {
               })}
             </ul>
           ) : (
-            <p className="mt-8 font-pullquote text-lede italic text-muted-foreground">
-              The calendar is refilling. Check the gatherings page.
-            </p>
+            <WeeklyLedger />
           )}
           <Link
             href="/events"

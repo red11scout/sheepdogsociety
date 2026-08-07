@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { LocationMap, type LocationPin } from "@/components/map/location-map";
 import { Icon } from "@/components/icons/Icon";
+import { formatMeetingTime, joinPlace } from "@/lib/format-meeting";
 
 const DAYS = [
   "Monday",
@@ -45,6 +46,9 @@ export function GroupsBrowser({ pins }: { pins: LocationPin[] }) {
 
   return (
     <div>
+      {/* Screen-reader landmark: keeps the heading outline sequential
+          (h1 -> h2 -> the h3 group names below). */}
+      <h2 className="sr-only">Browse the groups</h2>
       {/* Filter bar */}
       <div className="flex flex-col gap-3 border-y border-foreground/15 py-4 md:flex-row md:items-center">
         <div className="relative flex-1">
@@ -56,6 +60,7 @@ export function GroupsBrowser({ pins }: { pins: LocationPin[] }) {
           <input
             type="text"
             placeholder="City, state, or group name"
+            aria-label="Search groups by city, state, or name"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="h-11 w-full border border-foreground/15 bg-transparent pl-11 pr-4 text-sm text-foreground placeholder:text-foreground/40 focus:border-brass focus:outline-none"
@@ -63,6 +68,7 @@ export function GroupsBrowser({ pins }: { pins: LocationPin[] }) {
         </div>
         <select
           value={dayFilter}
+          aria-label="Filter groups by meeting day"
           onChange={(e) => setDayFilter(e.target.value)}
           className="h-11 border border-foreground/15 bg-transparent px-4 text-sm text-foreground focus:border-brass focus:outline-none md:w-[160px]"
         >
@@ -95,7 +101,7 @@ export function GroupsBrowser({ pins }: { pins: LocationPin[] }) {
               loc.groupSize != null && loc.groupSize > 0
                 ? `${loc.groupSize} ${loc.groupSize === 1 ? "man" : "men"}`
                 : null;
-            const meta = [memberPart, loc.meetingDay, loc.meetingTime]
+            const meta = [memberPart, loc.meetingDay, formatMeetingTime(loc.meetingTime)]
               .filter(Boolean)
               .join(" · ");
             return (
@@ -108,7 +114,7 @@ export function GroupsBrowser({ pins }: { pins: LocationPin[] }) {
                     <h3 className="font-display text-xl">{loc.name}</h3>
                     <p className="mt-1 flex items-center gap-1.5 text-sm text-muted-foreground">
                       <Icon name="map-pin" size={14} className="text-brass" />
-                      {loc.city}, {loc.state}
+                      {joinPlace(loc.city, loc.state)}
                     </p>
                   </div>
                   {meta && <p className="section-mark">{meta}</p>}

@@ -11,6 +11,7 @@ import { format } from "date-fns";
 import { cadenceLabel, type SeriesCadence } from "@/lib/events/series";
 import { Kicker } from "@/components/public/kicker";
 import { StaggerReveal } from "@/components/motion/StaggerReveal";
+import { WeeklyLedger } from "@/components/public/weekly-ledger";
 import { getSiteTextMap } from "@/lib/site-text/get";
 import { getStudioConfig } from "@/lib/studio/get";
 import { renderMerge } from "@/lib/studio/config";
@@ -172,9 +173,9 @@ export default async function EventsPage() {
         </div>
       </section>
     ),
-    // When nothing is on the books, the whole Upcoming section is hidden
-    // (no "Upcoming" heading, no empty-state box) so the page just shows
-    // past gatherings.
+    // When nothing is on the books, the standing weekly rhythm stands in —
+    // the hero just promised "the calendar below", so a calendar must
+    // follow. The groups' set days are the calendar.
     upcoming: upcomingItems.length > 0 ? (
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-7xl px-6 pb-20 md:px-10 md:pb-28">
@@ -260,7 +261,14 @@ export default async function EventsPage() {
             </ul>
         </div>
       </section>
-    ) : null,
+    ) : (
+      <section className="bg-background text-foreground">
+        <div className="mx-auto max-w-7xl px-6 pb-20 md:px-10 md:pb-28">
+          <Kicker left="The standing rhythm" right="Every week · Same tables" />
+          <WeeklyLedger />
+        </div>
+      </section>
+    ),
     "past-gatherings": past.length > 0 ? (
       <section className="bg-background text-foreground">
           <div className="mx-auto max-w-7xl px-6 pb-20 md:px-10 md:pb-28">
@@ -320,7 +328,9 @@ export default async function EventsPage() {
                         </p>
                       )}
                       <p className="section-mark mt-4 inline-flex items-center gap-2">
-                        See the night
+                        {/* "See the night" lied about morning workouts and
+                            daytime races; say what is actually there. */}
+                        {photos.length > 0 ? "See the photos" : "See the gathering"}
                         <Icon
                           name="arrow-right"
                           size={12}

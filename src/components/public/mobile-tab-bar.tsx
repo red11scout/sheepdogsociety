@@ -11,7 +11,10 @@ const TABS: { href: string; label: string; icon: IconName; exact?: boolean }[] =
   // hamburger panel (public-nav mobileSecondaryLinks) so it stays reachable.
   { href: "/events", label: "Events", icon: "calendar" },
   { href: "/bible", label: "Bible", icon: "scroll" },
-  { href: "/resources", label: "Resources", icon: "clipboard" },
+  // Join replaced Resources 2026-08-07: the site's one primary CTA
+  // (MASTER.md) had no mobile priority at all. Resources stays reachable
+  // in the hamburger panel.
+  { href: "/join", label: "Join", icon: "gate" },
 ];
 
 /**

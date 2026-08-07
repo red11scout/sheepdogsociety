@@ -4,11 +4,21 @@
  * styles stripped). This is a server-trusted source: only an admin can
  * upload, and the conversion path is bounded.
  */
-export function ResourceBody({ html }: { html: string }) {
+import { stripLeadingTitle } from "@/lib/resources/strip-leading-title";
+
+export function ResourceBody({
+  html,
+  dedupeTitle,
+}: {
+  html: string;
+  dedupeTitle?: string;
+}) {
   return (
     <div
       className="resource-prose"
-      dangerouslySetInnerHTML={{ __html: html }}
+      dangerouslySetInnerHTML={{
+        __html: dedupeTitle ? stripLeadingTitle(html, dedupeTitle) : html,
+      }}
     />
   );
 }
