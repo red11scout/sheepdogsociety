@@ -175,7 +175,7 @@ export function ScriptureMarquee({ className, verses = [] }: ScriptureMarqueePro
                     }}
                     onBlur={scheduleClose}
                     className={cn(
-                      "section-mark cursor-pointer whitespace-nowrap px-1 py-4 transition-colors duration-200",
+                      "section-mark cursor-pointer whitespace-nowrap px-1 py-4 transition-colors duration-200 active:scale-95 motion-reduce:active:scale-100",
                       isOpenRef ? "text-brass" : "text-stone/60 hover:text-brass/90"
                     )}
                   >

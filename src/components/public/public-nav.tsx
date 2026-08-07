@@ -229,7 +229,7 @@ export function PublicNav() {
                     </Link>
                     {isOpen && (
                       <div
-                        className="absolute left-0 top-full mt-1 min-w-[200px] border border-foreground/15 bg-popover text-popover-foreground"
+                        className="menu-pop absolute left-0 top-full mt-1 min-w-[200px] border border-foreground/15 bg-popover text-popover-foreground"
                         onMouseEnter={cancelClose}
                         onMouseLeave={scheduleClose}
                       >
@@ -238,7 +238,7 @@ export function PublicNav() {
                             <li key={child.href}>
                               <Link
                                 href={child.href}
-                                className="block px-4 py-2 text-sm text-foreground/75 transition-colors hover:bg-foreground/5 hover:text-foreground"
+                                className="block px-4 py-2 text-sm text-foreground/75 transition-colors hover:bg-foreground/5 hover:text-foreground active:bg-foreground/10"
                                 onClick={() => setOpenMenu(null)}
                               >
                                 {child.label}
@@ -292,7 +292,7 @@ export function PublicNav() {
         {/* Mobile slide-down panel — secondary destinations only; the
             primary five are one thumb-tap away in the bottom tab bar. */}
         {mobileOpen && (
-          <div className="border-t border-foreground/10 bg-background px-6 pb-6 pt-2 lg:hidden">
+          <div className="menu-pop border-t border-foreground/10 bg-background px-6 pb-6 pt-2 lg:hidden">
             {(isAdmin
               ? [...mobileSecondaryLinks, { href: "/gallery", label: "Gallery" }]
               : mobileSecondaryLinks
@@ -300,7 +300,7 @@ export function PublicNav() {
               <Link
                 key={link.href}
                 href={link.href}
-                className="block py-3 text-sm font-medium text-foreground/80"
+                className="block py-3 text-sm font-medium text-foreground/80 active:text-brass"
                 onClick={() => setMobileOpen(false)}
               >
                 {link.label}
