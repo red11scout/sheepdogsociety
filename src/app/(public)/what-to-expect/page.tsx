@@ -185,7 +185,7 @@ export default async function WhatToExpectPage() {
               href="/groups"
               className="lift inline-flex h-12 items-center gap-3 bg-brass px-6 text-sm font-medium uppercase tracking-[0.18em] text-iron transition-colors hover:bg-gold"
             >
-              Find a group near me
+              Find a table near me
               <Icon name="arrow-right" size={16} />
             </Link>
             <Link

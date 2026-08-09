@@ -167,7 +167,7 @@ export const SITE_TEXT_KEYS = [
   { key: "hwg.hero.headline2", label: "Hero headline — line 2 (italic)", group: "How We Gather", multiline: false,
     defaultValue: "One brotherhood." },
   { key: "hwg.cta.title", label: "Closing CTA — title", group: "How We Gather", multiline: false,
-    defaultValue: "Find a group, or plant one." },
+    defaultValue: "Find a table, or plant one." },
   // ── Events ────────────────────────────────────────────────
   { key: "events.hero.headline1", label: "Hero headline — line 1", group: "Events", multiline: false,
     defaultValue: "Bring a brother." },

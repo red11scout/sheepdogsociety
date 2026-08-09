@@ -40,8 +40,16 @@ export default async function PublicLayout({
       <div className="nw-grain" aria-hidden="true" />
       {isEnabled && <DraftRibbon />}
       {isEnabled && <StudioModeForcer />}
+      {/* Skip link (MASTER.md non-negotiable; was missing in production).
+          Visually hidden until keyboard focus, then a brass-ruled chip. */}
+      <a
+        href="#content"
+        className="section-mark sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-[60] focus:border focus:border-brass focus:bg-background focus:px-4 focus:py-3"
+      >
+        Skip to content
+      </a>
       <PublicNav />
-      <main className="flex-1">{children}</main>
+      <main id="content" className="flex-1">{children}</main>
       <PublicFooter />
       <MobileTabBar />
     </div>
