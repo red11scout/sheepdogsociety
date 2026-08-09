@@ -190,7 +190,7 @@ export default async function HomePage() {
                   className="lift nw-cta group inline-flex h-12 items-center gap-3 bg-foreground px-7 text-base font-medium text-background"
                 >
                   <Icon name="map-pin" size={18} />
-                  Find your group
+                  Find your table
                   <Icon
                     name="arrow-right"
                     size={16}

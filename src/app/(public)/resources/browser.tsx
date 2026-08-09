@@ -696,7 +696,7 @@ function ClusterDisclosure({
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-foreground/5 md:px-5 md:py-4"
+        className="flex min-h-11 w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-foreground/5 md:px-5 md:py-4"
         aria-expanded={isOpen}
       >
         <div className="flex items-baseline gap-3">
@@ -742,7 +742,7 @@ function Facet({
           type="button"
           onClick={() => setOpen((v) => !v)}
           aria-expanded={open}
-          className="flex flex-1 items-center gap-2 py-1 text-left"
+          className="flex min-h-11 flex-1 items-center gap-2 py-1 text-left"
         >
           <span className="section-mark text-muted-foreground">{title}</span>
           <span className="text-[0.625rem] tabular-nums text-muted-foreground/60">

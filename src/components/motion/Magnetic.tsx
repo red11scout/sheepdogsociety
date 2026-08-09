@@ -21,11 +21,38 @@ export function Magnetic({
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     if (window.matchMedia("(hover: none)").matches) return;
 
-    let raf = 0;
+    let raf: number | null = null;
     let targetX = 0;
     let targetY = 0;
     let currentX = 0;
     let currentY = 0;
+
+    // The loop runs only while the element is actually moving — the old
+    // version ticked every frame from mount for a hover effect that is
+    // idle 99% of the time.
+    const tick = () => {
+      currentX += (targetX - currentX) * 0.12;
+      currentY += (targetY - currentY) * 0.12;
+      if (
+        Math.abs(targetX - currentX) < 0.05 &&
+        Math.abs(targetY - currentY) < 0.05
+      ) {
+        currentX = targetX;
+        currentY = targetY;
+        el.style.transform =
+          targetX === 0 && targetY === 0
+            ? ""
+            : `translate3d(${currentX.toFixed(2)}px, ${currentY.toFixed(2)}px, 0)`;
+        raf = null;
+        return;
+      }
+      el.style.transform = `translate3d(${currentX.toFixed(2)}px, ${currentY.toFixed(2)}px, 0)`;
+      raf = requestAnimationFrame(tick);
+    };
+
+    const wake = () => {
+      if (raf === null) raf = requestAnimationFrame(tick);
+    };
 
     const handleMove = (e: MouseEvent) => {
       const rect = el.getBoundingClientRect();
@@ -33,33 +60,27 @@ export function Magnetic({
       const cy = rect.top + rect.height / 2;
       targetX = (e.clientX - cx) * strength;
       targetY = (e.clientY - cy) * strength;
+      wake();
     };
 
     const handleLeave = () => {
       targetX = 0;
       targetY = 0;
-    };
-
-    const tick = () => {
-      currentX += (targetX - currentX) * 0.12;
-      currentY += (targetY - currentY) * 0.12;
-      el.style.transform = `translate3d(${currentX.toFixed(2)}px, ${currentY.toFixed(2)}px, 0)`;
-      raf = requestAnimationFrame(tick);
+      wake();
     };
 
     el.addEventListener("mousemove", handleMove);
     el.addEventListener("mouseleave", handleLeave);
-    raf = requestAnimationFrame(tick);
 
     return () => {
       el.removeEventListener("mousemove", handleMove);
       el.removeEventListener("mouseleave", handleLeave);
-      cancelAnimationFrame(raf);
+      if (raf !== null) cancelAnimationFrame(raf);
     };
   }, [strength]);
 
   return (
-    <div ref={ref} className={className} style={{ willChange: "transform" }}>
+    <div ref={ref} className={className}>
       {children}
     </div>
   );

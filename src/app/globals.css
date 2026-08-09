@@ -612,7 +612,8 @@
   transition:
     transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
     box-shadow 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform;
+  /* No will-change: it sat on every lift-composed card at rest, holding
+     compositor layers for a 2px hover rise the browser handles fine. */
 }
 .lift:hover {
   transform: translateY(-2px);

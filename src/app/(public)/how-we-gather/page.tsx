@@ -192,7 +192,7 @@ export default async function HowWeGatherPage() {
             >
               <Link href="/groups">
                 <Icon name="map-pin" size={18} className="mr-2" />
-                Find a group
+                Find a table
               </Link>
             </Button>
             <Link
