@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
-import { animate, createScope, onScroll, stagger, utils } from "animejs";
+import { animate, createScope, stagger, utils } from "animejs";
+import { observeReveal } from "./Reveal";
 
 interface StaggerRevealProps {
   children: ReactNode;
@@ -16,7 +17,8 @@ interface StaggerRevealProps {
 
 /**
  * Staggered children reveal on viewport entry (anime.js v4 ONLY).
- * Same progressive-enhancement + reduced-motion contract as Reveal.
+ * Same progressive-enhancement + reduced-motion + reveal-pending contract
+ * as Reveal; the trigger is the shared observeReveal.
  */
 export function StaggerReveal({
   children,
@@ -30,28 +32,39 @@ export function StaggerReveal({
   useEffect(() => {
     const root = rootRef.current;
     if (!root) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      root.classList.remove("reveal-pending");
+      return;
+    }
 
     const items = Array.from(root.querySelectorAll<HTMLElement>(selector));
-    if (items.length === 0) return;
+    if (items.length === 0) {
+      root.classList.remove("reveal-pending");
+      return;
+    }
 
+    let stop = () => {};
     const scope = createScope({ root }).add(() => {
       utils.set(items, { opacity: 0, translateY: y });
-      animate(items, {
+      root.classList.remove("reveal-pending");
+      const anim = animate(items, {
         opacity: 1,
         translateY: 0,
         duration: 400,
         delay: stagger(step),
         ease: "outQuad",
-        // repeat defaults to true and would re-flash on re-entry.
-        autoplay: onScroll({ target: root, enter: "bottom-=48 top", repeat: false }),
+        autoplay: false,
       });
+      stop = observeReveal(root, () => anim.play());
     });
-    return () => scope.revert();
+    return () => {
+      stop();
+      scope.revert();
+    };
   }, [selector, y, step]);
 
   return (
-    <div ref={rootRef} className={className}>
+    <div ref={rootRef} className={className ? `reveal-pending ${className}` : "reveal-pending"}>
       {children}
     </div>
   );

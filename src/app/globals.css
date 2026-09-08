@@ -192,7 +192,7 @@
   --muted-foreground: oklch(0.7 0.025 75);
   --accent: oklch(0.73 0.13 80);
   --accent-foreground: oklch(0.18 0.022 260);
-  --destructive: oklch(0.6 0.18 30);
+  --destructive: oklch(0.66 0.17 30);
   --border: oklch(0.32 0.022 260);
   --input: oklch(0.3 0.022 260);
   --ring: oklch(0.73 0.13 80);
@@ -219,6 +219,10 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* viewport-fit=cover (root layout) — keep content clear of the
+       notch in landscape; fixed chrome pads itself. */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
   }
   :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
     outline: 2px solid var(--color-brass);
@@ -573,6 +577,23 @@
 @utility verse-target {
   background-color: color-mix(in srgb, var(--color-brass) 18%, transparent);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-brass) 18%, transparent);
+}
+
+/* Reveal / StaggerReveal initial state. Server markup carries
+   .reveal-pending; the effect swaps it for an inline opacity before the
+   first animated frame. Scoped to scripting-enabled, motion-ok browsers so
+   no-JS readers and crawlers see everything, and a delayed keyframe
+   uncovers the content anyway if the effect never runs. */
+@keyframes reveal-fallback {
+  to {
+    opacity: 1;
+  }
+}
+@media (scripting: enabled) and (prefers-reduced-motion: no-preference) {
+  .reveal-pending {
+    opacity: 0;
+    animation: reveal-fallback 0s 1.5s forwards;
+  }
 }
 
 /* Cursor-tracked spotlight on dark cards. Pure CSS variables, no JS state. */

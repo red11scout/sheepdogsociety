@@ -38,8 +38,8 @@ export async function listEncouragements() {
     .orderBy(desc(weeklyEncouragements.issueNumber));
 }
 
-export async function listPublishedEncouragements() {
-  return await db
+export async function listPublishedEncouragements(limit?: number) {
+  const query = db
     .select({
       id: weeklyEncouragements.id,
       issueNumber: weeklyEncouragements.issueNumber,
@@ -59,6 +59,7 @@ export async function listPublishedEncouragements() {
       )
     )
     .orderBy(desc(weeklyEncouragements.publishDate));
+  return limit ? await query.limit(limit) : await query;
 }
 
 export async function getPublishedEncouragementBySlug(slug: string) {
@@ -235,7 +236,8 @@ export async function setEncouragementStatus(
   }
 
   revalidatePath("/admin/encouragements");
-  revalidatePath("/letter");
+  revalidatePath("/letter", "layout");
+  revalidatePath("/");
   return { broadcast: broadcastResult };
 }
 

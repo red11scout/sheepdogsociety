@@ -88,7 +88,7 @@ export function GroupInterestForm({ locationId }: { locationId: string }) {
           maxLength={2000}
           value={form.message}
           onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
-          className="mt-3 w-full border border-foreground/20 bg-transparent px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-foreground/40 focus:border-brass focus:outline-none"
+          className="mt-3 w-full border border-foreground/20 bg-transparent px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-muted-foreground focus:border-brass focus:outline-none"
         />
       </div>
       {error && (
@@ -130,7 +130,7 @@ function Field({
     <div>
       <label className="folio" htmlFor={id}>
         {label}
-        {required && <span className="ml-1 text-brass">*</span>}
+        {required && <span className="ml-1 text-brass-deep">*</span>}
       </label>
       <input
         id={id}
@@ -139,7 +139,7 @@ function Field({
         maxLength={maxLength}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-3 h-11 w-full border border-foreground/20 bg-transparent px-4 text-base text-foreground placeholder:text-foreground/40 focus:border-brass focus:outline-none"
+        className="mt-3 h-11 w-full border border-foreground/20 bg-transparent px-4 text-base text-foreground placeholder:text-muted-foreground focus:border-brass focus:outline-none"
       />
     </div>
   );

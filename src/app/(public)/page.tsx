@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { isOptimizableImage } from "@/lib/images";
 import type { Metadata } from "next";
 import { db } from "@/db";
 import { events, eventSeries, locations, testimonies, users } from "@/db/schema";
@@ -95,7 +96,7 @@ async function getNextGatherings() {
 
 async function getLatestLetter() {
   try {
-    const rows = await listPublishedEncouragements();
+    const rows = await listPublishedEncouragements(1);
     return rows[0] ?? null;
   } catch {
     return null;
@@ -163,7 +164,7 @@ export default async function HomePage() {
 
   const sections: Record<string, React.ReactNode> = {
     hero: (
-      <section className="nw-hero relative flex min-h-[88vh] items-center bg-background text-foreground [@media(max-height:760px)]:min-h-0">
+      <section className="nw-hero relative flex min-h-[88svh] items-center bg-background text-foreground [@media(max-height:760px)]:min-h-0">
         <div className="nw-hero-light" aria-hidden="true" />
         <HeroAtmosphere />
         <div className="nw-hero-vignette" aria-hidden="true" />
@@ -226,7 +227,7 @@ export default async function HomePage() {
       </section>
     ),
     verse: (
-      <section className="ember-band nw-chapel relative flex min-h-[78vh] items-center overflow-hidden">
+      <section className="ember-band nw-chapel relative flex min-h-[78svh] items-center overflow-hidden">
         <div className="nw-chapel-glow" aria-hidden="true" />
         <Reveal y={0} className="absolute inset-0 z-0">
           <span className="nw-verse-glow" aria-hidden="true" />
@@ -384,7 +385,7 @@ export default async function HomePage() {
                         alt={letter.coverImageAlt ?? ""}
                         fill
                         sizes="(max-width: 768px) 100vw, 50vw"
-                        unoptimized
+                        unoptimized={!isOptimizableImage(letter.coverImageUrl)}
                         className="object-cover transition-transform duration-700 group-hover/cover:scale-[1.04]"
                       />
                     ) : (

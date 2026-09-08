@@ -1,6 +1,14 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  images: {
+    // Uploads land in Vercel Blob; see src/lib/images.ts for the matching
+    // client-side check (everything else renders `unoptimized`). Blob URLs
+    // are immutable (random suffix), so cache the optimised variants for
+    // a month instead of the 60s default — each re-optimisation is billed.
+    remotePatterns: [{ protocol: "https", hostname: "*.public.blob.vercel-storage.com" }],
+    minimumCacheTTL: 2678400,
+  },
   // Type errors fail the build (kept on; comment previously said the opposite).
   typescript: {
     ignoreBuildErrors: false,

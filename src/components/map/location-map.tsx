@@ -25,6 +25,18 @@ export type LocationPin = {
   contactName: string | null;
 };
 
+/** Popup HTML is built by string interpolation; every field below comes
+ *  from a public form (plant request → admin approval), so it is escaped
+ *  before it reaches setHTML. */
+function esc(value: string | number | null | undefined): string {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
 type LocationMapProps = {
   locations: LocationPin[];
   onSelectLocation?: (id: string) => void;
@@ -229,11 +241,11 @@ export function LocationMap({
         className: "sheepdog-popup",
       }).setHTML(`
         <div class="nw-pop">
-          <div class="nw-pop__loc">${loc.city}, ${loc.state}</div>
-          <h3 class="nw-pop__name">${loc.name}</h3>
-          ${meta ? `<div class="nw-pop__meta">${meta}</div>` : ""}
-          ${loc.meetingPlace ? `<p class="nw-pop__place">${loc.meetingPlace}</p>` : ""}
-          <a class="nw-pop__link" href="/groups/${loc.slug ?? loc.id}">View details →</a>
+          <div class="nw-pop__loc">${esc(loc.city)}, ${esc(loc.state)}</div>
+          <h3 class="nw-pop__name">${esc(loc.name)}</h3>
+          ${meta ? `<div class="nw-pop__meta">${esc(meta)}</div>` : ""}
+          ${loc.meetingPlace ? `<p class="nw-pop__place">${esc(loc.meetingPlace)}</p>` : ""}
+          <a class="nw-pop__link" href="/groups/${encodeURIComponent(loc.slug ?? loc.id)}">View details →</a>
         </div>
       `);
 

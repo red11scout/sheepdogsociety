@@ -102,6 +102,7 @@ const PAIRS = [
   ["--background", "--c-stone", 4.5, "folio small print"],
   ["--background", "--c-brass-deep", 4.5, "section marks / brass-colored text"],
   ["--background", "--c-oxblood", 3.0, "oxblood display ems (display size)"],
+  ["--background", "--destructive", 4.5, "form error text (14px)"],
   ["--c-brass", "--c-iron", 4.5, "brass fill + iron text (CTA)"],
   ["--c-bone", "--c-ink", 4.5, "legacy bone/ink safety net"],
   ["#1c1610", "#efe7d5", 4.5, "ember band body"],

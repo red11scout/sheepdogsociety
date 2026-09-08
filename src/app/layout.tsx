@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import {
   Inter,
   Merriweather,
@@ -84,6 +84,21 @@ export const metadata: Metadata = {
     apple: "/apple-touch-icon.png",
     shortcut: "/favicon.ico",
   },
+};
+
+// viewportFit=cover lets env(safe-area-inset-bottom) resolve on iPhones
+// (it is 0 without it, so the tab bar sat under the home indicator).
+// interactiveWidget=resizes-content makes Android Chrome shrink the layout
+// viewport for the on-screen keyboard, so fixed bottom chrome stays put.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  interactiveWidget: "resizes-content",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#F2EBDD" },
+    { media: "(prefers-color-scheme: dark)", color: "#0E1624" },
+  ],
 };
 
 export default function RootLayout({

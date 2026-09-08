@@ -27,7 +27,7 @@ export default function VerseSharePage() {
       <section className="bg-background text-foreground">
         <div className="mx-auto max-w-3xl px-6 py-24 md:px-12 md:py-32">
           <div className="flex items-center gap-4">
-            <span className="section-mark text-brass">§ Acts 20:28 &middot; NIV</span>
+            <span className="section-mark text-brass-deep">§ Acts 20:28 &middot; NIV</span>
             <div className="hairline flex-1" />
           </div>
           <blockquote className="mt-10 border-l-2 border-brass/40 pl-6 font-pullquote text-2xl leading-relaxed text-foreground md:text-3xl">

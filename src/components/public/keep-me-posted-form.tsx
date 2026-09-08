@@ -100,7 +100,7 @@ export function KeepMePostedForm() {
       </div>
 
       {error && (
-        <p className="border border-oxblood/40 bg-oxblood/10 px-4 py-3 text-sm text-oxblood">
+        <p className="border border-oxblood/40 bg-oxblood/10 px-4 py-3 text-sm text-destructive">
           {error}
         </p>
       )}

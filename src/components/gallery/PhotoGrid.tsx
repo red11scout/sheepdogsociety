@@ -85,9 +85,9 @@ export function PhotoGrid({ photos, eventTitle }: PhotoGridProps) {
 
   if (photos.length === 0) {
     return (
-      <div className="border border-dashed border-iron/15 bg-bone p-12 text-center">
-        <Icon name="image" size={36} className="mx-auto text-iron/30" />
-        <p className="mt-4 font-pullquote text-base italic text-iron/60">
+      <div className="border border-dashed border-foreground/15 bg-card p-12 text-center">
+        <Icon name="image" size={36} className="mx-auto text-muted-foreground" />
+        <p className="mt-4 font-pullquote text-base italic text-muted-foreground">
           No photos yet.
         </p>
       </div>
@@ -107,7 +107,7 @@ export function PhotoGrid({ photos, eventTitle }: PhotoGridProps) {
               }}
               type="button"
               onClick={() => setOpenIndex(i)}
-              className="lift group/photo relative block aspect-square w-full overflow-hidden bg-iron/5 transition-shadow hover:shadow-lg"
+              className="lift group/photo relative block aspect-square w-full overflow-hidden bg-foreground/5 transition-shadow hover:shadow-lg"
               aria-label={`Open photo ${i + 1}${p.caption ? ` — ${p.caption}` : ""}`}
             >
               <Image
@@ -126,7 +126,7 @@ export function PhotoGrid({ photos, eventTitle }: PhotoGridProps) {
               />
               {p.caption && (
                 <div
-                  className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-2 bg-iron/85 px-3 py-2 text-[0.6875rem] leading-snug text-bone opacity-0 transition-all duration-300 group-hover/photo:translate-y-0 group-hover/photo:opacity-100"
+                  className="pointer-events-none absolute inset-x-0 bottom-0 translate-y-2 bg-[#0E1624]/85 px-3 py-2 text-[0.6875rem] leading-snug text-[#F2EBDD] opacity-0 transition-all duration-300 group-hover/photo:translate-y-0 group-hover/photo:opacity-100"
                   aria-hidden
                 >
                   <span className="line-clamp-2">{p.caption}</span>
@@ -142,7 +142,7 @@ export function PhotoGrid({ photos, eventTitle }: PhotoGridProps) {
           role="dialog"
           aria-modal="true"
           aria-label={`Photo ${openIndex! + 1} of ${photos.length}`}
-          className="fixed inset-0 z-[100] flex flex-col bg-iron/95 backdrop-blur-sm"
+          className="fixed inset-0 z-[100] flex flex-col bg-[#0E1624]/95 text-[#F2EBDD] backdrop-blur-sm"
           onClick={(e) => {
             // Click backdrop to close — but not clicks on the image or
             // chrome (those have their own handlers).
@@ -163,21 +163,21 @@ export function PhotoGrid({ photos, eventTitle }: PhotoGridProps) {
           }}
         >
           {/* Top bar */}
-          <header className="flex items-center justify-between gap-4 border-b border-bone/10 px-4 py-3 text-bone md:px-8">
+          <header className="flex items-center justify-between gap-4 border-b border-[#F2EBDD]/10 px-4 py-3 md:px-8">
             <div className="flex items-baseline gap-3 truncate">
               {eventTitle && (
-                <span className="display-xl truncate text-lg text-bone md:text-xl">
+                <span className="display-xl truncate text-lg md:text-xl">
                   {eventTitle}
                 </span>
               )}
-              <span className="section-mark shrink-0 text-stone/55">
+              <span className="section-mark shrink-0 text-[#C7BFAE]">
                 {openIndex! + 1} / {photos.length}
               </span>
             </div>
             <button
               type="button"
               onClick={close}
-              className="inline-flex h-9 w-9 items-center justify-center border border-bone/20 text-bone transition-colors hover:border-brass hover:text-brass"
+              className="inline-flex h-11 w-11 items-center justify-center border border-[#F2EBDD]/20 transition-colors hover:border-brass hover:text-brass"
               aria-label="Close gallery"
             >
               <Icon name="close" size={16} />
@@ -190,7 +190,7 @@ export function PhotoGrid({ photos, eventTitle }: PhotoGridProps) {
               <button
                 type="button"
                 onClick={prev}
-                className="absolute left-2 top-1/2 z-10 -translate-y-1/2 inline-flex h-12 w-12 items-center justify-center border border-bone/20 bg-iron/60 text-bone transition-colors hover:border-brass hover:text-brass md:left-6 md:h-14 md:w-14"
+                className="absolute left-2 top-1/2 z-10 -translate-y-1/2 inline-flex h-12 w-12 items-center justify-center border border-[#F2EBDD]/20 bg-[#0E1624]/60 transition-colors hover:border-brass hover:text-brass md:left-6 md:h-14 md:w-14"
                 aria-label="Previous photo"
               >
                 <Icon name="chevron-left" size={20} />
@@ -198,14 +198,14 @@ export function PhotoGrid({ photos, eventTitle }: PhotoGridProps) {
             )}
             {/* Container reserves max viewport but lets the image keep
              *  its native aspect ratio (object-contain). */}
-            <div className="relative flex h-full max-h-[calc(100vh-180px)] w-full items-center justify-center">
+            <div className="relative flex h-full max-h-[calc(100dvh-180px)] w-full items-center justify-center">
               <Image
                 src={open.url}
                 alt={open.alt ?? ""}
                 width={1920}
                 height={1080}
                 sizes="100vw"
-                className="h-full max-h-[calc(100vh-180px)] w-auto max-w-full object-contain"
+                className="h-full max-h-[calc(100dvh-180px)] w-auto max-w-full object-contain"
                 unoptimized
                 priority
               />
@@ -214,7 +214,7 @@ export function PhotoGrid({ photos, eventTitle }: PhotoGridProps) {
               <button
                 type="button"
                 onClick={next}
-                className="absolute right-2 top-1/2 z-10 -translate-y-1/2 inline-flex h-12 w-12 items-center justify-center border border-bone/20 bg-iron/60 text-bone transition-colors hover:border-brass hover:text-brass md:right-6 md:h-14 md:w-14"
+                className="absolute right-2 top-1/2 z-10 -translate-y-1/2 inline-flex h-12 w-12 items-center justify-center border border-[#F2EBDD]/20 bg-[#0E1624]/60 transition-colors hover:border-brass hover:text-brass md:right-6 md:h-14 md:w-14"
                 aria-label="Next photo"
               >
                 <Icon name="chevron-right" size={20} />
@@ -224,8 +224,8 @@ export function PhotoGrid({ photos, eventTitle }: PhotoGridProps) {
 
           {/* Caption rail */}
           {open.caption && (
-            <footer className="border-t border-bone/10 px-4 py-4 md:px-8">
-              <p className="mx-auto max-w-2xl text-center font-pullquote text-base italic leading-relaxed text-bone/85">
+            <footer className="border-t border-[#F2EBDD]/10 px-4 py-4 md:px-8">
+              <p className="mx-auto max-w-2xl text-center font-pullquote text-base italic leading-relaxed text-[#F2EBDD]/85">
                 {open.caption}
               </p>
             </footer>

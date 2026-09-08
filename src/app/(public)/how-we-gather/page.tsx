@@ -103,7 +103,7 @@ export default async function HowWeGatherPage() {
               <li key={r.title} className="py-12 md:py-20">
                 <div className="grid gap-8 md:grid-cols-[120px_1fr_240px] md:gap-12">
                   <div className="flex flex-col gap-4">
-                    <span className="section-mark text-brass">§ {r.roman}</span>
+                    <span className="section-mark text-brass-deep">§ {r.roman}</span>
                     <Icon
                       name={r.icon}
                       size={56}
@@ -137,7 +137,7 @@ export default async function HowWeGatherPage() {
                     )}
                   </div>
                   <div className="md:text-right">
-                    <span className="section-mark text-brass">{r.cadence}</span>
+                    <span className="section-mark text-brass-deep">{r.cadence}</span>
                   </div>
                 </div>
               </li>

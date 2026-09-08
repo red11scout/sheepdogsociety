@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { testimonies, users } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { revalidatePath } from "next/cache";
 import { z } from "zod/v4";
 
 const updateSchema = z.object({
@@ -46,6 +47,7 @@ export async function PATCH(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  revalidatePath("/stories");
   return NextResponse.json({ testimony });
 }
 
@@ -72,5 +74,6 @@ export async function DELETE(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
+  revalidatePath("/stories");
   return NextResponse.json({ success: true });
 }

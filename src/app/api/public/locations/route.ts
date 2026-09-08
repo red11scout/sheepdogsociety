@@ -40,7 +40,7 @@ export async function GET() {
   } catch (error) {
     console.error("Failed to fetch locations:", error);
     return NextResponse.json(
-      { error: "Failed to fetch locations", detail: String(error) },
+      { error: "Failed to fetch locations" },
       { status: 500 }
     );
   }

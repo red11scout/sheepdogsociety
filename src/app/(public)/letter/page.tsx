@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import { Ambient } from "@/components/motion/Ambient";
 import Link from "next/link";
 import Image from "next/image";
+import { isOptimizableImage } from "@/lib/images";
 import { listPublishedEncouragements } from "@/server/encouragements";
 import { Icon } from "@/components/icons/Icon";
 import { Kicker } from "@/components/public/kicker";
@@ -12,7 +13,9 @@ import { getSiteTextMap } from "@/lib/site-text/get";
 import { getStudioConfig } from "@/lib/studio/get";
 import { renderMerge } from "@/lib/studio/config";
 
-export const dynamic = "force-dynamic";
+// ISR: cached for a minute, and every admin write that touches this
+// surface calls revalidatePath, so a publish shows up at once.
+export const revalidate = 60;
 
 export const metadata = {
   title: "The Letter — Sheepdog Society",
@@ -82,7 +85,7 @@ export default async function LetterIndexPage() {
                           alt={current.coverImageAlt ?? ""}
                           fill
                           sizes="(max-width: 768px) 100vw, 50vw"
-                          unoptimized
+                          unoptimized={!isOptimizableImage(current.coverImageUrl)}
                           className="object-cover transition-transform duration-700 group-hover/front:scale-[1.04]"
                         />
                       ) : (
@@ -148,7 +151,7 @@ export default async function LetterIndexPage() {
                               alt={row.coverImageAlt ?? ""}
                               fill
                               sizes="(max-width: 768px) 100vw, 50vw"
-                              unoptimized
+                              unoptimized={!isOptimizableImage(row.coverImageUrl)}
                               className="object-cover transition-transform duration-500 group-hover/card:scale-[1.03]"
                             />
                           ) : (

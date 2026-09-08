@@ -54,7 +54,7 @@ export default async function GalleryEventPage({
             All galleries
           </Link>
           <div className="mt-8 flex items-center gap-4">
-            <span className="section-mark text-brass">§ Gallery</span>
+            <span className="section-mark text-brass-deep">§ Gallery</span>
             <div className="hairline flex-1" />
           </div>
           <h1 className="display-xl mt-8 text-[clamp(2.25rem,6vw,5rem)] text-foreground">
@@ -99,7 +99,7 @@ export default async function GalleryEventPage({
             {ev.recap && (
               <div className="mt-10 border-t border-foreground/15 pt-8">
                 <div className="flex items-center gap-3">
-                  <span className="section-mark text-brass">§ Recap</span>
+                  <span className="section-mark text-brass-deep">§ Recap</span>
                   <div className="hairline flex-1" />
                 </div>
                 <div className="mt-6 space-y-5">
@@ -122,7 +122,7 @@ export default async function GalleryEventPage({
       <section className="bg-background">
         <div className="mx-auto max-w-7xl px-6 pb-20 md:px-12 md:pb-28">
           <div className="mb-6 flex items-center gap-3">
-            <span className="section-mark text-brass">§ The night, in pictures</span>
+            <span className="section-mark text-brass-deep">§ The night, in pictures</span>
             <div className="hairline flex-1" />
           </div>
           <PhotoGrid photos={ev.photos} eventTitle={ev.title} />

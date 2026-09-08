@@ -3,7 +3,7 @@
 import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
 import { resources, users, resourceSections } from "@/db/schema";
-import { and, eq, isNull, asc, desc } from "drizzle-orm";
+import { and, eq, isNull, asc, desc, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { categorizeResource } from "@/lib/resources/categorize";
 import { uniqueResourceSlug } from "@/lib/resources/slug";
@@ -67,7 +67,7 @@ export async function createSection(input: {
     })
     .returning();
   revalidatePath("/admin/resources");
-  revalidatePath("/resources");
+  revalidatePath("/resources", "layout");
   return row;
 }
 
@@ -90,7 +90,7 @@ export async function updateSection(input: {
     .set(patch)
     .where(eq(resourceSections.id, input.id));
   revalidatePath("/admin/resources");
-  revalidatePath("/resources");
+  revalidatePath("/resources", "layout");
 }
 
 export async function softDeleteSection(id: string) {
@@ -172,7 +172,7 @@ export async function createResource(input: {
     })
     .returning();
   revalidatePath("/admin/resources");
-  revalidatePath("/resources");
+  revalidatePath("/resources", "layout");
   return row;
 }
 
@@ -216,7 +216,7 @@ export async function updateResource(input: {
   if (input.fieldNotesStatus !== undefined) patch.fieldNotesStatus = input.fieldNotesStatus;
   await db.update(resources).set(patch).where(eq(resources.id, input.id));
   revalidatePath("/admin/resources");
-  revalidatePath("/resources");
+  revalidatePath("/resources", "layout");
 }
 
 export async function deleteResource(id: string) {
@@ -227,7 +227,7 @@ export async function deleteResource(id: string) {
     .set({ deletedAt: new Date(), isPublic: false })
     .where(eq(resources.id, id));
   revalidatePath("/admin/resources");
-  revalidatePath("/resources");
+  revalidatePath("/resources", "layout");
 }
 
 export async function recategorizeResource(id: string) {
@@ -276,7 +276,7 @@ export async function recategorizeResource(id: string) {
     .where(eq(resources.id, id));
 
   revalidatePath("/admin/resources");
-  revalidatePath("/resources");
+  revalidatePath("/resources", "layout");
   revalidatePath(`/resources/${row.id}`);
   return cat;
 }
@@ -293,7 +293,7 @@ export async function moveResourceToSection(id: string, sectionId: string) {
     .set({ sectionId, category: section.slug })
     .where(eq(resources.id, id));
   revalidatePath("/admin/resources");
-  revalidatePath("/resources");
+  revalidatePath("/resources", "layout");
 }
 
 export async function listSectionsAndResourcesForPublic() {
@@ -325,19 +325,16 @@ export async function listSectionsAndResourcesForPublic() {
       topics: resources.topics,
       themes: resources.themes,
       booksOfBible: resources.booksOfBible,
-      hasBody: resources.bodyHtml,
+      // Presence only — the full body_html of every resource was being
+      // shipped from Postgres on each /resources render just to be
+      // coerced to a boolean here.
+      hasBody: sql<boolean>`coalesce(length(${resources.bodyHtml}), 0) > 0`,
       createdAt: resources.createdAt,
     })
     .from(resources)
     .where(eq(resources.isPublic, true));
 
-  // Map hasBody (text) → boolean for the client.
-  const itemsClient = items.map((it) => ({
-    ...it,
-    hasBody: !!it.hasBody && it.hasBody.length > 0,
-  }));
-
-  return { sections, items: itemsClient };
+  return { sections, items };
 }
 
 export async function getPublicResourceBySlug(slug: string) {

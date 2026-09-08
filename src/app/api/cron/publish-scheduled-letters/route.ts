@@ -119,10 +119,8 @@ export async function GET(req: Request) {
 
   // Revalidate public surfaces so the newly-published letters render.
   try {
-    revalidatePath("/letter");
-    for (const row of due) {
-      revalidatePath(`/letter/${row.slug}`);
-    }
+    revalidatePath("/letter", "layout");
+    revalidatePath("/");
   } catch {
     // revalidatePath throws on edge runtime; nodejs is fine
   }

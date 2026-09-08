@@ -62,7 +62,11 @@ export async function getESVChapter(
       fallback: false,
       paragraphs: parseESVChapterText(text),
     };
-  } catch {
+  } catch (error) {
+    // Say so in the logs: a missing key, a 401, and a parser bug all look
+    // identical from the page (a quiet WEB fallback) and only this line
+    // tells them apart.
+    console.error(`ESV chapter fetch failed for ${book.name} ${chapter}:`, error);
     const paragraphs = await getWEBChapter(book, chapter);
     return { book, chapter, translation: "WEB", fallback: true, paragraphs };
   }

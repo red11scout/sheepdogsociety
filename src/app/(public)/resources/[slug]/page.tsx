@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { isOptimizableImage } from "@/lib/images";
 import { getPublicResourceBySlug } from "@/server/resources-admin";
 import { Icon } from "@/components/icons/Icon";
 import { buyLabelForUrl } from "@/lib/resources/buy-label";
@@ -9,7 +10,9 @@ import { PrintButton } from "./print-button";
 import { ResourceBody } from "./resource-body";
 import { Embed } from "./embed";
 
-export const dynamic = "force-dynamic";
+// ISR: cached for a minute, and every admin write that touches this
+// surface calls revalidatePath, so a publish shows up at once.
+export const revalidate = 60;
 
 export async function generateMetadata({
   params,
@@ -89,7 +92,7 @@ export default async function ResourceDetailPage({
                 href={row.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="lift inline-flex h-9 items-center gap-2 border border-foreground/15 bg-card px-4 text-xs font-medium uppercase tracking-wider text-foreground transition-colors hover:border-brass hover:text-brass"
+                className="lift inline-flex h-11 items-center gap-2 border border-foreground/15 bg-card px-4 text-xs font-medium uppercase tracking-wider text-foreground transition-colors hover:border-brass hover:text-brass"
               >
                 <Icon name="arrow-up-right" size={12} />
                 Watch on YouTube
@@ -100,7 +103,7 @@ export default async function ResourceDetailPage({
                 href={row.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="lift inline-flex h-9 items-center gap-2 border border-foreground/15 bg-card px-4 text-xs font-medium uppercase tracking-wider text-foreground transition-colors hover:border-brass hover:text-brass"
+                className="lift inline-flex h-11 items-center gap-2 border border-foreground/15 bg-card px-4 text-xs font-medium uppercase tracking-wider text-foreground transition-colors hover:border-brass hover:text-brass"
               >
                 <Icon name="arrow-up-right" size={12} />
                 {buyLabel}
@@ -111,7 +114,7 @@ export default async function ResourceDetailPage({
                 href={row.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="lift inline-flex h-9 items-center gap-2 border border-foreground/15 bg-card px-4 text-xs font-medium uppercase tracking-wider text-foreground transition-colors hover:border-brass hover:text-brass"
+                className="lift inline-flex h-11 items-center gap-2 border border-foreground/15 bg-card px-4 text-xs font-medium uppercase tracking-wider text-foreground transition-colors hover:border-brass hover:text-brass"
               >
                 <Icon name="arrow-up-right" size={12} />
                 Open link
@@ -135,7 +138,7 @@ export default async function ResourceDetailPage({
               <a
                 href={downloadUrl}
                 download={row.sourceFilename ?? undefined}
-                className="lift inline-flex h-9 items-center gap-2 border border-foreground/15 bg-card px-4 text-xs font-medium uppercase tracking-wider text-foreground transition-colors hover:border-brass hover:text-brass"
+                className="lift inline-flex h-11 items-center gap-2 border border-foreground/15 bg-card px-4 text-xs font-medium uppercase tracking-wider text-foreground transition-colors hover:border-brass hover:text-brass"
               >
                 <Icon name="download" size={12} />
                 Download {isPdf ? "PDF" : isDocx ? ".docx" : "file"}
@@ -173,7 +176,6 @@ export default async function ResourceDetailPage({
                   alt="Sheepdog Society"
                   width={44}
                   height={44}
-                  unoptimized
                   className="h-11 w-11 object-contain"
                 />
                 <div className="leading-tight">
@@ -193,7 +195,7 @@ export default async function ResourceDetailPage({
           {/* Section-mark + book pills */}
           <div className="mt-6 flex flex-wrap items-center gap-3">
             {row.section && (
-              <span className="section-mark text-brass">
+              <span className="section-mark text-brass-deep">
                 § {row.section.name}
               </span>
             )}
@@ -224,7 +226,7 @@ export default async function ResourceDetailPage({
               {(row.booksOfBible ?? []).map((b) => (
                 <span
                   key={`b-${b}`}
-                  className="inline-flex h-6 items-center border border-brass/40 bg-brass/10 px-2 text-[0.625rem] uppercase tracking-wider text-brass"
+                  className="inline-flex h-6 items-center border border-brass/40 bg-brass/10 px-2 text-[0.6875rem] uppercase tracking-wider text-brass-deep"
                 >
                   {b}
                 </span>
@@ -259,7 +261,7 @@ export default async function ResourceDetailPage({
           {row.fieldNotesStatus === "approved" && row.fieldNotesHtml && (
             <section className="mb-12">
               <div className="flex items-center gap-3">
-                <span className="section-mark text-brass">§ Field notes</span>
+                <span className="section-mark text-brass-deep">§ Field notes</span>
                 <div className="hairline flex-1" />
               </div>
               <div
@@ -329,7 +331,7 @@ export default async function ResourceDetailPage({
           {hasCompanion && (
             <section className="mt-12 border-t border-foreground/15 pt-8">
               <div className="flex items-center gap-3">
-                <span className="section-mark text-brass">
+                <span className="section-mark text-brass-deep">
                   § {row.companionLabel || "Study guide"}
                 </span>
                 <div className="hairline flex-1" />
@@ -380,7 +382,6 @@ export default async function ResourceDetailPage({
                   alt=""
                   width={16}
                   height={16}
-                  unoptimized
                   className="h-4 w-4 object-contain"
                 />
                 Sheepdog Society · acts2028sheepdogsociety.com
@@ -432,7 +433,7 @@ function BookCard({
             fill
             sizes="180px"
             className="object-contain"
-            unoptimized
+            unoptimized={!isOptimizableImage(thumbnailUrl)}
           />
         ) : (
           <div className="flex h-full items-center justify-center text-muted-foreground">
@@ -495,7 +496,7 @@ function LinkCard({
             fill
             sizes="(max-width: 768px) 100vw, 800px"
             className="object-cover"
-            unoptimized
+            unoptimized={!isOptimizableImage(thumbnailUrl)}
           />
         </div>
       )}

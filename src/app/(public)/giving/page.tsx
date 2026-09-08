@@ -84,7 +84,7 @@ export default async function GivingPage() {
                 give, not reluctantly or under compulsion, for God loves a
                 cheerful giver.
               </blockquote>
-              <p className="section-mark text-brass">2 Corinthians 9:7</p>
+              <p className="section-mark text-brass-deep">2 Corinthians 9:7</p>
             </div>
           </div>
         </div>
@@ -121,7 +121,7 @@ export default async function GivingPage() {
                   </p>
                   <Link
                     href={w.href}
-                    className="mt-8 inline-flex items-center gap-2 section-mark text-brass transition-opacity hover:opacity-70"
+                    className="mt-8 inline-flex items-center gap-2 section-mark text-brass-deep transition-opacity hover:opacity-70"
                   >
                     {w.cta}
                     <Icon name="arrow-right" size={14} />
@@ -136,7 +136,7 @@ export default async function GivingPage() {
     partners: (
       <section id="partners" className="scroll-mt-24 bg-background text-foreground">
         <div className="mx-auto max-w-5xl px-6 py-28 text-center md:px-12 md:py-40">
-          <span className="section-mark text-brass">§ Sheepdog Partners</span>
+          <span className="section-mark text-brass-deep">§ Sheepdog Partners</span>
           <h2 className="display-xl mt-6 text-display-lg">
             {t["giving.partners.headline1"]}
             <br />

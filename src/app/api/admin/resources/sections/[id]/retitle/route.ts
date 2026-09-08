@@ -78,7 +78,7 @@ export async function POST(
     retitled++;
   }
 
-  revalidatePath("/resources");
+  revalidatePath("/resources", "layout");
   revalidatePath("/admin/resources");
 
   return NextResponse.json({
