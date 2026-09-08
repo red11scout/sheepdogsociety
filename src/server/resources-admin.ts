@@ -67,7 +67,7 @@ export async function createSection(input: {
     })
     .returning();
   revalidatePath("/admin/resources");
-  revalidatePath("/resources");
+  revalidatePath("/resources", "layout");
   return row;
 }
 
@@ -90,7 +90,7 @@ export async function updateSection(input: {
     .set(patch)
     .where(eq(resourceSections.id, input.id));
   revalidatePath("/admin/resources");
-  revalidatePath("/resources");
+  revalidatePath("/resources", "layout");
 }
 
 export async function softDeleteSection(id: string) {
@@ -172,7 +172,7 @@ export async function createResource(input: {
     })
     .returning();
   revalidatePath("/admin/resources");
-  revalidatePath("/resources");
+  revalidatePath("/resources", "layout");
   return row;
 }
 
@@ -216,7 +216,7 @@ export async function updateResource(input: {
   if (input.fieldNotesStatus !== undefined) patch.fieldNotesStatus = input.fieldNotesStatus;
   await db.update(resources).set(patch).where(eq(resources.id, input.id));
   revalidatePath("/admin/resources");
-  revalidatePath("/resources");
+  revalidatePath("/resources", "layout");
 }
 
 export async function deleteResource(id: string) {
@@ -227,7 +227,7 @@ export async function deleteResource(id: string) {
     .set({ deletedAt: new Date(), isPublic: false })
     .where(eq(resources.id, id));
   revalidatePath("/admin/resources");
-  revalidatePath("/resources");
+  revalidatePath("/resources", "layout");
 }
 
 export async function recategorizeResource(id: string) {
@@ -276,7 +276,7 @@ export async function recategorizeResource(id: string) {
     .where(eq(resources.id, id));
 
   revalidatePath("/admin/resources");
-  revalidatePath("/resources");
+  revalidatePath("/resources", "layout");
   revalidatePath(`/resources/${row.id}`);
   return cat;
 }
@@ -293,7 +293,7 @@ export async function moveResourceToSection(id: string, sectionId: string) {
     .set({ sectionId, category: section.slug })
     .where(eq(resources.id, id));
   revalidatePath("/admin/resources");
-  revalidatePath("/resources");
+  revalidatePath("/resources", "layout");
 }
 
 export async function listSectionsAndResourcesForPublic() {

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { isOptimizableImage } from "@/lib/images";
 import { notFound } from "next/navigation";
 import { getPublishedEncouragementBySlug } from "@/server/encouragements";
 import { Icon } from "@/components/icons/Icon";
@@ -7,7 +8,9 @@ import { Kicker } from "@/components/public/kicker";
 import { LetterCover } from "@/components/letters/LetterCover";
 import { format } from "date-fns";
 
-export const dynamic = "force-dynamic";
+// ISR: cached for a minute, and every admin write that touches this
+// surface calls revalidatePath, so a publish shows up at once.
+export const revalidate = 60;
 
 export async function generateMetadata({
   params,
@@ -106,7 +109,7 @@ export default async function LetterPage({
                 alt={row.coverImageAlt ?? ""}
                 width={1600}
                 height={900}
-                unoptimized
+                unoptimized={!isOptimizableImage(row.coverImageUrl)}
                 className="h-full w-full object-cover"
                 priority
               />

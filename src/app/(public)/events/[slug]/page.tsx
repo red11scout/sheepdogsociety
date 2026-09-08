@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { isOptimizableImage } from "@/lib/images";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { db } from "@/db";
@@ -166,7 +167,7 @@ export default async function EventDetailPage({
                       sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
                       className="object-cover"
                       priority={i < 2}
-                      unoptimized
+                      unoptimized={!isOptimizableImage(p.url)}
                     />
                   </div>
                   {p.caption && (

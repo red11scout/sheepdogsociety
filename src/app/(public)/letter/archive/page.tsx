@@ -5,7 +5,9 @@ import { listPublishedEncouragements } from "@/server/encouragements";
 import { Kicker } from "@/components/public/kicker";
 import { format } from "date-fns";
 
-export const dynamic = "force-dynamic";
+// ISR: cached for a minute, and every admin write that touches this
+// surface calls revalidatePath, so a publish shows up at once.
+export const revalidate = 60;
 
 export const metadata: Metadata = {
   title: "The Letter archive — Sheepdog Society",

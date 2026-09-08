@@ -1,6 +1,7 @@
 import { Fragment } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { isOptimizableImage } from "@/lib/images";
 import type { Metadata } from "next";
 import { db } from "@/db";
 import { events, eventSeries, locations, testimonies, users } from "@/db/schema";
@@ -384,7 +385,7 @@ export default async function HomePage() {
                         alt={letter.coverImageAlt ?? ""}
                         fill
                         sizes="(max-width: 768px) 100vw, 50vw"
-                        unoptimized
+                        unoptimized={!isOptimizableImage(letter.coverImageUrl)}
                         className="object-cover transition-transform duration-700 group-hover/cover:scale-[1.04]"
                       />
                     ) : (

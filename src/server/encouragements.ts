@@ -236,7 +236,8 @@ export async function setEncouragementStatus(
   }
 
   revalidatePath("/admin/encouragements");
-  revalidatePath("/letter");
+  revalidatePath("/letter", "layout");
+  revalidatePath("/");
   return { broadcast: broadcastResult };
 }
 

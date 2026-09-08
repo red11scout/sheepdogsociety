@@ -4,7 +4,9 @@ import { ResourcesBrowser } from "./browser";
 import { getStudioConfig } from "@/lib/studio/get";
 import { renderMerge } from "@/lib/studio/config";
 
-export const dynamic = "force-dynamic";
+// ISR: cached for a minute, and every admin write that touches this
+// surface calls revalidatePath, so a publish shows up at once.
+export const revalidate = 60;
 
 export const metadata = {
   title: "Resources — Sheepdog Society",

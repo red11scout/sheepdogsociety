@@ -181,6 +181,6 @@ export async function createLinkResource(input: CreateLinkResourceInput) {
   }
 
   revalidatePath("/admin/resources");
-  revalidatePath("/resources");
+  revalidatePath("/resources", "layout");
   return row;
 }

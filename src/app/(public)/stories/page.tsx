@@ -1,4 +1,6 @@
-export const dynamic = "force-dynamic";
+// ISR: cached for a minute, and every admin write that touches this
+// surface calls revalidatePath, so a publish shows up at once.
+export const revalidate = 60;
 
 import { Fragment } from "react";
 import { Ambient } from "@/components/motion/Ambient";

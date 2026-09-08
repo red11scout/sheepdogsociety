@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { isOptimizableImage } from "@/lib/images";
 import { getPublicResourceBySlug } from "@/server/resources-admin";
 import { Icon } from "@/components/icons/Icon";
 import { buyLabelForUrl } from "@/lib/resources/buy-label";
@@ -9,7 +10,9 @@ import { PrintButton } from "./print-button";
 import { ResourceBody } from "./resource-body";
 import { Embed } from "./embed";
 
-export const dynamic = "force-dynamic";
+// ISR: cached for a minute, and every admin write that touches this
+// surface calls revalidatePath, so a publish shows up at once.
+export const revalidate = 60;
 
 export async function generateMetadata({
   params,
@@ -173,7 +176,6 @@ export default async function ResourceDetailPage({
                   alt="Sheepdog Society"
                   width={44}
                   height={44}
-                  unoptimized
                   className="h-11 w-11 object-contain"
                 />
                 <div className="leading-tight">
@@ -380,7 +382,6 @@ export default async function ResourceDetailPage({
                   alt=""
                   width={16}
                   height={16}
-                  unoptimized
                   className="h-4 w-4 object-contain"
                 />
                 Sheepdog Society · acts2028sheepdogsociety.com
@@ -432,7 +433,7 @@ function BookCard({
             fill
             sizes="180px"
             className="object-contain"
-            unoptimized
+            unoptimized={!isOptimizableImage(thumbnailUrl)}
           />
         ) : (
           <div className="flex h-full items-center justify-center text-muted-foreground">
@@ -495,7 +496,7 @@ function LinkCard({
             fill
             sizes="(max-width: 768px) 100vw, 800px"
             className="object-cover"
-            unoptimized
+            unoptimized={!isOptimizableImage(thumbnailUrl)}
           />
         </div>
       )}

@@ -2,6 +2,7 @@ import { Fragment } from "react";
 import { Ambient } from "@/components/motion/Ambient";
 import Link from "next/link";
 import Image from "next/image";
+import { isOptimizableImage } from "@/lib/images";
 import type { Metadata } from "next";
 import { db } from "@/db";
 import { events, eventSeries } from "@/db/schema";
@@ -300,7 +301,7 @@ export default async function EventsPage() {
                           fill
                           sizes="(max-width: 768px) 100vw, (max-width: 1280px) 50vw, 33vw"
                           className="object-cover transition-transform duration-500 group-hover/past:scale-[1.03]"
-                          unoptimized
+                          unoptimized={!isOptimizableImage(cover.url)}
                         />
                       ) : (
                         <div className="flex h-full items-center justify-center text-foreground/25">
