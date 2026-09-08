@@ -87,13 +87,31 @@ export function PublicNav() {
   }
 
   useEffect(() => {
+    // One probe per tab, not one per page view: the answer is cached in
+    // sessionStorage so ordinary visitors pay the round-trip once.
+    const KEY = "sheepdog-nav-admin";
+    try {
+      const cached = window.sessionStorage.getItem(KEY);
+      if (cached === "1") {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
+        setIsAdmin(true);
+        return;
+      }
+      if (cached === "0") return;
+    } catch {
+      // Storage blocked: fall through and probe.
+    }
     let alive = true;
     fetch("/api/auth/session")
       .then((r) => (r.ok ? r.json() : null))
       .then((s) => {
-        if (alive && s?.user && (s.user as { role?: string }).role === "admin") {
-          setIsAdmin(true);
+        const admin = !!s?.user && (s.user as { role?: string }).role === "admin";
+        try {
+          window.sessionStorage.setItem(KEY, admin ? "1" : "0");
+        } catch {
+          // Private mode: probe again next page.
         }
+        if (alive && admin) setIsAdmin(true);
       })
       .catch(() => {});
     return () => {

@@ -24,7 +24,7 @@ export default async function GalleryPage() {
         <div className="dotted-grid absolute inset-0 opacity-[0.06]" aria-hidden />
         <div className="relative mx-auto max-w-7xl px-6 py-20 md:px-12 md:py-32">
           <div className="flex items-center gap-4">
-            <span className="section-mark text-brass">§ Gallery</span>
+            <span className="section-mark text-brass-deep">§ Gallery</span>
             <div className="hairline flex-1" />
           </div>
           <h1 className="display-xl mt-10 max-w-4xl text-[clamp(2.5rem,7vw,6rem)] text-foreground">
@@ -86,11 +86,11 @@ export default async function GalleryPage() {
 
                         {/* Card chrome — date pill top-left, count top-right. */}
                         <div className="pointer-events-none absolute inset-x-4 top-4 flex items-start justify-between">
-                          <span className="inline-flex items-baseline gap-2 border border-background/30 bg-foreground/70 px-2 py-1 text-[0.625rem] uppercase tracking-[0.18em] text-background backdrop-blur-sm">
+                          <span className="inline-flex items-baseline gap-2 border border-background/30 bg-foreground/70 px-2 py-1 text-[0.6875rem] uppercase tracking-[0.18em] text-background backdrop-blur-sm">
                             {format(ev.startTime, "MMM d, yyyy")}
                           </span>
                           {ev.photos.length > 1 && (
-                            <span className="inline-flex items-center gap-1 border border-brass/40 bg-foreground/70 px-2 py-1 text-[0.625rem] uppercase tracking-[0.18em] text-brass backdrop-blur-sm">
+                            <span className="inline-flex items-center gap-1 border border-background/30 bg-foreground/70 px-2 py-1 text-[0.6875rem] uppercase tracking-[0.18em] text-background backdrop-blur-sm">
                               <Icon name="image" size={10} />
                               {extra > 0 ? `+${extra}` : ev.photos.length}
                             </span>
@@ -100,7 +100,7 @@ export default async function GalleryPage() {
                         {/* Title block on the gradient. */}
                         <div className="absolute inset-x-0 bottom-0 p-5 text-background">
                           {ev.eventType && (
-                            <span className="section-mark text-brass">
+                            <span className="section-mark text-background/85">
                               § {ev.eventType}
                             </span>
                           )}

@@ -10,7 +10,15 @@ import { referenceToUrl } from "@/lib/bible/books";
  */
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const q = (searchParams.get("q") ?? "").trim().slice(0, 100);
+  // Lower-case + collapse whitespace so "Good Shepherd" and "good shepherd"
+  // share one cache entry (ESV search is case-insensitive anyway); strip
+  // control characters before the query reaches the upstream key.
+  const q = (searchParams.get("q") ?? "")
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase()
+    .slice(0, 100);
 
   if (q.length < 3) {
     return NextResponse.json(
@@ -24,12 +32,21 @@ export async function GET(request: Request) {
 
   try {
     const { results } = await searchESV(q);
-    return NextResponse.json({
-      results: results.flatMap((r) => {
-        const url = referenceToUrl(r.reference);
-        return url ? [{ reference: r.reference, content: r.content, url }] : [];
-      }),
-    });
+    return NextResponse.json(
+      {
+        results: results.flatMap((r) => {
+          const url = referenceToUrl(r.reference);
+          return url ? [{ reference: r.reference, content: r.content, url }] : [];
+        }),
+      },
+      {
+        headers: {
+          // Scripture does not change: let the CDN answer repeat queries
+          // for a day so the ESV daily quota is spent on new searches only.
+          "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800",
+        },
+      }
+    );
   } catch (error) {
     console.error("Bible search error:", error);
     return NextResponse.json({ error: "search-unavailable" }, { status: 503 });

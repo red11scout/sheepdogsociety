@@ -3,7 +3,7 @@
 import { auth } from "@/lib/auth-compat";
 import { db } from "@/db";
 import { resources, users, resourceSections } from "@/db/schema";
-import { and, eq, isNull, asc, desc } from "drizzle-orm";
+import { and, eq, isNull, asc, desc, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { categorizeResource } from "@/lib/resources/categorize";
 import { uniqueResourceSlug } from "@/lib/resources/slug";
@@ -325,19 +325,16 @@ export async function listSectionsAndResourcesForPublic() {
       topics: resources.topics,
       themes: resources.themes,
       booksOfBible: resources.booksOfBible,
-      hasBody: resources.bodyHtml,
+      // Presence only — the full body_html of every resource was being
+      // shipped from Postgres on each /resources render just to be
+      // coerced to a boolean here.
+      hasBody: sql<boolean>`coalesce(length(${resources.bodyHtml}), 0) > 0`,
       createdAt: resources.createdAt,
     })
     .from(resources)
     .where(eq(resources.isPublic, true));
 
-  // Map hasBody (text) → boolean for the client.
-  const itemsClient = items.map((it) => ({
-    ...it,
-    hasBody: !!it.hasBody && it.hasBody.length > 0,
-  }));
-
-  return { sections, items: itemsClient };
+  return { sections, items };
 }
 
 export async function getPublicResourceBySlug(slug: string) {

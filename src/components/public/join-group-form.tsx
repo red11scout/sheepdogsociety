@@ -182,12 +182,12 @@ export function JoinGroupForm({
           .
         </Toggle>
         {fieldErrors.terms && (
-          <p className="mt-1 text-sm text-oxblood">{fieldErrors.terms}</p>
+          <p className="mt-1 text-sm text-destructive">{fieldErrors.terms}</p>
         )}
       </div>
 
       {error && (
-        <p className="border border-oxblood/40 bg-oxblood/10 px-4 py-3 text-sm text-oxblood">
+        <p className="border border-oxblood/40 bg-oxblood/10 px-4 py-3 text-sm text-destructive">
           {error}
         </p>
       )}
@@ -228,7 +228,7 @@ function Field({
         {required && <span className="ml-1 text-brass-deep">*</span>}
       </span>
       <div className="mt-2">{children}</div>
-      {error && <p className="mt-2 text-sm text-oxblood">{error}</p>}
+      {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
       {hint && <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{hint}</p>}
     </label>
   );
@@ -257,5 +257,5 @@ function Toggle({
 }
 
 function inputCls() {
-  return "block h-11 w-full border border-foreground/15 bg-transparent px-3 text-base text-foreground placeholder:text-foreground/30 focus:border-brass focus:outline-none";
+  return "block h-11 w-full border border-foreground/15 bg-transparent px-3 text-base text-foreground placeholder:text-muted-foreground focus:border-brass focus:outline-none";
 }

@@ -183,7 +183,7 @@ export default async function AboutPage() {
                 key={item.heading}
                 className="grid grid-cols-[60px_1fr] gap-6 py-10 md:grid-cols-[80px_280px_1fr] md:gap-12 md:py-14"
               >
-                <span className="section-mark text-brass md:pt-2">
+                <span className="section-mark text-brass-deep md:pt-2">
                   § {item.roman}
                 </span>
                 <h3 className="display-soft col-span-1 text-display-md">

@@ -176,13 +176,13 @@ export function ScriptureMarquee({ className, verses = [] }: ScriptureMarqueePro
                     onBlur={scheduleClose}
                     className={cn(
                       "section-mark cursor-pointer whitespace-nowrap px-1 py-4 transition-colors duration-200 active:scale-95 motion-reduce:active:scale-100",
-                      isOpenRef ? "text-brass" : "text-stone/60 hover:text-brass/90"
+                      isOpenRef ? "text-brass-deep" : "text-stone hover:text-brass-deep"
                     )}
                   >
                     {ref}
                   </button>
                 ) : (
-                  <span className="section-mark whitespace-nowrap px-1 py-4 text-stone/60">
+                  <span className="section-mark whitespace-nowrap px-1 py-4 text-stone">
                     {ref}
                   </span>
                 )}
@@ -229,8 +229,8 @@ export function ScriptureMarquee({ className, verses = [] }: ScriptureMarqueePro
             className="pointer-events-none absolute -inset-8 -z-10 rounded-full bg-brass/15 blur-3xl"
           />
           <div className="border border-brass/40 bg-card shadow-[0_18px_50px_-12px_rgba(0,0,0,0.45)]">
-            <div className="max-h-[46vh] overflow-y-auto p-6">
-              <p className="section-mark text-brass">§ {open.verse.ref}</p>
+            <div className="max-h-[46dvh] overflow-y-auto p-6">
+              <p className="section-mark text-brass-deep">§ {open.verse.ref}</p>
               <p className="mt-3 font-scripture text-lg italic leading-relaxed text-foreground">
                 {open.verse.text}
               </p>

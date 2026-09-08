@@ -2,7 +2,15 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { LocationMap, type LocationPin } from "@/components/map/location-map";
+import dynamic from "next/dynamic";
+import type { LocationPin } from "@/components/map/location-map";
+
+// mapbox-gl is ~200 KB gzipped and touches window at import time — split
+// it out of the page bundle and render it client-only.
+const LocationMap = dynamic(
+  () => import("@/components/map/location-map").then((m) => m.LocationMap),
+  { ssr: false, loading: () => <div className="h-full min-h-[320px] w-full bg-card" aria-hidden /> }
+);
 import { Icon } from "@/components/icons/Icon";
 import { formatMeetingTime, joinPlace } from "@/lib/format-meeting";
 
@@ -63,7 +71,7 @@ export function GroupsBrowser({ pins }: { pins: LocationPin[] }) {
             aria-label="Search groups by city, state, or name"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="h-11 w-full border border-foreground/15 bg-transparent pl-11 pr-4 text-sm text-foreground placeholder:text-foreground/40 focus:border-brass focus:outline-none"
+            className="h-11 w-full border border-foreground/15 bg-transparent pl-11 pr-4 text-sm text-foreground placeholder:text-muted-foreground focus:border-brass focus:outline-none"
           />
         </div>
         <select

@@ -66,13 +66,19 @@ function highlightMatch(content: string, q: string) {
 
 /**
  * The reference pill that becomes a type-ahead input and opens the
- * genre-grouped picker panel (66 books -> chapter grid). The type-ahead
- * IS the reference search (BibleProject anatomy); keyword search gets its
- * own input in the same panel, hitting /api/public/bible/search. Recent
- * keyword searches live in localStorage (cap 8). Keyboard: Escape closes
- * (focus returns to the pill), ArrowUp/ArrowDown walk the options, Enter
- * activates. Square corners on purpose — broadsheet brand over benchmark
- * chrome.
+ * picker panel. Panel order, top to bottom: the go-to row (the type-ahead
+ * IS the reference search), the keyword search (its own input, hitting
+ * /api/public/bible/search), then the 66 books grouped by genre. Keyword
+ * search sits ABOVE the books on purpose: on a phone the book list is
+ * ~1,400px tall, and a search box buried under it read as a stray input
+ * floating mid-page. While a keyword search is live the book grid gives
+ * way to the results so they are never below the fold.
+ *
+ * Recent keyword searches live in localStorage (cap 8). Keyboard: Escape
+ * closes (focus returns to the pill), ArrowUp/ArrowDown walk the options,
+ * Enter activates. Square corners on purpose — broadsheet brand over
+ * benchmark chrome. Panel height uses dvh so the iOS toolbar never clips
+ * the bottom of the sheet.
  */
 export function BiblePicker({ current, variant = "reader" }: BiblePickerProps) {
   const router = useRouter();
@@ -102,6 +108,7 @@ export function BiblePicker({ current, variant = "reader" }: BiblePickerProps) {
     return hits.length > 0 ? hits : null;
   }, [query]);
   const groups = useMemo(() => booksByGenre(), []);
+  const searching = searchQuery.trim().length >= 3;
 
   // localStorage is browser-only — load recents when the panel opens.
   useEffect(() => {
@@ -237,7 +244,7 @@ export function BiblePicker({ current, variant = "reader" }: BiblePickerProps) {
               : "inline-flex h-11 w-full cursor-pointer items-center justify-center gap-2 border border-foreground/25 bg-card px-6 text-sm font-medium transition-colors hover:border-brass"
           }
         >
-          <span>{variant === "hero" ? "Type a book and a chapter" : pillLabel}</span>
+          <span>{variant === "hero" ? "Book and chapter, e.g. John 3" : pillLabel}</span>
           <Icon
             name={variant === "hero" ? "search" : "chevron-down"}
             size={14}
@@ -261,10 +268,13 @@ export function BiblePicker({ current, variant = "reader" }: BiblePickerProps) {
               );
             }
           }}
-          placeholder="Type a book and a chapter"
+          placeholder={variant === "hero" ? "Book and chapter, e.g. John 3" : "Book and chapter"}
           aria-label="Go to a book and chapter"
+          autoComplete="off"
+          autoCapitalize="words"
+          enterKeyHint="go"
           className={`w-full border border-brass bg-background px-4 placeholder:text-muted-foreground focus:border-brass focus-visible:outline-none ${
-            variant === "hero" ? "h-12 text-base" : "h-11 text-sm"
+            variant === "hero" ? "h-12 text-base" : "h-11 text-base sm:text-sm"
           }`}
         />
       )}
@@ -273,7 +283,7 @@ export function BiblePicker({ current, variant = "reader" }: BiblePickerProps) {
         <div
           role="dialog"
           aria-label="Find a passage"
-          className="absolute left-1/2 top-full z-40 mt-2 max-h-[70vh] w-[min(92vw,40rem)] -translate-x-1/2 overflow-y-auto border border-foreground/15 bg-popover p-4 text-popover-foreground shadow-xl"
+          className="absolute left-1/2 top-full z-40 mt-2 max-h-[70dvh] w-[min(92vw,40rem)] -translate-x-1/2 overflow-y-auto overscroll-contain border border-foreground/15 bg-popover p-4 text-popover-foreground shadow-xl"
         >
           {/* Go-to row — the type-ahead IS the reference search. */}
           {parsed && (
@@ -285,7 +295,7 @@ export function BiblePicker({ current, variant = "reader" }: BiblePickerProps) {
                   `/bible/${parsed.book.slug}/${parsed.chapter}${parsed.verse ? `#v${parsed.verse}` : ""}`
                 )
               }
-              className="mb-4 flex w-full cursor-pointer items-center justify-between border border-brass/50 bg-brass/10 px-4 py-3 text-left text-sm transition-colors hover:bg-brass/20"
+              className="mb-4 flex min-h-11 w-full cursor-pointer items-center justify-between border border-brass/50 bg-brass/10 px-4 py-3 text-left text-sm transition-colors hover:bg-brass/20"
             >
               <span>
                 Go to{" "}
@@ -305,7 +315,7 @@ export function BiblePicker({ current, variant = "reader" }: BiblePickerProps) {
                   type="button"
                   data-picker-option
                   onClick={() => setActiveBook(null)}
-                  className="folio cursor-pointer py-2 transition-colors hover:text-brass"
+                  className="folio min-h-11 cursor-pointer py-2 transition-colors hover:text-brass"
                 >
                   ← All books
                 </button>
@@ -327,46 +337,43 @@ export function BiblePicker({ current, variant = "reader" }: BiblePickerProps) {
             </div>
           ) : (
             <>
-              {bookMatches ? (
-                <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
-                  {bookMatches.map((b) => bookButton(b))}
-                </div>
-              ) : (
-                groups.map(({ genre, books }) => (
-                  <div key={genre} className="mt-4 first:mt-0">
-                    <p className="folio">{genre}</p>
-                    <div className="mt-2 grid grid-cols-2 gap-1 sm:grid-cols-3">
-                      {books.map((b) => bookButton(b))}
-                    </div>
-                  </div>
-                ))
-              )}
-
-              {/* Keyword search — its own input in the same panel. */}
-              <div className="mt-6 border-t border-foreground/10 pt-4">
+              {/* Keyword search — first in the panel so it is never below
+                  the fold. Results replace the book grid while active. */}
+              <div className={bookMatches ? "hidden" : ""}>
                 <label htmlFor="bible-keyword-search" className="folio">
                   Search the Scriptures
                 </label>
-                <input
-                  id="bible-keyword-search"
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="A word or phrase, e.g. shepherd"
-                  className="mt-2 h-11 w-full border border-foreground/25 bg-background px-4 text-sm placeholder:text-muted-foreground focus:border-brass focus-visible:outline-none"
-                />
+                <div className="relative mt-2">
+                  <Icon
+                    name="search"
+                    size={14}
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-foreground/50"
+                  />
+                  <input
+                    id="bible-keyword-search"
+                    type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="A word or phrase, e.g. shepherd"
+                    autoComplete="off"
+                    enterKeyHint="search"
+                    className="h-11 w-full border border-foreground/25 bg-background pl-9 pr-4 text-base placeholder:text-muted-foreground focus:border-brass focus-visible:outline-none sm:text-sm [&::-webkit-search-cancel-button]:appearance-none"
+                  />
+                </div>
 
                 {searchState === "loading" && (
-                  <p className="mt-3 text-sm text-muted-foreground">Searching…</p>
+                  <p className="mt-3 text-sm text-muted-foreground" aria-live="polite">
+                    Searching…
+                  </p>
                 )}
                 {searchState === "unavailable" && (
-                  <p className="mt-3 text-sm text-muted-foreground">
+                  <p className="mt-3 text-sm text-muted-foreground" aria-live="polite">
                     Search is down right now. You can still open any book and
-                    chapter above.
+                    chapter below.
                   </p>
                 )}
                 {searchState === "done" && results && results.length === 0 && (
-                  <p className="mt-3 text-sm text-muted-foreground">
+                  <p className="mt-3 text-sm text-muted-foreground" aria-live="polite">
                     No verses matched. Try another word.
                   </p>
                 )}
@@ -399,7 +406,7 @@ export function BiblePicker({ current, variant = "reader" }: BiblePickerProps) {
                           type="button"
                           data-picker-option
                           onClick={() => setSearchQuery(q)}
-                          className="cursor-pointer border border-foreground/15 px-3 py-1.5 text-xs transition-colors hover:border-brass hover:text-brass"
+                          className="min-h-10 cursor-pointer border border-foreground/15 px-3 py-2 text-xs transition-colors hover:border-brass hover:text-brass"
                         >
                           {q}
                         </button>
@@ -408,6 +415,26 @@ export function BiblePicker({ current, variant = "reader" }: BiblePickerProps) {
                   </div>
                 )}
               </div>
+
+              {/* The 66 books — hidden while a keyword search is live so
+                  the results own the panel. */}
+              {!searching &&
+                (bookMatches ? (
+                  <div className="grid grid-cols-2 gap-1 sm:grid-cols-3">
+                    {bookMatches.map((b) => bookButton(b))}
+                  </div>
+                ) : (
+                  <div className="mt-6 border-t border-foreground/10 pt-4">
+                    {groups.map(({ genre, books }) => (
+                      <div key={genre} className="mt-4 first:mt-0">
+                        <p className="folio">{genre}</p>
+                        <div className="mt-2 grid grid-cols-2 gap-1 sm:grid-cols-3">
+                          {books.map((b) => bookButton(b))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ))}
             </>
           )}
         </div>

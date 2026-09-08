@@ -170,7 +170,7 @@ export function PlantRequestForm() {
         />
         <div>
           <label className="folio" htmlFor="plant-state">
-            State<span className="ml-1 text-brass">*</span>
+            State<span className="ml-1 text-brass-deep">*</span>
           </label>
           <select
             id="plant-state"
@@ -250,7 +250,7 @@ export function PlantRequestForm() {
           placeholder="Tell us about yourself and your vision."
           value={form.reason}
           onChange={(e) => update("reason", e.target.value)}
-          className="mt-3 w-full border border-foreground/20 bg-transparent px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-foreground/40 focus:border-brass focus:outline-none"
+          className="mt-3 w-full border border-foreground/20 bg-transparent px-4 py-3 text-base leading-relaxed text-foreground placeholder:text-muted-foreground focus:border-brass focus:outline-none"
         />
       </div>
 
@@ -296,7 +296,7 @@ function Field({
     <div>
       <label className="folio" htmlFor={id}>
         {label}
-        {required && <span className="ml-1 text-brass">*</span>}
+        {required && <span className="ml-1 text-brass-deep">*</span>}
       </label>
       <input
         id={id}
@@ -306,7 +306,7 @@ function Field({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="mt-3 h-11 w-full border border-foreground/20 bg-transparent px-4 text-base text-foreground placeholder:text-foreground/40 focus:border-brass focus:outline-none"
+        className="mt-3 h-11 w-full border border-foreground/20 bg-transparent px-4 text-base text-foreground placeholder:text-muted-foreground focus:border-brass focus:outline-none"
       />
     </div>
   );

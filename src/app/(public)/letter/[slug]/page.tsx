@@ -68,7 +68,7 @@ export default async function LetterPage({
             All letters
           </Link>
           <div className="mt-8 flex flex-wrap items-center gap-3">
-            <span className="section-mark text-brass">
+            <span className="section-mark text-brass-deep">
               No. {row.issueNumber}
             </span>
             {row.publishDate && (

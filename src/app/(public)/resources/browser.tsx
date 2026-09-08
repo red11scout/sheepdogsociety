@@ -225,7 +225,7 @@ export function ResourcesBrowser({ sections, items }: BrowserProps) {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Search resources..."
-                className="block h-11 w-full border border-foreground/15 bg-foreground/[0.04] pl-4 pr-9 text-sm text-foreground placeholder:text-foreground/50 focus:border-brass focus:outline-none"
+                className="block h-11 w-full border border-foreground/15 bg-foreground/[0.04] pl-4 pr-9 text-sm text-foreground placeholder:text-muted-foreground focus:border-brass focus:outline-none"
               />
               {query && (
                 <button
@@ -529,7 +529,7 @@ function MobileFilterSheet({
         <span className="flex items-center gap-2">
           More filters
           {activeCount > 0 && (
-            <span className="inline-flex h-4 min-w-[16px] items-center justify-center bg-brass px-1 text-[0.5625rem] font-semibold text-iron">
+            <span className="inline-flex h-4 min-w-[16px] items-center justify-center bg-brass px-1 text-[0.6875rem] font-semibold text-iron">
               {activeCount}
             </span>
           )}
@@ -745,14 +745,14 @@ function Facet({
           className="flex min-h-11 flex-1 items-center gap-2 py-1 text-left"
         >
           <span className="section-mark text-muted-foreground">{title}</span>
-          <span className="text-[0.625rem] tabular-nums text-muted-foreground/60">
+          <span className="text-[0.6875rem] tabular-nums text-muted-foreground">
             {count}
           </span>
           {value && !open && (
             <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-brass" aria-hidden />
           )}
           {/* Plain word instead of a chevron glyph (Drew, 2026-07-09). */}
-          <span className="ml-auto text-[0.625rem] uppercase tracking-wider text-muted-foreground/60">
+          <span className="ml-auto text-[0.6875rem] uppercase tracking-wider text-muted-foreground">
             {open ? "Hide" : "Show"}
           </span>
         </button>
@@ -760,7 +760,7 @@ function Facet({
           <button
             type="button"
             onClick={() => onChange("")}
-            className="shrink-0 text-[0.625rem] uppercase tracking-wider text-muted-foreground hover:text-brass"
+            className="shrink-0 text-[0.6875rem] uppercase tracking-wider text-muted-foreground hover:text-brass-deep"
           >
             Clear
           </button>
@@ -773,7 +773,7 @@ function Facet({
               return (
                 <li
                   key={opt.value}
-                  className="px-2 pb-1 pt-3 text-[0.625rem] uppercase tracking-wider text-brass first:pt-0"
+                  className="px-2 pb-1 pt-3 text-[0.6875rem] uppercase tracking-wider text-brass-deep first:pt-0"
                 >
                   {opt.label}
                 </li>

@@ -72,7 +72,7 @@ export default function PartnershipsPage() {
                 key={p.title}
                 className="grid gap-8 py-12 md:grid-cols-[80px_80px_1fr_auto] md:items-start md:gap-12 md:py-16"
               >
-                <span className="section-mark text-brass md:pt-3">
+                <span className="section-mark text-brass-deep md:pt-3">
                   § {p.roman}
                 </span>
                 <Icon
@@ -91,7 +91,7 @@ export default function PartnershipsPage() {
                 </div>
                 <Link
                   href="/contact"
-                  className="inline-flex items-center gap-2 section-mark text-brass transition-opacity hover:opacity-70 md:pt-3"
+                  className="inline-flex items-center gap-2 section-mark text-brass-deep transition-opacity hover:opacity-70 md:pt-3"
                 >
                   Learn more
                   <Icon name="arrow-right" size={14} />

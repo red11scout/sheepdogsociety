@@ -14,7 +14,7 @@
 
 import NextAuth from "next-auth";
 import { authConfig } from "@/auth.config";
-import { NextResponse } from "next/server";
+import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
 
 const PUBLIC_ROUTES = [
   /^\/$/,
@@ -68,7 +68,18 @@ function isPublic(pathname: string): boolean {
 
 const { auth } = NextAuth(authConfig);
 
-export default auth((req) => {
+// Session-gated paths only. Public routes return before this wrapper so
+// the JWT is never decrypted for an ordinary page view.
+const withSession = auth((req) => {
+  if (!req.auth) {
+    const signInUrl = new URL("/admin/sign-in", req.nextUrl);
+    signInUrl.searchParams.set("callbackUrl", req.nextUrl.pathname);
+    return NextResponse.redirect(signInUrl);
+  }
+  return NextResponse.next();
+});
+
+export default function middleware(req: NextRequest, event: NextFetchEvent) {
   const { pathname } = req.nextUrl;
 
   // Studio compare: the LIVE iframe carries ?studio=published — forward the
@@ -95,14 +106,13 @@ export default auth((req) => {
   }
 
   // Everything else requires a session.
-  if (!req.auth) {
-    const signInUrl = new URL("/admin/sign-in", req.nextUrl);
-    signInUrl.searchParams.set("callbackUrl", pathname);
-    return NextResponse.redirect(signInUrl);
-  }
-
-  return NextResponse.next();
-});
+  // Auth.js types the wrapper as a route handler; as middleware it takes
+  // (NextRequest, NextFetchEvent), which is what Next hands us here.
+  return (withSession as unknown as (r: NextRequest, e: NextFetchEvent) => ReturnType<typeof withSession>)(
+    req,
+    event
+  );
+}
 
 export const config = {
   matcher: [
