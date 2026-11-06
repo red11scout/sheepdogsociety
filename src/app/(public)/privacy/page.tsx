@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Kicker } from "@/components/public/kicker";
+import { MessageLink } from "@/components/public/message-link";
 
 export const metadata: Metadata = {
   title: "Privacy — Sheepdog Society",
@@ -61,8 +62,9 @@ const SECTIONS = [
   {
     heading: "Contact",
     body: [
-      "Questions, requests, or corrections: shepherd@acts2028sheepdogsociety.com.",
+      "Questions, requests, or corrections:",
     ],
+    contact: true,
   },
 ] as const;
 
@@ -94,6 +96,12 @@ export default function PrivacyPage() {
                     className="text-lg leading-relaxed text-muted-foreground"
                   >
                     {p}
+                    {"contact" in s && s.contact && i === s.body.length - 1 && (
+                      <>
+                        {" "}
+                        <MessageLink className="link-editorial cursor-pointer" topic="other" />.
+                      </>
+                    )}
                   </p>
                 ))}
               </div>

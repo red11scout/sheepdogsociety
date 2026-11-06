@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { MessageLink } from "@/components/public/message-link";
 
 // Root error boundary. Renders a calm, branded page and NEVER shows the raw
 // error message to users (it can carry internal/DB text). The digest is a
@@ -36,12 +37,7 @@ export default function ErrorPage({
           This one is on us, not you. The page hit a snag and could not load.
           Give it another try, or head back to the front page. If it keeps
           happening, tell us at{" "}
-          <a
-            className="text-brass-deep underline underline-offset-4"
-            href="mailto:shepherd@acts2028sheepdogsociety.com"
-          >
-            shepherd@acts2028sheepdogsociety.com
-          </a>
+          <MessageLink className="cursor-pointer text-brass-deep underline underline-offset-4" topic="other" />
           .
         </p>
 

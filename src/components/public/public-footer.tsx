@@ -4,6 +4,7 @@ import { Icon } from "@/components/icons/Icon";
 import { ScriptureMarquee } from "@/components/motion/ScriptureMarquee";
 import { MARQUEE_REFS } from "@/lib/bible/marquee-refs";
 import { getMarqueeVerses } from "@/lib/bible/verse";
+import { MessageLink } from "@/components/public/message-link";
 
 /**
  * Broadsheet footer. The crest bookends the page (single, centered,
@@ -135,12 +136,9 @@ export async function PublicFooter() {
                 </Link>
               </li>
               <li>
-                <a
-                  href="mailto:shepherd@acts2028sheepdogsociety.com"
-                  className="text-foreground/80 transition-colors hover:text-brass"
-                >
+                <MessageLink className="cursor-pointer text-foreground/80 transition-colors hover:text-brass">
                   Email us
-                </a>
+                </MessageLink>
               </li>
             </ul>
           </div>
