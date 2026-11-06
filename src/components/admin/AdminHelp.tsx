@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/icons/Icon";
 import { cn } from "@/lib/utils";
+import { MessageLink } from "@/components/public/message-link";
 
 /**
  * Persistent ? button (bottom-right, every admin page) + side-sheet.
@@ -229,12 +230,10 @@ export function AdminHelp() {
             <div className="mt-12 border-t border-stone/15 pt-6">
               <p className="text-xs leading-relaxed text-stone/60">
                 Need something not covered here? Email{" "}
-                <a
-                  href="mailto:shepherd@acts2028sheepdogsociety.com"
-                  className="text-brass underline decoration-brass/40 underline-offset-4 hover:text-gold"
-                >
-                  shepherd@acts2028sheepdogsociety.com
-                </a>
+                <MessageLink
+                  className="cursor-pointer text-brass underline decoration-brass/40 underline-offset-4 hover:text-gold"
+                  topic="other"
+                />
                 . A real human reads it.
               </p>
             </div>

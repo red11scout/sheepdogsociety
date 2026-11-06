@@ -5,6 +5,7 @@ import { getSiteTextMap } from "@/lib/site-text/get";
 import { getStudioConfig } from "@/lib/studio/get";
 import { renderMerge } from "@/lib/studio/config";
 import ContactForm from "@/components/public/contact-form";
+import { MessageLink } from "@/components/public/message-link";
 
 export const metadata = {
   title: "Contact — Sheepdog Society",
@@ -27,12 +28,7 @@ export default async function ContactPage() {
           </h1>
           <p className="mt-8 max-w-2xl text-lg text-muted-foreground">
             {t["contact.hero.paragraph"]}{" "}
-            <a
-              href="mailto:shepherd@acts2028sheepdogsociety.com"
-              className="link-editorial font-medium text-foreground"
-            >
-              shepherd@acts2028sheepdogsociety.com
-            </a>
+            <MessageLink className="link-editorial cursor-pointer font-medium text-foreground" />
             . It reaches the same watch.
           </p>
         </div>

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { signIn } from "@/auth";
 import { Icon } from "@/components/icons/Icon";
+import { MessageLink } from "@/components/public/message-link";
 
 export const metadata: Metadata = {
   title: "Sign in — Sheepdog Society",
@@ -94,12 +95,13 @@ export default async function SignInPage({
 
         <p className="mt-10 text-center text-xs text-stone/65">
           Admin access only.{" "}
-          <Link
-            href="mailto:shepherd@acts2028sheepdogsociety.com?subject=Sheepdog%20Society%20sign-in%20help"
-            className="text-brass underline underline-offset-4 transition-colors hover:text-gold"
+          <MessageLink
+            className="cursor-pointer text-brass underline underline-offset-4 transition-colors hover:text-gold"
+            topic="other"
+            title="Sign-in help"
           >
             Email the Watch
-          </Link>{" "}
+          </MessageLink>{" "}
           if you need help.
         </p>
 

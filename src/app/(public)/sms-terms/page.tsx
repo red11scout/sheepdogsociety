@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { Kicker } from "@/components/public/kicker";
+import { MessageLink } from "@/components/public/message-link";
 
 export const metadata: Metadata = {
   title: "SMS Terms — Sheepdog Society",
@@ -61,8 +62,9 @@ const SECTIONS = [
   {
     heading: "Customer care",
     body: [
-      "Questions, problems, or to opt out by email instead: shepherd@acts2028sheepdogsociety.com.",
+      "Questions, problems, or to opt out by email instead:",
     ],
+    contact: true,
   },
   {
     heading: "Changes",
@@ -99,6 +101,12 @@ export default function SmsTermsPage() {
                     className="text-lg leading-relaxed text-muted-foreground"
                   >
                     {p}
+                    {"contact" in s && s.contact && i === s.body.length - 1 && (
+                      <>
+                        {" "}
+                        <MessageLink className="link-editorial cursor-pointer" topic="other" />.
+                      </>
+                    )}
                     {"link" in s && s.link && i === s.body.length - 1 && (
                       <>
                         {" "}

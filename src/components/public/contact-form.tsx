@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Icon } from "@/components/icons/Icon";
 import { Magnetic } from "@/components/motion/Magnetic";
 import { Kicker } from "@/components/public/kicker";
@@ -14,11 +14,25 @@ const TOPICS = [
   { value: "other", label: "Other" },
 ];
 
-export default function ContactForm() {
+interface ContactFormProps {
+  /** "page" is the full /contact section; "dialog" is the compact form
+   *  inside MessageLink's dialog (no outer padding, no kicker). */
+  variant?: "page" | "dialog";
+  /** Pre-selected topic value (see TOPICS). */
+  defaultTopic?: string;
+}
+
+export default function ContactForm({
+  variant = "page",
+  defaultTopic,
+}: ContactFormProps = {}) {
+  // Two forms can be mounted at once (the /contact page plus the dialog
+  // opened from its own hero), so field ids are instance-scoped.
+  const uid = useId();
   const [form, setForm] = useState({
     name: "",
     email: "",
-    topic: "general",
+    topic: TOPICS.some((t) => t.value === defaultTopic) ? (defaultTopic as string) : "general",
     message: "",
   });
   const [honeypot, setHoneypot] = useState("");
@@ -44,11 +58,17 @@ export default function ContactForm() {
     setSubmitting(false);
   }
 
+  const compact = variant === "dialog";
+  const Wrapper = compact ? "div" : "section";
+
   return (
-    <section className="bg-background text-foreground">
-      <div className="mx-auto max-w-3xl px-6 py-20 md:px-12 md:py-32">
+    <Wrapper className={compact ? "text-foreground" : "bg-background text-foreground"}>
+      <div className={compact ? "pt-6" : "mx-auto max-w-3xl px-6 py-20 md:px-12 md:py-32"}>
         {submitted ? (
-          <div className="border border-brass/40 bg-background/40 p-12 text-center">
+          <div
+            role="status"
+            className={`border border-brass/40 bg-background/40 text-center ${compact ? "p-8" : "p-12"}`}
+          >
             <Icon
               name="check"
               size={48}
@@ -63,8 +83,8 @@ export default function ContactForm() {
             </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="grid gap-8">
-            <Kicker left="Your message" />
+          <form onSubmit={handleSubmit} className={compact ? "grid gap-6" : "grid gap-8"}>
+            {!compact && <Kicker left="Your message" />}
 
             {/* Honeypot — hidden via accessibility, not display:none (bots check that). */}
             <label className="absolute left-[-9999px] h-0 w-0 overflow-hidden" aria-hidden="true">
@@ -80,6 +100,7 @@ export default function ContactForm() {
 
             <div className="grid gap-6 md:grid-cols-2">
               <Field
+                id={`${uid}-name`}
                 label="Name"
                 required
                 maxLength={200}
@@ -87,6 +108,7 @@ export default function ContactForm() {
                 onChange={(v) => setForm((f) => ({ ...f, name: v }))}
               />
               <Field
+                id={`${uid}-email`}
                 label="Email"
                 type="email"
                 required
@@ -97,9 +119,9 @@ export default function ContactForm() {
             </div>
 
             <div>
-              <label className="folio" htmlFor="contact-topic">Topic</label>
+              <label className="folio" htmlFor={`${uid}-topic`}>Topic</label>
               <select
-                id="contact-topic"
+                id={`${uid}-topic`}
                 value={form.topic}
                 onChange={(e) =>
                   setForm((f) => ({ ...f, topic: e.target.value }))
@@ -119,11 +141,11 @@ export default function ContactForm() {
             </div>
 
             <div>
-              <label className="folio" htmlFor="contact-message">Message</label>
+              <label className="folio" htmlFor={`${uid}-message`}>Message</label>
               <textarea
-                id="contact-message"
+                id={`${uid}-message`}
                 required
-                rows={6}
+                rows={compact ? 5 : 6}
                 maxLength={5000}
                 value={form.message}
                 onChange={(e) =>
@@ -152,11 +174,12 @@ export default function ContactForm() {
           </form>
         )}
       </div>
-    </section>
+    </Wrapper>
   );
 }
 
 function Field({
+  id,
   label,
   required,
   type = "text",
@@ -164,6 +187,7 @@ function Field({
   value,
   onChange,
 }: {
+  id: string;
   label: string;
   required?: boolean;
   type?: string;
@@ -171,7 +195,6 @@ function Field({
   value: string;
   onChange: (v: string) => void;
 }) {
-  const id = `contact-${label.toLowerCase().replace(/[^a-z]+/g, "-")}`;
   return (
     <div>
       <label className="folio" htmlFor={id}>
