@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { locationRequests } from "@/db/schema";
 import { z } from "zod/v4";
-import { resend, FROM_TRANSACTIONAL, FROM_SHEPHERD, SHEPHERD_EMAIL } from "@/lib/email";
+import { resend, FROM_TRANSACTIONAL, FROM_SHEPHERD, SHEPHERD_EMAIL, notifyRecipients } from "@/lib/email";
 import { geocodeAddress } from "@/lib/geocoding";
 
 export const runtime = "nodejs";
@@ -105,7 +105,7 @@ export async function POST(request: Request) {
     try {
       const { error } = await resend().emails.send({
         from: FROM_TRANSACTIONAL,
-        to: SHEPHERD_EMAIL,
+        to: notifyRecipients(),
         replyTo: requesterEmail,
         subject: `New group-plant request: ${proposedGroupName} — ${proposedCity}, ${proposedState}`,
         text: [

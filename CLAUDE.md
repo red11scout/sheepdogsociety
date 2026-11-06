@@ -52,7 +52,7 @@ Pastoral, warm, direct, masculine without macho. Short Anglo-Saxon sentences. Im
 
 ## Required Env Vars
 **Auth:** `AUTH_SECRET`, `AUTH_RESEND_KEY`, `ADMIN_EMAILS`, `NEXT_PUBLIC_SITE_URL`
-**Email:** `RESEND_API_KEY`, `RESEND_AUDIENCE_ID`, `RESEND_FROM_AUTH`, `RESEND_FROM_NEWSLETTER`
+**Email:** `RESEND_API_KEY`, `RESEND_AUDIENCE_ID`, `RESEND_FROM_AUTH`, `RESEND_FROM_NEWSLETTER`; optional `NOTIFY_EMAILS` (comma-separated extra inboxes that get a copy of every shepherd@ notification — contact, plant request, group interest, autopilot; shepherd@ sits behind GoDaddy Advanced Email Security, which has quarantined site mail)
 **DB:** `DATABASE_URL` (Neon pooled endpoint — used by the entire runtime: app queries + Auth.js + every feature). `DATABASE_URL_UNPOOLED` for migration scripts that need a stable session. Migrations applied via the GitHub Action at `.github/workflows/apply-migrations.yml` (auto on push to main when `drizzle/*.sql` changes) using the `DATABASE_URL_PRODUCTION` env secret.
 **AI:** `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` (for `gpt-image-1`, optional)
 **Maps:** `NEXT_PUBLIC_MAPBOX_TOKEN`
