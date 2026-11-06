@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { locationInterests, locations } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { z } from "zod/v4";
-import { resend, FROM_TRANSACTIONAL, FROM_SHEPHERD, SHEPHERD_EMAIL } from "@/lib/email";
+import { resend, FROM_TRANSACTIONAL, FROM_SHEPHERD, SHEPHERD_EMAIL, notifyRecipients } from "@/lib/email";
 
 const schema = z.object({
   // Optional since the /join form allows "no preference yet".
@@ -109,7 +109,7 @@ acts2028sheepdogsociety.com/admin/location-interests`,
 
       const { error } = await resend().emails.send({
         from: FROM_TRANSACTIONAL,
-        to: SHEPHERD_EMAIL,
+        to: notifyRecipients(),
         replyTo: email,
         subject: `New join request: ${loc ? groupLabel : name}`,
         text: `Name: ${name}\nEmail: ${email}\nPhone: ${phone || "(not given)"}\nWeekly letter: ${wantsNewsletter ?? true ? "yes" : "no"}\n\nGroup: ${groupLabel}\n${leaderLine}\n\nMessage:\n${message || "(none)"}\n\nApprove it into Members: ${process.env.NEXT_PUBLIC_SITE_URL ?? "https://www.acts2028sheepdogsociety.com"}/admin/location-interests`,

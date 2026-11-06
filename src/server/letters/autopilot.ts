@@ -54,12 +54,11 @@ import {
   PUBLISH_HOUR,
   pad2,
 } from "@/server/letters/autopilot-state";
-import { resend, FROM_TRANSACTIONAL } from "@/lib/email";
+import { resend, FROM_TRANSACTIONAL, notifyRecipients } from "@/lib/email";
 
 const MODEL = "claude-sonnet-4-5";
 export const AUTOPILOT_THEME_PROMPT_VERSION = "letter-autopilot-theme.v1";
 
-const SHEPHERD_EMAIL = "shepherd@acts2028sheepdogsociety.com";
 const KILL_SWITCH_LINE =
   "To stop the autopilot: /admin/encouragements, Autopilot card, one toggle.";
 
@@ -157,7 +156,7 @@ async function sendEmail(subject: string, text: string): Promise<boolean> {
   try {
     const { error } = await resend().emails.send({
       from: FROM_TRANSACTIONAL,
-      to: SHEPHERD_EMAIL,
+      to: notifyRecipients(),
       subject,
       text,
     });

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { db } from "@/db";
 import { contactSubmissions } from "@/db/schema";
 import { z } from "zod/v4";
-import { resend, FROM_TRANSACTIONAL, FROM_SHEPHERD, SHEPHERD_EMAIL } from "@/lib/email";
+import { resend, FROM_TRANSACTIONAL, FROM_SHEPHERD, SHEPHERD_EMAIL, notifyRecipients } from "@/lib/email";
 
 const schema = z.object({
   name: z.string().min(1).max(200),
@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     try {
       const { error } = await resend().emails.send({
         from: FROM_TRANSACTIONAL,
-        to: SHEPHERD_EMAIL,
+        to: notifyRecipients(),
         replyTo: parsed.data.email,
         subject: `New contact: ${topic} from ${parsed.data.name}`,
         text: `Name: ${parsed.data.name}\nEmail: ${parsed.data.email}\nTopic: ${topic}\n\n${parsed.data.message}`,
